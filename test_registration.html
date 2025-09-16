@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Registration Test</title>
+</head>
+<body>
+    <h1>Register Admin Account</h1>
+    <button onclick="registerAdmin()">Register Admin (abcd@gmail.com / 12345)</button>
+    <div id="result"></div>
+
+    <script>
+        async function registerAdmin() {
+            try {
+                const response = await fetch('http://localhost:5001/api/admin/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        username: 'admin',
+                        email: 'abcd@gmail.com',
+                        password: '12345',
+                        fullName: 'Admin User'
+                    })
+                });
+
+                const result = await response.json();
+                document.getElementById('result').innerHTML = `
+                    <h3>Response (${response.status}):</h3>
+                    <pre>${JSON.stringify(result, null, 2)}</pre>
+                `;
+            } catch (error) {
+                document.getElementById('result').innerHTML = `
+                    <h3>Error:</h3>
+                    <pre>${error.message}</pre>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

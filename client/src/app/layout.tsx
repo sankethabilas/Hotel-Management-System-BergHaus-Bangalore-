@@ -1,0 +1,23 @@
+import { AuthProvider } from '@/contexts/AuthContext'
+import '@/styles/globals.css'
+
+export const metadata = {
+  title: 'BergHaus Hotel Management System',
+  description: 'Food & Beverage Management Module',
+}
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <html lang="en">
+      <body>
+        <AuthProvider>
+          {children}
+        </AuthProvider>
+      </body>
+    </html>
+  )
+}
