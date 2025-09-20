@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import Header from '@/components/layout/Header';
-import Footer from '@/components/layout/Footer';
 import { ShoppingCart, Clock, Star, Utensils } from 'lucide-react';
 
 export default function HomePage() {
@@ -27,13 +26,7 @@ export default function HomePage() {
                 className="bg-secondary-500 hover:bg-secondary-600 text-primary-900 font-semibold px-8 py-3 rounded-lg transition-colors inline-flex items-center"
               >
                 <Utensils className="mr-2 h-5 w-5" />
-                View Menu
-              </Link>
-              <Link
-                href="/admin"
-                className="bg-transparent border-2 border-white hover:bg-white hover:text-primary-600 font-semibold px-8 py-3 rounded-lg transition-colors"
-              >
-                Admin Portal
+                Browse Menu
               </Link>
             </div>
           </div>
@@ -103,8 +96,6 @@ export default function HomePage() {
           </Link>
         </div>
       </section>
-
-      <Footer />
     </div>
   );
 }

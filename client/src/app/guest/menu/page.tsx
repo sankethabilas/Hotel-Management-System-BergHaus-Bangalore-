@@ -40,12 +40,11 @@ export default function MenuPage() {
         setLoading(true)
         setError(null)
         
-        const response = await api.getMenuItems({
-          isAvailable: true // Only show available items to guests
-        })
+        const response = await fetch('http://localhost:5001/api/menu')
+        const data = await response.json()
         
-        if (response.success && response.data) {
-          setMenuItems(response.data)
+        if (data.success && data.data) {
+          setMenuItems(data.data)
         } else {
           setError('Failed to load menu items')
         }
@@ -271,7 +270,7 @@ export default function MenuPage() {
                       <div className="aspect-video relative bg-gray-200">
                         {item.image ? (
                           <Image
-                            src={item.image}
+                            src={`http://localhost:5001${item.image}`}
                             alt={item.name}
                             fill
                             className="object-cover"
