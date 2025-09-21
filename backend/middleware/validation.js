@@ -115,7 +115,35 @@ const validateProfileUpdate = [
     .optional()
     .trim()
     .isLength({ max: 10 })
-    .withMessage('Zip code cannot exceed 10 characters')
+    .withMessage('Zip code cannot exceed 10 characters'),
+  
+  body('address.country')
+    .optional()
+    .trim()
+    .isLength({ max: 50 })
+    .withMessage('Country cannot exceed 50 characters'),
+  
+  body('dateOfBirth')
+    .optional()
+    .isISO8601()
+    .withMessage('Please provide a valid date of birth'),
+  
+  body('emergencyContact.name')
+    .optional()
+    .trim()
+    .isLength({ max: 100 })
+    .withMessage('Emergency contact name cannot exceed 100 characters'),
+  
+  body('emergencyContact.phone')
+    .optional()
+    .isMobilePhone()
+    .withMessage('Please provide a valid emergency contact phone number'),
+  
+  body('emergencyContact.relationship')
+    .optional()
+    .trim()
+    .isLength({ max: 50 })
+    .withMessage('Emergency contact relationship cannot exceed 50 characters')
 ];
 
 // Password change validation

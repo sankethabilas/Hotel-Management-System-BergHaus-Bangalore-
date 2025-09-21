@@ -172,13 +172,17 @@ const getMe = async (req, res) => {
       success: true,
       data: {
         user: {
-          id: user._id,
+          _id: user._id,
           firstName: user.firstName,
           lastName: user.lastName,
           email: user.email,
           role: user.role,
           phone: user.phone,
           address: user.address,
+          dateOfBirth: user.dateOfBirth,
+          emergencyContact: user.emergencyContact,
+          profileImage: user.profileImage,
+          isActive: user.isActive,
           lastLogin: user.lastLogin,
           createdAt: user.createdAt,
           updatedAt: user.updatedAt
@@ -210,7 +214,7 @@ const updateProfile = async (req, res) => {
       });
     }
 
-    const { firstName, lastName, phone, address } = req.body;
+    const { firstName, lastName, phone, address, dateOfBirth, emergencyContact } = req.body;
     const userId = req.user.userId;
 
     const user = await User.findById(userId);
@@ -222,10 +226,26 @@ const updateProfile = async (req, res) => {
     }
 
     // Update user fields
-    if (firstName) user.firstName = firstName;
-    if (lastName) user.lastName = lastName;
-    if (phone) user.phone = phone;
-    if (address) user.address = { ...user.address, ...address };
+    if (firstName !== undefined) user.firstName = firstName;
+    if (lastName !== undefined) user.lastName = lastName;
+    if (phone !== undefined) user.phone = phone;
+    if (dateOfBirth !== undefined) user.dateOfBirth = dateOfBirth;
+    
+    // Update address fields
+    if (address) {
+      user.address = {
+        ...user.address,
+        ...address
+      };
+    }
+    
+    // Update emergency contact fields
+    if (emergencyContact) {
+      user.emergencyContact = {
+        ...user.emergencyContact,
+        ...emergencyContact
+      };
+    }
 
     await user.save();
 
@@ -234,13 +254,18 @@ const updateProfile = async (req, res) => {
       message: 'Profile updated successfully',
       data: {
         user: {
-          id: user._id,
+          _id: user._id,
           firstName: user.firstName,
           lastName: user.lastName,
           email: user.email,
           role: user.role,
           phone: user.phone,
           address: user.address,
+          dateOfBirth: user.dateOfBirth,
+          emergencyContact: user.emergencyContact,
+          profileImage: user.profileImage,
+          isActive: user.isActive,
+          createdAt: user.createdAt,
           updatedAt: user.updatedAt
         }
       }

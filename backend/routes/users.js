@@ -7,7 +7,9 @@ const {
   updateUser,
   deleteUser,
   deactivateUser,
-  activateUser
+  activateUser,
+  uploadProfilePicture,
+  upload
 } = require('../controllers/userController');
 
 const {
@@ -45,5 +47,10 @@ router.put('/:id/deactivate', protect, authorize('admin'), deactivateUser);
 // @desc    Activate user
 // @access  Private/Admin
 router.put('/:id/activate', protect, authorize('admin'), activateUser);
+
+// @route   POST /api/users/:id/upload
+// @desc    Upload profile picture
+// @access  Private (own profile or admin)
+router.post('/:id/upload', protect, upload.single('profileImage'), uploadProfilePicture);
 
 module.exports = router;

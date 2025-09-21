@@ -124,6 +124,82 @@ export const usersAPI = {
     const response: AxiosResponse<ApiResponse<{ user: User }>> = await api.put(`/users/${userId}/activate`);
     return response.data;
   },
+
+  // Upload profile picture
+  uploadProfilePicture: async (userId: string, file: File): Promise<ApiResponse<{ user: User }>> => {
+    const formData = new FormData();
+    formData.append('profileImage', file);
+    
+    const response: AxiosResponse<ApiResponse<{ user: User }>> = await api.post(`/users/${userId}/upload`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    
+    return response.data;
+  },
+};
+
+// Availability API functions
+export const availabilityAPI = {
+  // Check room availability
+  checkAvailability: async (params: {
+    checkIn: string;
+    checkOut: string;
+    roomType?: string;
+    adults?: number;
+    children?: number;
+  }): Promise<ApiResponse<{
+    checkIn: string;
+    checkOut: string;
+    nights: number;
+    totalGuests: number;
+    availableRooms: any[];
+    roomsByType: Record<string, any[]>;
+    totalAvailable: number;
+  }>> => {
+    const response: AxiosResponse<ApiResponse<any>> = await api.get('/availability', { params });
+    return response.data;
+  },
+
+  // Get availability calendar data
+  getAvailabilityCalendar: async (params: {
+    roomType?: string;
+    month?: number;
+    year?: number;
+  }): Promise<ApiResponse<{
+    month: number;
+    year: number;
+    calendarData: Record<string, any>;
+    rooms: any[];
+  }>> => {
+    const response: AxiosResponse<ApiResponse<any>> = await api.get('/availability/calendar', { params });
+    return response.data;
+  },
+
+  // Book a room
+  bookRoom: async (bookingData: {
+    roomId: string;
+    checkIn: string;
+    checkOut: string;
+    guestCount: {
+      adults: number;
+      children: number;
+    };
+    specialRequests?: string;
+  }): Promise<ApiResponse<{
+    reservation: any;
+    pricing: {
+      nights: number;
+      pricePerNight: number;
+      subtotal: number;
+      tax: number;
+      total: number;
+    };
+  }>> => {
+    const response: AxiosResponse<ApiResponse<any>> = await api.post('/availability/book', bookingData);
+    return response.data;
+  },
 };
 
 // Utility functions

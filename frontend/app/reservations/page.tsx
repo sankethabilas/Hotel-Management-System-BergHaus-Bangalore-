@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -25,7 +25,16 @@ import {
   ArrowRight,
   MapPin,
   Phone,
-  Mail
+  Mail,
+  Search,
+  Filter,
+  X,
+  Wifi,
+  Car,
+  Coffee,
+  Dumbbell,
+  Waves,
+  TreePine
 } from 'lucide-react';
 
 const roomTypes = [
@@ -119,6 +128,14 @@ export default function ReservationsPage() {
   const [checkOut, setCheckOut] = useState('2024-09-22');
   const [adults, setAdults] = useState(2);
   const [children, setChildren] = useState(0);
+  
+  // Search and filter states
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedRoomType, setSelectedRoomType] = useState('');
+  const [priceRange, setPriceRange] = useState([0, 20000]);
+  const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
+  const [showFilters, setShowFilters] = useState(false);
+  const [sortBy, setSortBy] = useState('price-asc');
 
   const updateRoomSelection = (roomId: string, change: number) => {
     setSelectedRooms(prev => ({
@@ -139,7 +156,7 @@ export default function ReservationsPage() {
     let total = 0;
     Object.entries(selectedRooms).forEach(([roomId, quantity]) => {
       if (quantity > 0) {
-        const room = roomTypes.find(r => r.id === roomId);
+        const room = filteredAndSortedRooms.find(r => r.id === roomId) || roomTypes.find(r => r.id === roomId);
         if (room) {
           total += room.currentPrice * quantity;
         }
@@ -153,6 +170,121 @@ export default function ReservationsPage() {
     const checkOutDate = new Date(checkOut);
     const diffTime = Math.abs(checkOutDate.getTime() - checkInDate.getTime());
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  };
+
+  // Get unique room types for filter
+  const roomTypeOptions = useMemo(() => {
+    const types = roomTypes.map(room => {
+      if (room.name.includes('Double')) return 'Double';
+      if (room.name.includes('Family')) return 'Family';
+      if (room.name.includes('Single')) return 'Single';
+      if (room.name.includes('Twin')) return 'Twin';
+      if (room.name.includes('Suite')) return 'Suite';
+      return 'Other';
+    });
+    return Array.from(new Set(types));
+  }, []);
+
+  // Get unique amenities for filter
+  const amenityOptions = useMemo(() => {
+    const allAmenities = roomTypes.flatMap(room => room.amenities);
+    const uniqueAmenities = Array.from(new Set(allAmenities));
+    return uniqueAmenities.slice(0, 20); // Limit to top 20 amenities
+  }, []);
+
+  // Filter and sort rooms
+  const filteredAndSortedRooms = useMemo(() => {
+    let filtered = roomTypes.filter(room => {
+      // Search query filter
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const matchesName = room.name.toLowerCase().includes(query);
+        const matchesDescription = room.description.toLowerCase().includes(query);
+        const matchesAmenities = room.amenities.some(amenity => 
+          amenity.toLowerCase().includes(query)
+        );
+        if (!matchesName && !matchesDescription && !matchesAmenities) {
+          return false;
+        }
+      }
+
+      // Room type filter
+      if (selectedRoomType) {
+        const roomType = room.name.includes('Double') ? 'Double' :
+                        room.name.includes('Family') ? 'Family' :
+                        room.name.includes('Single') ? 'Single' :
+                        room.name.includes('Twin') ? 'Twin' :
+                        room.name.includes('Suite') ? 'Suite' : 'Other';
+        if (roomType !== selectedRoomType) {
+          return false;
+        }
+      }
+
+      // Price range filter
+      if (room.currentPrice < priceRange[0] || room.currentPrice > priceRange[1]) {
+        return false;
+      }
+
+      // Amenities filter
+      if (selectedAmenities.length > 0) {
+        const hasAllSelectedAmenities = selectedAmenities.every(amenity =>
+          room.amenities.some(roomAmenity => 
+            roomAmenity.toLowerCase().includes(amenity.toLowerCase())
+          )
+        );
+        if (!hasAllSelectedAmenities) {
+          return false;
+        }
+      }
+
+      // Capacity filter (based on adults + children)
+      const totalGuests = adults + children;
+      if (room.maxPersons < totalGuests) {
+        return false;
+      }
+
+      return true;
+    });
+
+    // Sort rooms
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case 'price-asc':
+          return a.currentPrice - b.currentPrice;
+        case 'price-desc':
+          return b.currentPrice - a.currentPrice;
+        case 'name-asc':
+          return a.name.localeCompare(b.name);
+        case 'name-desc':
+          return b.name.localeCompare(a.name);
+        case 'capacity-asc':
+          return a.maxPersons - b.maxPersons;
+        case 'capacity-desc':
+          return b.maxPersons - a.maxPersons;
+        default:
+          return 0;
+      }
+    });
+
+    return filtered;
+  }, [searchQuery, selectedRoomType, priceRange, selectedAmenities, sortBy, adults, children]);
+
+  // Handle amenity selection
+  const toggleAmenity = (amenity: string) => {
+    setSelectedAmenities(prev => 
+      prev.includes(amenity) 
+        ? prev.filter(a => a !== amenity)
+        : [...prev, amenity]
+    );
+  };
+
+  // Clear all filters
+  const clearFilters = () => {
+    setSearchQuery('');
+    setSelectedRoomType('');
+    setPriceRange([0, 20000]);
+    setSelectedAmenities([]);
+    setSortBy('price-asc');
   };
 
   return (
@@ -261,6 +393,138 @@ export default function ReservationsPage() {
         </div>
       </section>
 
+      {/* Search and Filter Section */}
+      <section className="py-8 bg-gray-50 border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col lg:flex-row gap-6">
+            {/* Search Bar */}
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <Input
+                  placeholder="Search rooms by name, description, or amenities..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 pr-4 py-3 border-gray-300 focus:border-hms-primary focus:ring-hms-primary"
+                />
+              </div>
+            </div>
+
+            {/* Filter Toggle and Sort */}
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setShowFilters(!showFilters)}
+                className="flex items-center space-x-2 border-hms-primary text-hms-primary hover:bg-hms-primary hover:text-white"
+              >
+                <Filter className="w-4 h-4" />
+                <span>Filters</span>
+                {selectedAmenities.length > 0 || selectedRoomType || priceRange[0] > 0 || priceRange[1] < 20000 ? (
+                  <Badge className="bg-hms-primary text-white text-xs">{selectedAmenities.length + (selectedRoomType ? 1 : 0) + (priceRange[0] > 0 || priceRange[1] < 20000 ? 1 : 0)}</Badge>
+                ) : null}
+              </Button>
+
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-md focus:border-hms-primary focus:ring-hms-primary"
+              >
+                <option value="price-asc">Price: Low to High</option>
+                <option value="price-desc">Price: High to Low</option>
+                <option value="name-asc">Name: A to Z</option>
+                <option value="name-desc">Name: Z to A</option>
+                <option value="capacity-asc">Capacity: Low to High</option>
+                <option value="capacity-desc">Capacity: High to Low</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Advanced Filters */}
+          {showFilters && (
+            <div className="mt-6 p-6 bg-white rounded-lg border border-gray-200 shadow-sm">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {/* Room Type Filter */}
+                <div>
+                  <Label className="text-hms-primary font-semibold mb-3 block">Room Type</Label>
+                  <select
+                    value={selectedRoomType}
+                    onChange={(e) => setSelectedRoomType(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:border-hms-primary focus:ring-hms-primary"
+                  >
+                    <option value="">All Room Types</option>
+                    {roomTypeOptions.map(type => (
+                      <option key={type} value={type}>{type}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Price Range Filter */}
+                <div>
+                  <Label className="text-hms-primary font-semibold mb-3 block">
+                    Price Range: {formatPrice(priceRange[0])} - {formatPrice(priceRange[1])}
+                  </Label>
+                  <div className="space-y-2">
+                    <input
+                      type="range"
+                      min="0"
+                      max="20000"
+                      step="500"
+                      value={priceRange[0]}
+                      onChange={(e) => setPriceRange([parseInt(e.target.value), priceRange[1]])}
+                      className="w-full"
+                    />
+                    <input
+                      type="range"
+                      min="0"
+                      max="20000"
+                      step="500"
+                      value={priceRange[1]}
+                      onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value)])}
+                      className="w-full"
+                    />
+                  </div>
+                </div>
+
+                {/* Popular Amenities */}
+                <div className="md:col-span-2">
+                  <Label className="text-hms-primary font-semibold mb-3 block">Popular Amenities</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {['Free WiFi', 'Mountain View', 'Balcony', 'Air Conditioning', 'TV', 'Terrace', 'Patio', 'Garden View'].map(amenity => (
+                      <button
+                        key={amenity}
+                        onClick={() => toggleAmenity(amenity)}
+                        className={`flex items-center space-x-2 px-3 py-2 rounded-md text-sm transition-colors ${
+                          selectedAmenities.includes(amenity)
+                            ? 'bg-hms-primary text-white'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                      >
+                        <span>{amenity}</span>
+                        {selectedAmenities.includes(amenity) && <X className="w-3 h-3" />}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Clear Filters */}
+              <div className="mt-4 flex justify-between items-center">
+                <div className="text-sm text-gray-600">
+                  Showing {filteredAndSortedRooms.length} of {roomTypes.length} rooms
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={clearFilters}
+                  className="text-gray-600 hover:text-gray-800"
+                >
+                  Clear All Filters
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+
       {/* Availability Notice */}
       <section className="py-6 bg-yellow-50 border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -288,19 +552,39 @@ export default function ReservationsPage() {
 
           {/* Table */}
           <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-lg">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Room type</th>
-                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">Number of guests</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Today's price</th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Your choices</th>
-                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">Select rooms</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {roomTypes.map((room) => (
+            {filteredAndSortedRooms.length === 0 ? (
+              <div className="p-12 text-center">
+                <div className="flex justify-center mb-4">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                    <Search className="w-8 h-8 text-gray-400" />
+                  </div>
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No rooms found</h3>
+                <p className="text-gray-600 mb-4">
+                  Try adjusting your search criteria or filters to find more rooms.
+                </p>
+                <Button
+                  onClick={clearFilters}
+                  variant="outline"
+                  className="border-hms-primary text-hms-primary hover:bg-hms-primary hover:text-white"
+                >
+                  Clear All Filters
+                </Button>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Room type</th>
+                      <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">Number of guests</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Today's price</th>
+                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Your choices</th>
+                      <th className="px-6 py-4 text-center text-sm font-semibold text-gray-900">Select rooms</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {filteredAndSortedRooms.map((room) => (
                     <tr key={room.id} className="hover:bg-gray-50 transition-colors">
                       {/* Room Type Column */}
                       <td className="px-6 py-6">
@@ -433,10 +717,11 @@ export default function ReservationsPage() {
                         </div>
                       </td>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
 
           {/* Reservation Button */}
@@ -508,7 +793,7 @@ export default function ReservationsPage() {
                     <div className="space-y-2">
                       {Object.entries(selectedRooms).map(([roomId, quantity]) => {
                         if (quantity === 0) return null;
-                        const room = roomTypes.find(r => r.id === roomId);
+                        const room = filteredAndSortedRooms.find(r => r.id === roomId) || roomTypes.find(r => r.id === roomId);
                         if (!room) return null;
                         return (
                           <div key={roomId} className="flex justify-between">

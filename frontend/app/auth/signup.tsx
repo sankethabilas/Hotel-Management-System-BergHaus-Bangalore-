@@ -10,8 +10,9 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Eye, EyeOff, Mail, Lock, User, Phone, ArrowLeft } from 'lucide-react';
-import { AuthService, validateEmail, validatePassword, validatePhone } from '@/lib/auth';
+import { validateEmail, validatePassword, validatePhone } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 import { UserRole } from '@/types';
 
 interface SignupFormData {
@@ -36,6 +37,7 @@ interface FormErrors {
 export default function SignupPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { register } = useAuth();
   const [formData, setFormData] = useState<SignupFormData>({
     firstName: '',
     lastName: '',
@@ -131,23 +133,13 @@ export default function SignupPage() {
       // Remove confirmPassword from data sent to API
       const { confirmPassword, ...userData } = formData;
       
-      const result = await AuthService.register(userData);
+      const success = await register(userData);
       
-      if (result.success) {
-        toast({
-          title: "Welcome to HMS!",
-          description: "Your account has been created successfully.",
-        });
-        
-        // Animate redirect
-        setTimeout(() => {
-          router.push('/dashboard');
-        }, 1500);
+      if (success) {
+        // Redirect to home page on successful registration
+        router.push('/');
       } else {
-        setMessage(result.message || 'Registration failed');
-        if (result.errors) {
-          setErrors(result.errors);
-        }
+        setMessage('Registration failed. Please try again.');
       }
     } catch (error) {
       setMessage('An error occurred. Please try again.');

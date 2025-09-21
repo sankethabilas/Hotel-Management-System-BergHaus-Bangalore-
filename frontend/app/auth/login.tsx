@@ -10,8 +10,9 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Eye, EyeOff, Mail, Lock, ArrowLeft } from 'lucide-react';
-import { AuthService, validateEmail } from '@/lib/auth';
+import { validateEmail } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface LoginFormData {
   email: string;
@@ -26,6 +27,7 @@ interface FormErrors {
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { login, isAuthenticated } = useAuth();
   const [formData, setFormData] = useState<LoginFormData>({
     email: '',
     password: ''
@@ -79,24 +81,13 @@ export default function LoginPage() {
     setMessage('');
 
     try {
-      const result = await AuthService.login(formData);
+      const success = await login(formData.email, formData.password);
       
-      if (result.success) {
-        toast({
-          title: "Welcome back!",
-          description: "You have successfully logged in.",
-          variant: "success",
-        });
-        
-        // Animate redirect
-        setTimeout(() => {
-          router.push('/dashboard');
-        }, 1500);
+      if (success) {
+        // Redirect to home page on successful login
+        router.push('/');
       } else {
-        setMessage(result.message || 'Login failed');
-        if (result.errors) {
-          setErrors(result.errors);
-        }
+        setMessage('Login failed. Please check your credentials.');
       }
     } catch (error) {
       setMessage('An error occurred. Please try again.');

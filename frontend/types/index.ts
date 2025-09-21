@@ -7,6 +7,9 @@ export interface User {
   phone?: string;
   role: UserRole;
   isActive: boolean;
+  profileImage?: string;
+  dateOfBirth?: string;
+  lastLogin?: string;
   createdAt: string;
   updatedAt: string;
   address?: {
@@ -15,6 +18,11 @@ export interface User {
     state?: string;
     zipCode?: string;
     country?: string;
+  };
+  emergencyContact?: {
+    name?: string;
+    phone?: string;
+    relationship?: string;
   };
 }
 

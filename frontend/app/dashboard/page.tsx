@@ -340,7 +340,10 @@ export default function DashboardPage() {
               <CardHeader>
                 <div className="flex items-center space-x-4">
                   <Avatar className="h-16 w-16">
-                    <AvatarImage src="/avatars/01.png" alt={user.firstName} />
+                    <AvatarImage 
+                      src={user.profileImage ? `http://localhost:5000${user.profileImage}` : undefined} 
+                      alt={user.firstName} 
+                    />
                     <AvatarFallback>
                       {user.firstName?.charAt(0)}{user.lastName?.charAt(0)}
                     </AvatarFallback>
