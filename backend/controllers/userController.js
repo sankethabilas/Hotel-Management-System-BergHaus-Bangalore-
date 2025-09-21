@@ -374,6 +374,72 @@ const upload = multer({
   fileFilter: fileFilter
 });
 
+// @desc    Google signup/signin
+// @route   POST /api/users/google-signup
+// @access  Public
+const googleSignup = async (req, res) => {
+  try {
+    const { name, email, profilePic, accountType } = req.body;
+
+    // Validate required fields
+    if (!name || !email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Name and email are required'
+      });
+    }
+
+    // Check if user already exists
+    let user = await User.findOne({ email: email.toLowerCase() });
+
+    if (user) {
+      // User exists, update last login and return user
+      user.lastLogin = new Date();
+      await user.save();
+      
+      return res.json({
+        success: true,
+        message: 'User signed in successfully',
+        user: user.toJSON()
+      });
+    }
+
+    // Split name into first and last name
+    const nameParts = name.trim().split(' ');
+    const firstName = nameParts[0] || '';
+    const lastName = nameParts.slice(1).join(' ') || '';
+
+    // Create new user
+    const newUser = new User({
+      firstName,
+      lastName,
+      email: email.toLowerCase(),
+      password: 'google-auth', // Placeholder password for Google users
+      isGoogleUser: true,
+      role: accountType || 'guest',
+      profileImage: profilePic || null,
+      isActive: true,
+      lastLogin: new Date()
+    });
+
+    // Save user (password will be hashed by pre-save middleware)
+    await newUser.save();
+
+    res.status(201).json({
+      success: true,
+      message: 'User created successfully',
+      user: newUser.toJSON()
+    });
+  } catch (error) {
+    console.error('Google signup error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error during Google signup',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+    });
+  }
+};
+
 module.exports = {
   getAllUsers,
   getUserById,
@@ -382,5 +448,6 @@ module.exports = {
   deactivateUser,
   activateUser,
   uploadProfilePicture,
+  googleSignup,
   upload
 };

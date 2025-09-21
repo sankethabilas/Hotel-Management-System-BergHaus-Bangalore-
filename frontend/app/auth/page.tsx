@@ -2,8 +2,8 @@
 
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import LoginPage from './login';
-import SignupPage from './signup';
+import LoginPage from './login/page';
+import SignupPage from './signup/page';
 
 export default function AuthPage() {
   const [activeTab, setActiveTab] = useState('signup');

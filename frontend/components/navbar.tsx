@@ -30,6 +30,23 @@ export default function Navbar({ className }: NavbarProps) {
     return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase() || 'U';
   };
 
+  const getProfileImageUrl = (user: any) => {
+    if (!user) return undefined;
+    
+    // If user has a custom profile image (uploaded to backend)
+    if (user.profileImage && user.profileImage.startsWith('/uploads/')) {
+      return `http://localhost:5000${user.profileImage}`;
+    }
+    
+    // If user has a Google profile image (external URL)
+    if (user.profileImage && user.profileImage.startsWith('http')) {
+      return user.profileImage;
+    }
+    
+    // Fallback to undefined (will show initials)
+    return undefined;
+  };
+
   return (
     <nav className={`bg-white/95 dark:bg-gray-700/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-500 sticky top-0 z-50 transition-colors duration-200 ${className}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -108,8 +125,8 @@ export default function Navbar({ className }: NavbarProps) {
                     <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                       <Avatar className="h-10 w-10">
                         <AvatarImage 
-                          src={user?.profileImage ? `http://localhost:5000${user.profileImage}` : undefined} 
-                          alt={user?.firstName} 
+                          src={getProfileImageUrl(user)} 
+                          alt={`${user?.firstName} ${user?.lastName}`} 
                         />
                         <AvatarFallback className="bg-hms-primary text-white">
                           {getUserInitials(user)}
@@ -240,8 +257,8 @@ export default function Navbar({ className }: NavbarProps) {
                     <div className="flex items-center space-x-3 mb-3">
                       <Avatar className="h-10 w-10">
                         <AvatarImage 
-                          src={user?.profileImage ? `http://localhost:5000${user.profileImage}` : undefined} 
-                          alt={user?.firstName} 
+                          src={getProfileImageUrl(user)} 
+                          alt={`${user?.firstName} ${user?.lastName}`} 
                         />
                         <AvatarFallback className="bg-hms-primary text-white">
                           {getUserInitials(user)}

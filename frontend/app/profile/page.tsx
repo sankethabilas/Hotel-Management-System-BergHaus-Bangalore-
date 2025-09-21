@@ -175,6 +175,23 @@ export default function ProfilePage() {
     return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase() || 'U';
   };
 
+  const getProfileImageUrl = () => {
+    if (!user) return undefined;
+    
+    // If user has a custom profile image (uploaded to backend)
+    if (user.profileImage && user.profileImage.startsWith('/uploads/')) {
+      return `http://localhost:5000${user.profileImage}`;
+    }
+    
+    // If user has a Google profile image (external URL)
+    if (user.profileImage && user.profileImage.startsWith('http')) {
+      return user.profileImage;
+    }
+    
+    // Fallback to undefined (will show initials)
+    return undefined;
+  };
+
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
       case 'admin':
@@ -229,12 +246,12 @@ export default function ProfilePage() {
                   <div className="relative inline-block">
                     <Avatar className="h-32 w-32 mx-auto">
                       <AvatarImage 
-                        src={user.profileImage ? `http://localhost:5000${user.profileImage}` : undefined} 
-                        alt={user.firstName}
+                        src={getProfileImageUrl()} 
+                        alt={`${user.firstName} ${user.lastName}`}
                         onError={(e) => {
                           console.error('Avatar image failed to load:', e);
                           console.log('User profileImage:', user.profileImage);
-                          console.log('Full image URL:', user.profileImage ? `http://localhost:5000${user.profileImage}` : 'No image');
+                          console.log('Full image URL:', getProfileImageUrl());
                         }}
                         onLoad={() => {
                           console.log('Avatar image loaded successfully');

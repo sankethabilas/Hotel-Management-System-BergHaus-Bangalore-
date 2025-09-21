@@ -27,9 +27,16 @@ const userSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: [true, 'Password is required'],
+    required: function() {
+      // Password is required only if not using Google auth
+      return !this.isGoogleUser;
+    },
     minlength: [6, 'Password must be at least 6 characters'],
     select: false // Don't include password in queries by default
+  },
+  isGoogleUser: {
+    type: Boolean,
+    default: false
   },
   role: {
     type: String,
@@ -99,8 +106,8 @@ userSchema.virtual('fullName').get(function() {
 
 // Hash password before saving
 userSchema.pre('save', async function(next) {
-  // Only hash the password if it has been modified (or is new)
-  if (!this.isModified('password')) return next();
+  // Only hash the password if it has been modified (or is new) and user is not a Google user
+  if (!this.isModified('password') || this.isGoogleUser) return next();
   
   try {
     // Hash password with cost of 12

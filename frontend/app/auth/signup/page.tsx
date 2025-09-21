@@ -13,6 +13,7 @@ import { Eye, EyeOff, Mail, Lock, User, Phone } from 'lucide-react';
 import { AuthService, validateEmail, validatePassword, validatePhone } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { UserRole } from '@/types';
+import GoogleAuthButton from '@/components/google-auth-button';
 
 interface SignupFormData {
   firstName: string;
@@ -197,6 +198,18 @@ export default function SignupPage() {
                 </AlertDescription>
               </Alert>
             )}
+
+            {/* Google Sign Up Button */}
+            <GoogleAuthButton mode="signup" />
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t border-gray-300" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-white px-2 text-gray-500">Or create account with email</span>
+              </div>
+            </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">

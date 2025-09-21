@@ -9,6 +9,7 @@ const {
   deactivateUser,
   activateUser,
   uploadProfilePicture,
+  googleSignup,
   upload
 } = require('../controllers/userController');
 
@@ -17,6 +18,11 @@ const {
 } = require('../middleware/validation');
 
 const { protect, authorize, checkOwnership } = require('../middleware/auth');
+
+// @route   POST /api/users/google-signup
+// @desc    Google signup/signin
+// @access  Public
+router.post('/google-signup', googleSignup);
 
 // @route   GET /api/users
 // @desc    Get all users (with pagination and filtering)

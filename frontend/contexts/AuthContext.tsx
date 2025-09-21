@@ -16,6 +16,7 @@ interface AuthContextType {
   updateUser: (userData: any) => Promise<boolean>;
   uploadProfilePicture: (file: File) => Promise<boolean>;
   isAuthenticated: boolean;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -34,8 +35,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const currentUser = await AuthService.getCurrentUser();
-        setUser(currentUser);
+        // Check for session cookie from Google OAuth
+        const sessionCookie = document.cookie
+          .split('; ')
+          .find(row => row.startsWith('hms-session='));
+        
+        if (sessionCookie) {
+          const sessionData = JSON.parse(decodeURIComponent(sessionCookie.split('=')[1]));
+          console.log('Session data from cookie:', sessionData);
+          
+          if (sessionData.isAuthenticated && sessionData.user) {
+            // Use user data from session cookie (Google OAuth)
+            setUser(sessionData.user);
+          } else if (sessionData.isAuthenticated) {
+            // Fallback: get user data from backend using userId
+            const currentUser = await AuthService.getCurrentUser();
+            setUser(currentUser);
+          }
+        } else {
+          // Fallback to existing auth service (JWT token)
+          const currentUser = await AuthService.getCurrentUser();
+          setUser(currentUser);
+        }
       } catch (error) {
         console.error('Auth check failed:', error);
       } finally {
@@ -112,14 +133,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
-  const logout = () => {
-    AuthService.logout();
-    setUser(null);
-    toast({
-      title: "Logged Out",
-      description: "You have been successfully logged out.",
-    });
-    router.push('/');
+  const logout = async () => {
+    try {
+      // Clear session cookie
+      document.cookie = 'hms-session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+      
+      // Use existing auth service
+      AuthService.logout();
+      setUser(null);
+      toast({
+        title: "Logged Out",
+        description: "You have been successfully logged out.",
+      });
+      router.push('/');
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Force logout even if there's an error
+      setUser(null);
+      router.push('/');
+    }
   };
 
   const updateUser = async (userData: any): Promise<boolean> => {
@@ -192,6 +224,38 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
+  const refreshUser = async () => {
+    try {
+      setLoading(true);
+      // Check for session cookie from Google OAuth
+      const sessionCookie = document.cookie
+        .split('; ')
+        .find(row => row.startsWith('hms-session='));
+      
+      if (sessionCookie) {
+        const sessionData = JSON.parse(decodeURIComponent(sessionCookie.split('=')[1]));
+        console.log('Refreshing user data from session:', sessionData);
+        
+        if (sessionData.isAuthenticated && sessionData.user) {
+          // Use user data from session cookie (Google OAuth)
+          setUser(sessionData.user);
+        } else if (sessionData.isAuthenticated) {
+          // Fallback: get user data from backend using userId
+          const currentUser = await AuthService.getCurrentUser();
+          setUser(currentUser);
+        }
+      } else {
+        // Fallback to existing auth service (JWT token)
+        const currentUser = await AuthService.getCurrentUser();
+        setUser(currentUser);
+      }
+    } catch (error) {
+      console.error('Error refreshing user:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const value: AuthContextType = {
     user,
     loading,
@@ -201,6 +265,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     updateUser,
     uploadProfilePicture,
     isAuthenticated: !!user,
+    refreshUser,
   };
 
   return (
