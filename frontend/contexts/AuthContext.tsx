@@ -141,7 +141,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const logout = async () => {
     try {
-      // Clear session cookie
+      // Clear session cookie with proper path
+      document.cookie = 'hms-session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=localhost;';
       document.cookie = 'hms-session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
       
       // Use existing auth service

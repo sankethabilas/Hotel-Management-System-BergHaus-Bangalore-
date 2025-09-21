@@ -73,6 +73,7 @@ export async function POST(request: NextRequest) {
         httpOnly: false, // Allow JavaScript to read it
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
+        path: '/', // Ensure cookie is available on all paths
         maxAge: 60 * 60 * 24 * 7 // 7 days
       });
 
