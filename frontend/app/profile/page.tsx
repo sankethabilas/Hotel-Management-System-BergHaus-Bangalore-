@@ -68,6 +68,10 @@ export default function ProfilePage() {
     if (user) {
       console.log('User object in profile page:', user);
       console.log('User profileImage:', user.profileImage);
+      console.log('User firstName:', user.firstName);
+      console.log('User lastName:', user.lastName);
+      console.log('User email:', user.email);
+      console.log('User role:', user.role);
       setFormData({
         firstName: user.firstName || '',
         lastName: user.lastName || '',

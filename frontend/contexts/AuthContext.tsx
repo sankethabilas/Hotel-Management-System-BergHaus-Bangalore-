@@ -41,14 +41,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
           .find(row => row.startsWith('hms-session='));
         
         if (sessionCookie) {
-          const sessionData = JSON.parse(decodeURIComponent(sessionCookie.split('=')[1]));
+          const cookieValue = sessionCookie.split('=')[1];
+          console.log('Raw cookie value:', cookieValue);
+          const sessionData = JSON.parse(decodeURIComponent(cookieValue));
           console.log('Session data from cookie:', sessionData);
+          console.log('Session data user object:', sessionData.user);
+          console.log('Session data isAuthenticated:', sessionData.isAuthenticated);
           
           if (sessionData.isAuthenticated && sessionData.user) {
             // Use user data from session cookie (Google OAuth)
+            console.log('Setting user from session cookie:', sessionData.user);
             setUser(sessionData.user);
           } else if (sessionData.isAuthenticated) {
             // Fallback: get user data from backend using userId
+            console.log('Getting user from backend as fallback');
             const currentUser = await AuthService.getCurrentUser();
             setUser(currentUser);
           }
@@ -233,7 +239,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         .find(row => row.startsWith('hms-session='));
       
       if (sessionCookie) {
-        const sessionData = JSON.parse(decodeURIComponent(sessionCookie.split('=')[1]));
+        const cookieValue = sessionCookie.split('=')[1];
+        console.log('Raw cookie value (refresh):', cookieValue);
+        const sessionData = JSON.parse(decodeURIComponent(cookieValue));
         console.log('Refreshing user data from session:', sessionData);
         
         if (sessionData.isAuthenticated && sessionData.user) {
