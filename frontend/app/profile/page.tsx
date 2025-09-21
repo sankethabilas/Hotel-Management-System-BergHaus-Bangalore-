@@ -211,12 +211,33 @@ export default function ProfilePage() {
     }
   };
 
-  if (authLoading || !isAuthenticated || !user) {
+  if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-hms-primary mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600">Please log in to view your profile.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-hms-primary mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading user data...</p>
         </div>
       </div>
     );

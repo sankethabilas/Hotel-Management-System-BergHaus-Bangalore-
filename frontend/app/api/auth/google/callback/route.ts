@@ -58,13 +58,18 @@ export async function POST(request: NextRequest) {
       });
 
       // Set a session cookie that can be read by JavaScript
-      response.cookies.set('hms-session', JSON.stringify({
+      const sessionData = {
         userId: backendResponse.data.user._id,
         email: backendResponse.data.user.email,
         role: backendResponse.data.user.role,
         isAuthenticated: true,
         user: backendResponse.data.user // Include full user data
-      }), {
+      };
+      
+      console.log('Setting session cookie with data:', sessionData);
+      console.log('User data being stored:', backendResponse.data.user);
+      
+      response.cookies.set('hms-session', JSON.stringify(sessionData), {
         httpOnly: false, // Allow JavaScript to read it
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
