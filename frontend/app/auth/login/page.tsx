@@ -92,7 +92,7 @@ export default function LoginPage() {
         
         // Animate redirect
         setTimeout(() => {
-          router.push('/dashboard');
+          router.push('/');
         }, 1500);
       } else {
         setMessage(result.message || 'Login failed');

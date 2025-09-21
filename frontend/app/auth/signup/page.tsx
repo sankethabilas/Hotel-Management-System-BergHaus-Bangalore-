@@ -142,7 +142,7 @@ export default function SignupPage() {
         
         // Animate redirect
         setTimeout(() => {
-          router.push('/dashboard');
+          router.push('/');
         }, 1500);
       } else {
         setMessage(result.message || 'Registration failed');

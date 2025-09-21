@@ -69,7 +69,7 @@ export default function Navigation({ user, onLogout }: NavigationProps) {
   const handleLogout = async () => {
     try {
       await onLogout();
-      router.push('/login');
+      router.push('/');
     } catch (error) {
       console.error('Logout error:', error);
     }
@@ -80,7 +80,7 @@ export default function Navigation({ user, onLogout }: NavigationProps) {
       <div className="container flex h-16 items-center">
         {/* Logo */}
         <div className="mr-4 hidden md:flex">
-          <Link href="/dashboard" className="mr-6 flex items-center space-x-2">
+          <Link href="/" className="mr-6 flex items-center space-x-2">
             <div className="h-6 w-6 bg-primary rounded-md flex items-center justify-center">
               <span className="text-primary-foreground font-bold text-sm">H</span>
             </div>
@@ -102,10 +102,10 @@ export default function Navigation({ user, onLogout }: NavigationProps) {
         <NavigationMenu className="hidden md:flex">
           <NavigationMenuList>
             <NavigationMenuItem>
-              <Link href="/dashboard" legacyBehavior passHref>
+              <Link href="/" legacyBehavior passHref>
                 <NavigationMenuLink className={navigationMenuTriggerStyle()}>
                   <Home className="mr-2 h-4 w-4" />
-                  Dashboard
+                  Home
                 </NavigationMenuLink>
               </Link>
             </NavigationMenuItem>
@@ -121,7 +121,7 @@ export default function Navigation({ user, onLogout }: NavigationProps) {
                     <NavigationMenuLink asChild>
                       <a
                         className="flex h-full w-full select-none flex-col justify-end rounded-md bg-gradient-to-b from-muted/50 to-muted p-6 no-underline outline-none focus:shadow-md"
-                        href="/dashboard"
+                        href="/"
                       >
                         <div className="mb-2 mt-4 text-lg font-medium">
                           Hotel Management
@@ -192,7 +192,7 @@ export default function Navigation({ user, onLogout }: NavigationProps) {
         <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
           <div className="w-full flex-1 md:w-auto md:flex-none">
             {/* Mobile logo */}
-            <Link href="/dashboard" className="md:hidden flex items-center space-x-2">
+            <Link href="/" className="md:hidden flex items-center space-x-2">
               <div className="h-6 w-6 bg-primary rounded-md flex items-center justify-center">
                 <span className="text-primary-foreground font-bold text-sm">H</span>
               </div>
@@ -260,12 +260,12 @@ export default function Navigation({ user, onLogout }: NavigationProps) {
         <div className="md:hidden">
           <div className="space-y-1 px-2 pb-3 pt-2 sm:px-3 border-t">
             <Link
-              href="/dashboard"
+              href="/"
               className="block rounded-md px-3 py-2 text-base font-medium hover:bg-accent hover:text-accent-foreground"
               onClick={() => setMobileMenuOpen(false)}
             >
               <Home className="mr-2 h-4 w-4 inline" />
-              Dashboard
+              Home
             </Link>
             <Link
               href="/reservations"
