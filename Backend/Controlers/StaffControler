@@ -1,0 +1,143 @@
+const Staff = require("../Model/StaffModel");
+
+// display function
+const getAllStaff = async (req, res, next) => {
+    let staffList;
+    try {
+        staffList = await Staff.find();
+    } catch (err) {
+        console.log(err);
+        return res.status(500).json({ message: "Database error", error: err.message });
+    }
+
+    if (staffList.length === 0) {
+        return res.status(200).json({ staff: [], message: "No Staff Found" });
+    }
+
+    return res.status(200).json({ staff: staffList });
+};
+
+
+const addStaff = async (req, res, next) => {
+    const {
+        employeeId, fullName, dob, gender, nicPassport, phone, email, address,
+        jobRole, department, joinDate, salary, overtimeRate, bankAccount,
+        bankName, branch, profilePic, isActive
+    } = req.body;
+
+    let staff;
+    try {
+        staff = new Staff({
+            employeeId, fullName, dob, gender, nicPassport, phone, email, address,
+            jobRole, department, joinDate, salary, overtimeRate, bankAccount,
+            bankName, branch, profilePic, isActive
+        });
+        await staff.save();
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ message: "Database error", error: err.message });
+    }
+
+    if (!staff) {
+        return res.status(500).json({ message: "Unable to add staff" });
+    }
+
+    return res.status(201).json({ staff });
+};
+
+//get by ID
+const getById = async (req,res,next) =>{
+    const id = req.params.id;
+
+    let staff;
+
+    try{
+        staff = await Staff.findById(id);
+    }
+    catch(err){
+        console.log(err);
+        return res.status(500).json({ message: "Database error", error: err.message });
+    }
+
+    //not available user
+    if (!staff) {
+        return res.status(404).json({ message: "User not found" });
+    }
+
+    return res.status(200).json({ staff });
+}
+
+
+//update staff details
+const updateStaff = async(req, res,next)=>{
+    const id = req.params.id;
+
+    const {
+        employeeId, fullName, dob, gender, nicPassport, phone, email, address,
+        jobRole, department, joinDate, salary, overtimeRate, bankAccount,
+        bankName, branch, profilePic, isActive
+    } = req.body;
+
+    let staff;
+
+    try{
+        staff = await Staff.findByIdAndUpdate(id,
+            {
+                employeeId: employeeId,
+                fullName: fullName,
+                dob: dob,
+                gender: gender,
+                nicPassport: nicPassport,
+                phone: phone,
+                email: email,
+                address: address,
+                jobRole: jobRole,
+                department: department,
+                joinDate: joinDate,
+                salary: salary,
+                overtimeRate: overtimeRate,
+                bankAccount: bankAccount,
+                bankName: bankName,
+                branch: branch,
+                profilePic: profilePic,
+                isActive: isActive
+            }, { new: true });
+    }
+    catch(err){
+        console.log(err);
+        return res.status(500).json({ message: "Database error", error: err.message });
+    }
+
+    if (!staff) {
+        return res.status(404).json({ message: "User not found" });
+    }
+
+    return res.status(200).json({ staff });
+};
+
+//delete staff details
+const deleteStaff = async (req,res,next)=>{
+    const id = req.params.id;
+
+    let staff;
+
+    try{
+        staff = await Staff.findByIdAndDelete(id)
+    }
+    catch(err){
+        console.log(err);
+        return res.status(500).json({ message: "Database error", error: err.message });
+    }
+
+    if (!staff) {
+        return res.status(404).json({ message: "Unable to delete" });
+    }
+
+    return res.status(200).json({ staff });
+};
+
+module.exports.getAllStaff = getAllStaff;
+module.exports.addStaff = addStaff;
+module.exports.getById = getById;
+module.exports.updateStaff = updateStaff;
+module.exports.deleteStaff = deleteStaff;
