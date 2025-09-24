@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { AuthService } from '@/lib/auth';
 import Navbar from '@/components/navbar';
 import Footer from '@/components/footer';
 import { 
@@ -25,7 +26,8 @@ import {
   Shield,
   Clock,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  Lock
 } from 'lucide-react';
 
 export default function ProfilePage() {
@@ -36,6 +38,17 @@ export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [passwordErrors, setPasswordErrors] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -115,7 +128,13 @@ export default function ProfilePage() {
   const handleSave = async () => {
     try {
       setLoading(true);
-      const success = await updateUser(formData);
+      console.log('Saving profile with data:', formData);
+      
+      // Remove email from form data as it shouldn't be updated via profile update
+      const { email, ...profileData } = formData;
+      console.log('Profile data being sent:', profileData);
+      
+      const success = await updateUser(profileData);
       if (success) {
         setIsEditing(false);
       }
@@ -123,6 +142,89 @@ export default function ProfilePage() {
       console.error('Error updating profile:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePasswordChange = (field: string, value: string) => {
+    setPasswordData(prev => ({ ...prev, [field]: value }));
+    
+    // Clear error when user starts typing
+    if (passwordErrors[field as keyof typeof passwordErrors]) {
+      setPasswordErrors(prev => ({ ...prev, [field]: '' }));
+    }
+  };
+
+  const handleChangePassword = async () => {
+    try {
+      setPasswordLoading(true);
+      
+      // Clear previous errors
+      setPasswordErrors({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      });
+
+      // Validate current password
+      if (!passwordData.currentPassword) {
+        setPasswordErrors(prev => ({ ...prev, currentPassword: 'Current password is required' }));
+        return;
+      }
+
+      // Validate new password
+      if (!passwordData.newPassword) {
+        setPasswordErrors(prev => ({ ...prev, newPassword: 'New password is required' }));
+        return;
+      }
+
+      if (passwordData.newPassword.length < 6) {
+        setPasswordErrors(prev => ({ ...prev, newPassword: 'New password must be at least 6 characters long' }));
+        return;
+      }
+
+      // Validate confirm password
+      if (!passwordData.confirmPassword) {
+        setPasswordErrors(prev => ({ ...prev, confirmPassword: 'Please confirm your new password' }));
+        return;
+      }
+
+      if (passwordData.newPassword !== passwordData.confirmPassword) {
+        setPasswordErrors(prev => ({ ...prev, confirmPassword: 'Passwords do not match' }));
+        return;
+      }
+
+      const result = await AuthService.changePassword({
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword
+      });
+
+      if (result.success) {
+        toast({
+          title: "Password Changed",
+          description: "Your password has been changed successfully.",
+        });
+        // Clear password fields
+        setPasswordData({
+          currentPassword: '',
+          newPassword: '',
+          confirmPassword: ''
+        });
+      } else {
+        toast({
+          title: "Password Change Failed",
+          description: result.message || "Failed to change password. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error changing password:', error);
+      toast({
+        title: "Password Change Failed",
+        description: "An error occurred while changing your password. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setPasswordLoading(false);
     }
   };
 
@@ -349,8 +451,8 @@ export default function ProfilePage() {
                     >
                       {isEditing ? (
                         <>
-                          <Save className="w-4 h-4 mr-2" />
-                          Save Changes
+                          <Edit3 className="w-4 h-4 mr-2" />
+                          Cancel Edit
                         </>
                       ) : (
                         <>
@@ -394,10 +496,10 @@ export default function ProfilePage() {
                         id="email"
                         type="email"
                         value={formData.email}
-                        onChange={(e) => handleInputChange('email', e.target.value)}
-                        disabled={!isEditing}
-                        className="mt-1"
+                        disabled={true}
+                        className="mt-1 bg-gray-50 text-gray-600"
                       />
+                      
                     </div>
                     <div>
                       <Label htmlFor="phone">Phone</Label>
@@ -525,35 +627,127 @@ export default function ProfilePage() {
                     </div>
                   </div>
 
-                  {/* Save Button */}
-                  {isEditing && (
-                    <div className="flex justify-end space-x-4 pt-6 border-t">
+                  {/* Change Password Section */}
+                  <div key="change-password-section" className="border-t pt-6">
+                    <h3 className="text-lg font-semibold mb-4 flex items-center space-x-2">
+                      <Lock className="w-5 h-5" />
+                      <span>Change Password</span>
+                    </h3>
+                    <div className="space-y-4">
+                      <div key="current-password-field">
+                        <Label htmlFor="currentPassword">Current Password</Label>
+                        <Input
+                          id="currentPassword"
+                          type="password"
+                          value={passwordData.currentPassword}
+                          onChange={(e) => handlePasswordChange('currentPassword', e.target.value)}
+                          className={`mt-1 ${
+                            passwordErrors.currentPassword ? 'animate-shake border-red-500 focus:border-red-500' : 
+                            'border-gray-300 focus:border-hms-primary'
+                          }`}
+                          placeholder="Enter your current password"
+                        />
+                        {passwordErrors.currentPassword && (
+                          <p className="text-sm text-red-600 animate-fade-in flex items-center gap-1 mt-1">
+                            <span>⚠️</span>
+                            {passwordErrors.currentPassword}
+                          </p>
+                        )}
+                      </div>
+                      <div key="new-password-field">
+                        <Label htmlFor="newPassword">New Password</Label>
+                        <Input
+                          id="newPassword"
+                          type="password"
+                          value={passwordData.newPassword}
+                          onChange={(e) => handlePasswordChange('newPassword', e.target.value)}
+                          className={`mt-1 ${
+                            passwordErrors.newPassword ? 'animate-shake border-red-500 focus:border-red-500' : 
+                            'border-gray-300 focus:border-hms-primary'
+                          }`}
+                          placeholder="Enter your new password"
+                        />
+                        {passwordErrors.newPassword && (
+                          <p className="text-sm text-red-600 animate-fade-in flex items-center gap-1 mt-1">
+                            <span>⚠️</span>
+                            {passwordErrors.newPassword}
+                          </p>
+                        )}
+                      </div>
+                      <div key="confirm-password-field">
+                        <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                        <Input
+                          id="confirmPassword"
+                          type="password"
+                          value={passwordData.confirmPassword}
+                          onChange={(e) => handlePasswordChange('confirmPassword', e.target.value)}
+                          className={`mt-1 ${
+                            passwordErrors.confirmPassword ? 'animate-shake border-red-500 focus:border-red-500' : 
+                            'border-gray-300 focus:border-hms-primary'
+                          }`}
+                          placeholder="Confirm your new password"
+                        />
+                        {passwordErrors.confirmPassword && (
+                          <p className="text-sm text-red-600 animate-fade-in flex items-center gap-1 mt-1">
+                            <span>⚠️</span>
+                            {passwordErrors.confirmPassword}
+                          </p>
+                        )}
+                      </div>
                       <Button
-                        variant="outline"
-                        onClick={() => setIsEditing(false)}
-                        disabled={loading}
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        onClick={handleSave}
-                        disabled={loading}
+                        key="change-password-button"
+                        onClick={handleChangePassword}
+                        disabled={passwordLoading || !passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword}
                         className="bg-hms-primary hover:bg-hms-primary/90"
                       >
-                        {loading ? (
+                        {passwordLoading ? (
                           <>
                             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                            Saving...
+                            Changing Password...
                           </>
                         ) : (
                           <>
-                            <Save className="w-4 h-4 mr-2" />
-                            Save Changes
+                            <Lock className="w-4 h-4 mr-2" />
+                            Change Password
                           </>
                         )}
                       </Button>
                     </div>
-                  )}
+                  </div>
+
+                  {/* Save Button */}
+                  <div key="save-buttons-container" className="pt-6 border-t">
+                    {isEditing ? (
+                      <div className="flex justify-end space-x-4">
+                        <Button
+                          key="cancel-button"
+                          variant="outline"
+                          onClick={() => setIsEditing(false)}
+                          disabled={loading}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          key="save-button"
+                          onClick={handleSave}
+                          disabled={loading}
+                          className="bg-hms-primary hover:bg-hms-primary/90"
+                        >
+                          {loading ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                              Saving...
+                            </>
+                          ) : (
+                            <>
+                              <Save className="w-4 h-4 mr-2" />
+                              Save Changes
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    ) : null}
+                  </div>
                 </CardContent>
               </Card>
             </div>

@@ -24,6 +24,10 @@ export interface User {
     phone?: string;
     relationship?: string;
   };
+  idDetails?: {
+    idType?: 'passport' | 'national_id' | 'driving_license';
+    idNumber?: string;
+  };
 }
 
 export type UserRole = 'admin' | 'employee' | 'guest' | 'manager';
@@ -52,7 +56,8 @@ export interface AuthResponse {
     token: string;
   };
   user?: User; // For updateProfile response
-  errors?: Record<string, string>;
+  errors?: Record<string, string> | any[];
+  details?: string;
 }
 
 export interface AuthUser {
@@ -119,7 +124,6 @@ export interface UpdateUserData {
 export interface ChangePasswordData {
   currentPassword: string;
   newPassword: string;
-  confirmPassword: string;
 }
 
 export interface UserQueryParams {

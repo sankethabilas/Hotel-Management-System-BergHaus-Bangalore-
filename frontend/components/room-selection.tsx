@@ -84,7 +84,7 @@ export function RoomSelection({ rooms, checkIn, checkOut, nights, onBookingSucce
     }
   };
 
-  const handleBookRoom = async () => {
+  const handleBookRoom = () => {
     if (!selectedRoom) {
       toast({
         title: "No Room Selected",
@@ -112,42 +112,30 @@ export function RoomSelection({ rooms, checkIn, checkOut, nights, onBookingSucce
       return;
     }
 
-    try {
-      setBooking(true);
-      
-      const { availabilityAPI } = await import('@/lib/api');
-      const response = await availabilityAPI.bookRoom({
-        roomId: selectedRoom._id,
-        checkIn,
-        checkOut,
-        guestCount,
-        specialRequests: specialRequests.trim() || undefined
-      });
+    // Prepare booking data
+    const bookingData = {
+      roomId: selectedRoom._id,
+      roomNumber: selectedRoom.roomNumber,
+      roomType: selectedRoom.roomType,
+      checkIn,
+      checkOut,
+      nights,
+      adults: guestCount.adults,
+      children: guestCount.children,
+      pricePerNight: selectedRoom.pricePerNight,
+      totalPrice: selectedRoom.totalPrice,
+      tax: selectedRoom.tax,
+      finalPrice: selectedRoom.finalPrice,
+      amenities: selectedRoom.amenities,
+      description: selectedRoom.description,
+      images: selectedRoom.images
+    };
 
-      if (response.success && response.data) {
-        toast({
-          title: "Booking Successful!",
-          description: "Your room has been booked successfully. You will receive a confirmation email shortly.",
-        });
-        onBookingSuccess();
-        setSelectedRoom(null);
-        setSpecialRequests('');
-      } else {
-        toast({
-          title: "Booking Failed",
-          description: response.message || "Failed to book the room. Please try again.",
-          variant: "destructive",
-        });
-      }
-    } catch (error) {
-      toast({
-        title: "Booking Error",
-        description: "An error occurred while booking the room. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setBooking(false);
-    }
+    // Store booking data in localStorage
+    localStorage.setItem('bookingData', JSON.stringify(bookingData));
+
+    // Redirect to booking confirmation page
+    window.location.href = '/booking/confirmation';
   };
 
   if (rooms.length === 0) {

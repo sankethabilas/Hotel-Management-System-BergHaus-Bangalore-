@@ -86,7 +86,9 @@ export class AuthService {
 
   static async updateProfile(profileData: UpdateUserData): Promise<AuthResponse> {
     try {
+      console.log('AuthService.updateProfile called with:', profileData);
       const response = await authAPI.updateProfile(profileData);
+      console.log('authAPI.updateProfile response:', response);
       
       if (response.success) {
         return {
@@ -99,13 +101,16 @@ export class AuthService {
       return {
         success: false,
         message: response.message,
-        errors: response.errors
+        errors: response.errors,
+        details: response.details
       };
     } catch (error: any) {
+      console.error('AuthService.updateProfile error:', error);
       return {
         success: false,
         message: error.response?.data?.message || 'Profile update failed',
-        errors: error.response?.data?.errors
+        errors: error.response?.data?.errors,
+        details: error.response?.data?.details
       };
     }
   }
@@ -175,6 +180,6 @@ export const validatePassword = (password: string): ValidationResult => {
 };
 
 export const validatePhone = (phone: string): boolean => {
-  const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
+  const phoneRegex = /^[+0][\d]{7,14}$/;
   return phoneRegex.test(phone);
 };

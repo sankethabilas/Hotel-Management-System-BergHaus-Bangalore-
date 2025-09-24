@@ -1,6 +1,7 @@
 const Room = require('../models/Room');
 const Reservation = require('../models/Reservation');
 const User = require('../models/User');
+const { hasBookingOverlap, validateBookingDates } = require('../utils/bookingValidation');
 
 // @desc    Check room availability for date range
 // @route   GET /api/availability
@@ -21,18 +22,12 @@ const checkAvailability = async (req, res) => {
     const checkInDate = new Date(checkIn);
     const checkOutDate = new Date(checkOut);
 
-    // Validate dates
-    if (checkInDate >= checkOutDate) {
+    // Validate dates using utility function
+    const dateValidation = validateBookingDates(checkInDate, checkOutDate);
+    if (!dateValidation.success) {
       return res.status(400).json({
         success: false,
-        message: 'Check-out date must be after check-in date'
-      });
-    }
-
-    if (checkInDate < new Date()) {
-      return res.status(400).json({
-        success: false,
-        message: 'Check-in date cannot be in the past'
+        message: dateValidation.message
       });
     }
 
@@ -57,20 +52,35 @@ const checkAvailability = async (req, res) => {
         continue;
       }
 
-      // Check for overlapping reservations
-      const overlappingReservations = await Reservation.find({
+      // Check for overlapping reservations with maintenance period
+      const existingReservations = await Reservation.find({
         roomId: room._id,
-        status: { $in: ['confirmed', 'pending'] },
-        $or: [
-          {
-            checkIn: { $lt: checkOutDate },
-            checkOut: { $gt: checkInDate }
-          }
-        ]
+        status: { $in: ['confirmed', 'pending'] }
       });
 
-      // If no overlapping reservations, room is available
-      if (overlappingReservations.length === 0) {
+      // Check for overlaps considering maintenance period
+      let hasOverlap = false;
+      for (const existingReservation of existingReservations) {
+        const existingCheckIn = new Date(existingReservation.checkIn);
+        const existingCheckOut = new Date(existingReservation.checkOut);
+        
+        // Use utility function to check for overlap
+        const overlaps = hasBookingOverlap(
+          checkInDate, 
+          checkOutDate, 
+          existingCheckIn, 
+          existingCheckOut, 
+          1 // 1-day maintenance period
+        );
+
+        if (overlaps) {
+          hasOverlap = true;
+          break;
+        }
+      }
+
+      // If no overlapping reservations (including maintenance period), room is available
+      if (!hasOverlap) {
         // Calculate number of nights
         const nights = Math.ceil((checkOutDate - checkInDate) / (1000 * 60 * 60 * 24));
         
@@ -245,7 +255,11 @@ const bookRoom = async (req, res) => {
       });
     }
 
-    if (checkInDate < new Date()) {
+    // Get today's date without time
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (checkInDate < today) {
       return res.status(400).json({
         success: false,
         message: 'Check-in date cannot be in the past'

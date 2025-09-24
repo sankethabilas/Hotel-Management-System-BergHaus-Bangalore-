@@ -34,8 +34,15 @@ const validateRegister = [
   
   body('phone')
     .optional()
-    .isMobilePhone()
-    .withMessage('Please provide a valid phone number'),
+    .custom((value) => {
+      if (!value || value.trim() === '') return true; // Allow empty phone
+      // Phone validation: must start with + or 0, 8-15 digits total
+      const phoneRegex = /^[+0][\d]{7,14}$/;
+      if (!phoneRegex.test(value)) {
+        throw new Error('Phone number must start with + or 0 and have 8-15 digits total (e.g., +1234567890 or 0123456789)');
+      }
+      return true;
+    }),
   
   body('address.street')
     .optional()
@@ -78,72 +85,144 @@ const validateLogin = [
 const validateProfileUpdate = [
   body('firstName')
     .optional()
-    .trim()
-    .isLength({ min: 2, max: 50 })
-    .withMessage('First name must be between 2 and 50 characters'),
+    .custom((value) => {
+      if (!value || value.trim() === '') return true; // Allow empty
+      if (value.trim().length < 2) {
+        throw new Error('First name must be at least 2 characters long');
+      }
+      if (value.trim().length > 50) {
+        throw new Error('First name cannot exceed 50 characters');
+      }
+      return true;
+    }),
   
   body('lastName')
     .optional()
-    .trim()
-    .isLength({ min: 2, max: 50 })
-    .withMessage('Last name must be between 2 and 50 characters'),
+    .custom((value) => {
+      if (!value || value.trim() === '') return true; // Allow empty
+      if (value.trim().length < 2) {
+        throw new Error('Last name must be at least 2 characters long');
+      }
+      if (value.trim().length > 50) {
+        throw new Error('Last name cannot exceed 50 characters');
+      }
+      return true;
+    }),
   
   body('phone')
     .optional()
-    .isMobilePhone()
-    .withMessage('Please provide a valid phone number'),
+    .custom((value) => {
+      if (!value || value.trim() === '') return true; // Allow empty phone
+      // Phone validation: must start with + or 0, 8-15 digits total
+      const phoneRegex = /^[+0][\d]{7,14}$/;
+      if (!phoneRegex.test(value)) {
+        throw new Error('Phone number must start with + or 0 and have 8-15 digits total (e.g., +1234567890 or 0123456789)');
+      }
+      return true;
+    }),
   
   body('address.street')
     .optional()
-    .trim()
-    .isLength({ max: 100 })
-    .withMessage('Street address cannot exceed 100 characters'),
+    .custom((value) => {
+      if (!value || value.trim() === '') return true; // Allow empty
+      if (value.trim().length > 100) {
+        throw new Error('Street address cannot exceed 100 characters');
+      }
+      return true;
+    }),
   
   body('address.city')
     .optional()
-    .trim()
-    .isLength({ max: 50 })
-    .withMessage('City cannot exceed 50 characters'),
+    .custom((value) => {
+      if (!value || value.trim() === '') return true; // Allow empty
+      if (value.trim().length > 50) {
+        throw new Error('City cannot exceed 50 characters');
+      }
+      return true;
+    }),
   
   body('address.state')
     .optional()
-    .trim()
-    .isLength({ max: 50 })
-    .withMessage('State cannot exceed 50 characters'),
+    .custom((value) => {
+      if (!value || value.trim() === '') return true; // Allow empty
+      if (value.trim().length > 50) {
+        throw new Error('State cannot exceed 50 characters');
+      }
+      return true;
+    }),
   
   body('address.zipCode')
     .optional()
-    .trim()
-    .isLength({ max: 10 })
-    .withMessage('Zip code cannot exceed 10 characters'),
+    .custom((value) => {
+      if (!value || value.trim() === '') return true; // Allow empty
+      if (value.trim().length > 10) {
+        throw new Error('Zip code cannot exceed 10 characters');
+      }
+      return true;
+    }),
   
   body('address.country')
     .optional()
-    .trim()
-    .isLength({ max: 50 })
-    .withMessage('Country cannot exceed 50 characters'),
+    .custom((value) => {
+      if (!value || value.trim() === '') return true; // Allow empty
+      if (value.trim().length > 50) {
+        throw new Error('Country cannot exceed 50 characters');
+      }
+      return true;
+    }),
   
   body('dateOfBirth')
     .optional()
-    .isISO8601()
-    .withMessage('Please provide a valid date of birth'),
+    .custom((value) => {
+      if (!value || value.trim() === '') return true; // Allow empty
+      // Check if it's a valid date format (YYYY-MM-DD)
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (!dateRegex.test(value)) {
+        throw new Error('Date of birth must be in YYYY-MM-DD format (e.g., 1990-01-15)');
+      }
+      // Check if it's a valid date
+      const date = new Date(value);
+      if (isNaN(date.getTime())) {
+        throw new Error('Please provide a valid date of birth');
+      }
+      // Check if date is not in the future
+      if (date > new Date()) {
+        throw new Error('Date of birth cannot be in the future');
+      }
+      return true;
+    }),
   
   body('emergencyContact.name')
     .optional()
-    .trim()
-    .isLength({ max: 100 })
-    .withMessage('Emergency contact name cannot exceed 100 characters'),
+    .custom((value) => {
+      if (!value || value.trim() === '') return true; // Allow empty
+      if (value.trim().length > 100) {
+        throw new Error('Emergency contact name cannot exceed 100 characters');
+      }
+      return true;
+    }),
   
   body('emergencyContact.phone')
     .optional()
-    .isMobilePhone()
-    .withMessage('Please provide a valid emergency contact phone number'),
+    .custom((value) => {
+      if (!value || value.trim() === '') return true; // Allow empty phone
+      // Phone validation: must start with + or 0, 8-15 digits total
+      const phoneRegex = /^[+0][\d]{7,14}$/;
+      if (!phoneRegex.test(value)) {
+        throw new Error('Emergency contact phone must start with + or 0 and have 8-15 digits total (e.g., +1234567890 or 0123456789)');
+      }
+      return true;
+    }),
   
   body('emergencyContact.relationship')
     .optional()
-    .trim()
-    .isLength({ max: 50 })
-    .withMessage('Emergency contact relationship cannot exceed 50 characters')
+    .custom((value) => {
+      if (!value || value.trim() === '') return true; // Allow empty
+      if (value.trim().length > 50) {
+        throw new Error('Emergency contact relationship cannot exceed 50 characters');
+      }
+      return true;
+    })
 ];
 
 // Password change validation
@@ -186,8 +265,15 @@ const validateUserUpdate = [
   
   body('phone')
     .optional()
-    .isMobilePhone()
-    .withMessage('Please provide a valid phone number'),
+    .custom((value) => {
+      if (!value || value.trim() === '') return true; // Allow empty phone
+      // Phone validation: must start with + or 0, 8-15 digits total
+      const phoneRegex = /^[+0][\d]{7,14}$/;
+      if (!phoneRegex.test(value)) {
+        throw new Error('Phone number must start with + or 0 and have 8-15 digits total (e.g., +1234567890 or 0123456789)');
+      }
+      return true;
+    }),
   
   body('isActive')
     .optional()

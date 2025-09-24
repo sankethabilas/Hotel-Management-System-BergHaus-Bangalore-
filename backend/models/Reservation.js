@@ -13,61 +13,37 @@ const reservationSchema = new mongoose.Schema({
   },
   checkIn: {
     type: Date,
-    required: [true, 'Check-in date is required'],
-    validate: {
-      validator: function(value) {
-        return value > new Date();
-      },
-      message: 'Check-in date must be in the future'
-    }
+    required: [true, 'Check-in date is required']
   },
   checkOut: {
     type: Date,
-    required: [true, 'Check-out date is required'],
-    validate: {
-      validator: function(value) {
-        return value > this.checkIn;
-      },
-      message: 'Check-out date must be after check-in date'
-    }
+    required: [true, 'Check-out date is required']
   },
   totalPrice: {
     type: Number,
-    required: [true, 'Total price is required'],
-    min: [0, 'Total price cannot be negative']
+    required: [true, 'Total price is required']
   },
   status: {
     type: String,
-    enum: {
-      values: ['pending', 'confirmed', 'cancelled'],
-      message: 'Status must be pending, confirmed, or cancelled'
-    },
     default: 'pending'
   },
   paymentStatus: {
     type: String,
-    enum: {
-      values: ['unpaid', 'paid'],
-      message: 'Payment status must be unpaid or paid'
-    },
     default: 'unpaid'
   },
   guestCount: {
     adults: {
       type: Number,
-      required: [true, 'Number of adults is required'],
-      min: [1, 'At least 1 adult is required']
+      required: [true, 'Number of adults is required']
     },
     children: {
       type: Number,
-      default: 0,
-      min: [0, 'Children count cannot be negative']
+      default: 0
     }
   },
   specialRequests: {
     type: String,
-    trim: true,
-    maxlength: [500, 'Special requests cannot exceed 500 characters']
+    trim: true
   },
   cancellationReason: {
     type: String,

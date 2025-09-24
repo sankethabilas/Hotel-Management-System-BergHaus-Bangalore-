@@ -59,12 +59,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
             setUser(currentUser);
           }
         } else {
-          // Fallback to existing auth service (JWT token)
-          const currentUser = await AuthService.getCurrentUser();
-          setUser(currentUser);
+          // Check for JWT token (email-password login)
+          const token = document.cookie
+            .split('; ')
+            .find(row => row.startsWith('token='));
+          
+          if (token) {
+            console.log('JWT token found, getting user from backend');
+            const currentUser = await AuthService.getCurrentUser();
+            setUser(currentUser);
+          } else {
+            console.log('No authentication found');
+            setUser(null);
+          }
         }
       } catch (error) {
         console.error('Auth check failed:', error);
+        setUser(null);
       } finally {
         setLoading(false);
       }
@@ -79,12 +90,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const result = await AuthService.login({ email, password });
       
       if (result.success && result.user) {
+        console.log('Login successful, setting user:', result.user);
         setUser(result.user);
         toast({
           title: "Welcome back!",
           description: "You have successfully logged in.",
         });
-        router.push('/');
+        
+        // Small delay for better UX
+        setTimeout(() => {
+          router.push('/');
+        }, 1000);
         return true;
       } else {
         toast({
@@ -112,12 +128,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const result = await AuthService.register(userData);
       
       if (result.success && result.user) {
+        console.log('Registration successful, setting user:', result.user);
         setUser(result.user);
         toast({
-          title: "Welcome!",
-          description: "Your account has been created successfully.",
+          title: "Welcome to HMS!",
+          description: "Your account has been created successfully. Please sign in to continue.",
         });
-        router.push('/');
+        
+        // Small delay for better UX, then redirect to signin
+        setTimeout(() => {
+          router.push('/auth/signin');
+        }, 1500);
         return true;
       } else {
         toast({
@@ -164,9 +185,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const updateUser = async (userData: any): Promise<boolean> => {
     try {
       setLoading(true);
+      console.log('AuthContext updateUser called with:', userData);
       const result = await AuthService.updateProfile(userData);
+      console.log('AuthService.updateProfile result:', result);
       
       if (result.success && result.user) {
+        console.log('Profile update successful, setting user:', result.user);
         setUser(result.user);
         toast({
           title: "Profile Updated",
@@ -174,14 +198,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
         });
         return true;
       } else {
+        console.log('Profile update failed:', result.message);
+        console.log('Validation errors:', result.errors);
+        
+        // Create detailed error message
+        let errorMessage = result.message || "Failed to update profile";
+        if (result.errors && Array.isArray(result.errors) && result.errors.length > 0) {
+          errorMessage = result.errors.map((error: any) => `${error.field}: ${error.message}`).join(', ');
+        } else if ((result as any).details) {
+          errorMessage = (result as any).details;
+        }
+        
         toast({
           title: "Update Failed",
-          description: result.message || "Failed to update profile",
+          description: errorMessage,
           variant: "destructive",
         });
         return false;
       }
     } catch (error) {
+      console.error('Profile update error:', error);
       toast({
         title: "Update Failed",
         description: "An error occurred while updating your profile",

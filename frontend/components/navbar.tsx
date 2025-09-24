@@ -87,12 +87,6 @@ export default function Navbar({ className }: NavbarProps) {
               Book Now
             </Link>
             <Link 
-              href="/reservations" 
-              className="text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary transition-colors duration-200 font-medium"
-            >
-              Reservations
-            </Link>
-            <Link 
               href="/facilities" 
               className="text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary transition-colors duration-200 font-medium"
             >
@@ -164,7 +158,7 @@ export default function Navbar({ className }: NavbarProps) {
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : (
-                <Link href="/auth">
+                <Link href="/auth/signin">
                   <Button className="bg-hms-primary hover:bg-hms-primary/90 text-white transition-all duration-200 hover:scale-105">
                     Get Started
                   </Button>
@@ -211,13 +205,6 @@ export default function Navbar({ className }: NavbarProps) {
                 onClick={() => setIsMenuOpen(false)}
               >
                 Book Now
-              </Link>
-              <Link
-                href="/reservations"
-                className="block px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary hover:bg-gray-50 dark:hover:bg-gray-600 rounded-md transition-colors duration-200"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Reservations
               </Link>
               <Link
                 href="/facilities"
@@ -295,7 +282,7 @@ export default function Navbar({ className }: NavbarProps) {
                 </>
               ) : (
                 <div className="px-3 py-2">
-                  <Link href="/auth" onClick={() => setIsMenuOpen(false)}>
+                  <Link href="/auth/signin" onClick={() => setIsMenuOpen(false)}>
                     <Button className="w-full bg-hms-primary hover:bg-hms-primary/90 text-white">
                       Get Started
                     </Button>

@@ -53,14 +53,14 @@ export default function GoogleAuthButton({
       onClick={handleGoogleSignIn}
       disabled={isLoading}
       variant="outline"
-      className={`w-full flex items-center justify-center space-x-2 ${className}`}
+      className={`w-full flex items-center justify-center space-x-2 border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-all duration-200 ${className}`}
     >
       {isLoading ? (
         <Loader2 className="w-4 h-4 animate-spin" />
       ) : (
         <Chrome className="w-4 h-4" />
       )}
-      <span>
+      <span className="font-medium">
         {isLoading 
           ? 'Signing in...' 
           : mode === 'signup' 

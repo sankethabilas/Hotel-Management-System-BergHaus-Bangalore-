@@ -202,19 +202,80 @@ export const availabilityAPI = {
   },
 };
 
+// Booking API functions
+export const bookingAPI = {
+  // Create a new booking
+  createBooking: async (bookingData: {
+    roomId: string;
+    checkIn: string;
+    checkOut: string;
+    adults: number;
+    children: number;
+    guestDetails: {
+      firstName: string;
+      lastName: string;
+      email: string;
+      phone: string;
+      country: string;
+      idType: string;
+      idNumber: string;
+      arrivalTime?: string;
+      specialRequests?: string;
+    };
+    specialRequests?: string;
+  }): Promise<ApiResponse<{
+    reservation: {
+      id: string;
+      bookingReference: string;
+      checkIn: string;
+      checkOut: string;
+      roomNumber: string;
+      roomType: string;
+      totalAmount: number;
+      status: string;
+      guestDetails: any;
+    };
+  }>> => {
+    const response: AxiosResponse<ApiResponse<any>> = await api.post('/booking/create', bookingData);
+    return response.data;
+  },
+
+  // Get booking details
+  getBooking: async (bookingId: string): Promise<ApiResponse<{
+    reservation: any;
+  }>> => {
+    const response: AxiosResponse<ApiResponse<any>> = await api.get(`/booking/${bookingId}`);
+    return response.data;
+  },
+
+  // Get user's bookings
+  getUserBookings: async (): Promise<ApiResponse<{
+    bookings: any[];
+    total: number;
+  }>> => {
+    const response: AxiosResponse<ApiResponse<any>> = await api.get('/booking/user/bookings');
+    return response.data;
+  },
+};
+
 // Utility functions
 export const setAuthToken = (token: string | null): void => {
   if (token) {
-    Cookies.set('token', token, { expires: 7 }); // 7 days
+    Cookies.set('token', token, { 
+      expires: 7, // 7 days
+      path: '/',
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax'
+    });
     api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
   } else {
-    Cookies.remove('token');
+    Cookies.remove('token', { path: '/' });
     delete api.defaults.headers.common['Authorization'];
   }
 };
 
 export const removeAuthToken = (): void => {
-  Cookies.remove('token');
+  Cookies.remove('token', { path: '/' });
   delete api.defaults.headers.common['Authorization'];
 };
 

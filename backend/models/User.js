@@ -46,7 +46,7 @@ const userSchema = new mongoose.Schema({
   phone: {
     type: String,
     trim: true,
-    match: [/^[\+]?[1-9][\d]{0,15}$/, 'Please provide a valid phone number']
+    match: [/^[+0][\d]{7,14}$/, 'Phone number must start with + or 0 and have 8-15 digits total']
   },
   address: {
     street: String,
@@ -65,6 +65,10 @@ const userSchema = new mongoose.Schema({
   lastLogin: {
     type: Date
   },
+  welcomeEmailSent: {
+    type: Boolean,
+    default: false
+  },
   profileImage: {
     type: String,
     default: null
@@ -76,6 +80,18 @@ const userSchema = new mongoose.Schema({
     name: String,
     phone: String,
     relationship: String
+  },
+  idDetails: {
+    idType: {
+      type: String,
+      enum: ['passport', 'national_id', 'driving_license'],
+      default: null
+    },
+    idNumber: {
+      type: String,
+      trim: true,
+      default: null
+    }
   },
   preferences: {
     language: String,

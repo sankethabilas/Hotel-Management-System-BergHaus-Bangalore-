@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const { generateToken } = require('../config/jwt');
 const { validationResult } = require('express-validator');
+const emailService = require('../services/emailService');
 
 // @desc    Register user
 // @route   POST /api/auth/register
@@ -44,6 +45,12 @@ const register = async (req, res) => {
       userId: user._id, 
       email: user.email, 
       role: user.role 
+    });
+
+    // Send welcome email (async, don't wait for it)
+    emailService.sendWelcomeEmail(user).catch(error => {
+      console.error('Failed to send welcome email:', error);
+      // Don't fail the registration if email fails
     });
 
     res.status(201).json({
@@ -118,6 +125,19 @@ const login = async (req, res) => {
 
     // Update last login
     await user.updateLastLogin();
+
+    // Send welcome email for first-time login (if not sent before)
+    if (!user.welcomeEmailSent) {
+      emailService.sendWelcomeEmail(user).then(() => {
+        // Mark welcome email as sent
+        user.welcomeEmailSent = true;
+        user.save().catch(error => {
+          console.error('Failed to update welcome email status:', error);
+        });
+      }).catch(error => {
+        console.error('Failed to send welcome email:', error);
+      });
+    }
 
     // Generate JWT token
     const token = generateToken({ 
@@ -204,18 +224,32 @@ const getMe = async (req, res) => {
 // @access  Private
 const updateProfile = async (req, res) => {
   try {
+    console.log('Update profile request received:', req.body);
+    console.log('User from token:', req.user);
+    
     // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log('Validation errors:', errors.array());
+      
+      // Create detailed error messages
+      const errorMessages = errors.array().map(error => ({
+        field: error.path,
+        message: error.msg,
+        value: error.value
+      }));
+      
       return res.status(400).json({
         success: false,
         message: 'Validation failed',
-        errors: errors.array()
+        errors: errorMessages,
+        details: `Please fix the following issues: ${errorMessages.map(e => `${e.field}: ${e.message}`).join(', ')}`
       });
     }
 
     const { firstName, lastName, phone, address, dateOfBirth, emergencyContact } = req.body;
     const userId = req.user.userId;
+    console.log('Updating user ID:', userId);
 
     const user = await User.findById(userId);
     if (!user) {
@@ -248,8 +282,9 @@ const updateProfile = async (req, res) => {
     }
 
     await user.save();
+    console.log('User saved successfully:', user);
 
-    res.json({
+    const responseData = {
       success: true,
       message: 'Profile updated successfully',
       data: {
@@ -269,7 +304,10 @@ const updateProfile = async (req, res) => {
           updatedAt: user.updatedAt
         }
       }
-    });
+    };
+    
+    console.log('Sending response:', responseData);
+    res.json(responseData);
   } catch (error) {
     console.error('Update profile error:', error);
     res.status(500).json({
