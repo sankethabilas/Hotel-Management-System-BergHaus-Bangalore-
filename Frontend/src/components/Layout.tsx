@@ -17,6 +17,11 @@ export default function Layout({ children }: LayoutProps) {
     { href: '/leave/manage', label: 'HR - Manage Leaves', icon: '👔' },
   ];
 
+  // For admin routes, render without the staff top navigation/layout
+  if (pathname?.startsWith('/admin')) {
+    return <>{children}</>;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
