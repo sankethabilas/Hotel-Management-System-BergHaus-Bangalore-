@@ -8,9 +8,10 @@ import { staffAPI } from '@/services/api';
 interface StaffFormProps {
   staffId?: string;
   isEdit?: boolean;
+  basePathPrefix?: string; // e.g., '/admin' for admin routes
 }
 
-export default function StaffForm({ staffId, isEdit = false }: StaffFormProps) {
+export default function StaffForm({ staffId, isEdit = false, basePathPrefix = '' }: StaffFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -99,7 +100,7 @@ export default function StaffForm({ staffId, isEdit = false }: StaffFormProps) {
       } else {
         await staffAPI.createStaff(formData);
       }
-      router.push('/');
+      router.push(basePathPrefix || '/');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save staff');
     } finally {
@@ -428,7 +429,7 @@ export default function StaffForm({ staffId, isEdit = false }: StaffFormProps) {
             <div className="flex justify-end space-x-3">
               <button
                 type="button"
-                onClick={() => router.push('/')}
+                onClick={() => router.push(basePathPrefix || '/')}
                 className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
               >
                 Cancel

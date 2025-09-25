@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Staff } from '@/types/staff';
 import { staffAPI } from '@/services/api';
 
-export default function StaffList() {
+export default function StaffList({ basePathPrefix = '' }: { basePathPrefix?: string }) {
   const [staff, setStaff] = useState<Staff[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -81,7 +81,7 @@ export default function StaffList() {
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-900">Staff Members</h1>
         <Link
-          href="/add"
+          href={`${basePathPrefix || ''}/add`}
           className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors"
         >
           Add New Staff
@@ -120,7 +120,7 @@ export default function StaffList() {
             {!searchTerm && (
               <div className="mt-6">
                 <Link
-                  href="/add"
+                  href={`${basePathPrefix || ''}/add`}
                   className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
                 >
                   Add Staff Member
@@ -170,13 +170,13 @@ export default function StaffList() {
                   </div>
                   <div className="flex items-center space-x-2">
                     <Link
-                      href={`/staff/${member._id}`}
+                      href={`${basePathPrefix || ''}/staff/${member._id}`}
                       className="text-blue-600 hover:text-blue-900 text-sm font-medium"
                     >
                       View
                     </Link>
                     <Link
-                      href={`/edit/${member._id}`}
+                      href={`${basePathPrefix || ''}/staff/edit/${member._id}`}
                       className="text-indigo-600 hover:text-indigo-900 text-sm font-medium"
                     >
                       Edit

@@ -12,8 +12,9 @@ type NavItem = {
 
 const ADMIN_ITEMS: NavItem[] = [
   { href: "/admin", label: "Dashboard" },
-  { href: "/admin/staff-registration", label: "Staff Registration" },
-  { href: "/admin/leave-requests", label: "Leave Requests" },
+  { href: "/admin/staff", label: "Staff List" },
+  { href: "/admin/staff/add", label: "Staff Registration" },
+  { href: "/admin/leave-requests", label: "Manage Leaves" },
   { href: "/admin/attendance", label: "Staff Attendance" },
   { href: "/admin/payments", label: "Staff Payments" },
 ];
@@ -25,8 +26,8 @@ export default function AdminSidebar() {
     <aside className="h-dvh w-64 shrink-0 text-white admin-bg">
       <div className="flex h-full flex-col">
         <div className="px-4 py-5 border-b border-white/15">
-          <div className="text-lg font-semibold tracking-wide">BergHaus Admin</div>
-          <div className="text-xs text-white/80">Management Console</div>
+          <div className="text-lg font-semibold tracking-wide">BergHaus HMS</div>
+          <div className="text-xs text-white/80">Admin Dashboard</div>
         </div>
 
         <nav className="flex-1 overflow-y-auto px-2 py-4 space-y-3">
