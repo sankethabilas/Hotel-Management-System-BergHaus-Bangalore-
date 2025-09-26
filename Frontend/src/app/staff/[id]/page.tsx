@@ -4,26 +4,28 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Staff } from '@/types/staff';
 import { staffAPI } from '@/services/api';
+import { use } from 'react';
 
 interface StaffDetailsPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default function StaffDetailsPage({ params }: StaffDetailsPageProps) {
+  const resolvedParams = use(params);
   const [staff, setStaff] = useState<Staff | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchStaff();
-  }, [params.id]);
+  }, [resolvedParams.id]);
 
   const fetchStaff = async () => {
     try {
       setLoading(true);
-      const staffData = await staffAPI.getStaffById(params.id);
+      const staffData = await staffAPI.getStaffById(resolvedParams.id);
       setStaff(staffData);
       setError(null);
     } catch (err) {

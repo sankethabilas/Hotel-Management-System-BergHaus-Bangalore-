@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ReactNode } from "react";
+import { ReactNode, memo } from "react";
 
 type NavItem = {
   href: string;
@@ -19,7 +19,7 @@ const ADMIN_ITEMS: NavItem[] = [
   { href: "/admin/payments", label: "Staff Payments" },
 ];
 
-export default function AdminSidebar() {
+const AdminSidebar = memo(function AdminSidebar() {
   const pathname = usePathname();
 
   return (
@@ -58,6 +58,8 @@ export default function AdminSidebar() {
       </div>
     </aside>
   );
-}
+});
+
+export default AdminSidebar;
 
 

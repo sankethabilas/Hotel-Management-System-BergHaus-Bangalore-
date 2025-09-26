@@ -1,11 +1,13 @@
 import StaffForm from '@/components/StaffForm';
+import { use } from 'react';
 
 interface EditStaffPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default function EditStaffPage({ params }: EditStaffPageProps) {
-  return <StaffForm staffId={params.id} isEdit={true} />;
+  const resolvedParams = use(params);
+  return <StaffForm staffId={resolvedParams.id} isEdit={true} />;
 }

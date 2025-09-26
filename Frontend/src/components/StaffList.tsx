@@ -170,13 +170,13 @@ export default function StaffList({ basePathPrefix = '' }: { basePathPrefix?: st
                   </div>
                   <div className="flex items-center space-x-2">
                     <Link
-                      href={`${basePathPrefix || ''}/staff/${member._id}`}
+                      href={`${basePathPrefix || ''}/staff/staff/${member._id}`}
                       className="text-blue-600 hover:text-blue-900 text-sm font-medium"
                     >
                       View
                     </Link>
                     <Link
-                      href={`${basePathPrefix || ''}/staff/edit/${member._id}`}
+                      href={`${basePathPrefix || ''}/staff/staff/edit/${member._id}`}
                       className="text-indigo-600 hover:text-indigo-900 text-sm font-medium"
                     >
                       Edit

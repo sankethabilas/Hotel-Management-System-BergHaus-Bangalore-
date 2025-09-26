@@ -3,16 +3,13 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   // Speed up development
   typescript: {
-    // Speed up build by skipping type checking during dev
-    // (you can still run `npm run build` for full type checking)
     ignoreBuildErrors: process.env.NODE_ENV === 'development',
   },
   eslint: {
-    // Skip ESLint during builds to speed up
     ignoreDuringBuilds: process.env.NODE_ENV === 'development',
   },
   
-  // Optimize bundle size
+  // Optimize bundle size and performance
   webpack: (config, { isServer, dev }) => {
     if (!isServer) {
       config.resolve.fallback = {
@@ -26,8 +23,25 @@ const nextConfig: NextConfig = {
     // Speed up development builds
     if (dev) {
       config.watchOptions = {
-        poll: 1000, // Check for changes every second instead of file watching
+        poll: 1000,
         aggregateTimeout: 300,
+      };
+      
+      // Optimize for faster rebuilds
+      config.optimization = {
+        ...config.optimization,
+        removeAvailableModules: false,
+        removeEmptyChunks: false,
+        splitChunks: {
+          chunks: 'all',
+          cacheGroups: {
+            vendor: {
+              test: /[\\/]node_modules[\\/]/,
+              name: 'vendors',
+              chunks: 'all',
+            },
+          },
+        },
       };
     }
     
@@ -40,23 +54,15 @@ const nextConfig: NextConfig = {
   // Optimize images
   images: {
     domains: [],
-    unoptimized: true, // Disable image optimization to reduce memory usage
+    unoptimized: true,
   },
   
-  // Disable source maps in production to save memory
+  // Disable source maps in production
   productionBrowserSourceMaps: false,
   
-  // Speed up hot reloading
+  // Enable optimizations
   experimental: {
-    optimizeCss: false, // Disable CSS optimization in dev
-  },
-  
-  // Reduce memory usage during development
-  onDemandEntries: {
-    // period (in ms) where the server will keep pages in the buffer
-    maxInactiveAge: 25 * 1000,
-    // number of pages that should be kept simultaneously without being disposed
-    pagesBufferLength: 2,
+    optimizePackageImports: ['@/components', '@/services', '@/types'],
   },
 };
 
