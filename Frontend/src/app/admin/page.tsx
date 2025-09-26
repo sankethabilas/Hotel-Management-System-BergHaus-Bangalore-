@@ -1,9 +1,63 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { staffAPI } from '@/services/api';
+import { leaveAPI } from '@/services/leaveApi';
+import { Staff } from '@/types/staff';
+import { Leave } from '@/types/leave';
+
 export default function AdminDashboardPage() {
+  const [activeStaffCount, setActiveStaffCount] = useState<number>(0);
+  const [pendingLeavesCount, setPendingLeavesCount] = useState<number>(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      // Fetch staff data
+      const staffData: Staff[] = await staffAPI.getAllStaff();
+      const activeStaff = staffData.filter(staff => staff.isActive);
+      setActiveStaffCount(activeStaff.length);
+
+      // Fetch leave data
+      const leaveResponse = await leaveAPI.getAllLeaves();
+      const leaves: Leave[] = leaveResponse.leaves || [];
+      const pendingLeaves = leaves.filter(leave => leave.status === 'pending');
+      setPendingLeavesCount(pendingLeaves.length);
+      
+    } catch (error) {
+      console.error('Failed to fetch dashboard data:', error);
+      setError(error instanceof Error ? error.message : 'Failed to load dashboard data');
+      // Set default values in case of error
+      setActiveStaffCount(0);
+      setPendingLeavesCount(0);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const kpis = [
-    { label: "Occupancy", value: "82%", sub: "+5% WoW" },
-    { label: "Active Staff", value: "47", sub: "3 on leave" },
-    { label: "Pending Leaves", value: "6", sub: "2 urgent" },
-    { label: "Revenue (MTD)", value: "₹ 12.8L", sub: "+8% MoM" },
+    { 
+      label: "Active Staff", 
+      value: loading ? "..." : activeStaffCount.toString(), 
+      sub: loading ? "Loading..." : error ? "Unable to load" : `${activeStaffCount} currently active` 
+    },
+    { 
+      label: "Pending Leaves", 
+      value: loading ? "..." : pendingLeavesCount.toString(), 
+      sub: loading ? "Loading..." : error ? "Unable to load" : `${pendingLeavesCount} awaiting approval` 
+    },
+    { 
+      label: "Total Revenue", 
+      value: "Rs. 600000.00", 
+    },
   ];
 
   return (
@@ -14,12 +68,20 @@ export default function AdminDashboardPage() {
           <p className="text-sm text-gray-600 dark:text-gray-300">Overview of today across BergHaus Bangalore</p>
         </div>
         <div className="inline-flex gap-2">
+          <button 
+            onClick={fetchDashboardData}
+            disabled={loading}
+            className="btn-secondary"
+            title="Refresh dashboard data"
+          >
+            {loading ? 'Refreshing...' : 'Refresh'}
+          </button>
           <button className="btn-primary" style={{ backgroundColor: "#006bb8" }}>Download Report</button>
           <button className="btn-secondary">Share</button>
         </div>
       </header>
 
-      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {kpis.map((k) => (
           <div key={k.label} className="admin-card p-4">
             <div className="text-xs font-medium text-gray-600">{k.label}</div>
@@ -52,15 +114,19 @@ export default function AdminDashboardPage() {
           <ul className="mt-4 space-y-3 text-sm">
             <li className="flex items-start gap-2">
               <span className="mt-1 h-2.5 w-2.5 rounded-full" style={{ backgroundColor: "#ffc973" }} />
-              2 housekeeping shifts unassigned for tomorrow
+              {loading ? 'Loading leave requests...' : 
+               error ? 'Unable to load leave data' :
+               pendingLeavesCount > 0 ? `${pendingLeavesCount} leave requests pending approval` : 'No pending leave requests'}
             </li>
             <li className="flex items-start gap-2">
               <span className="mt-1 h-2.5 w-2.5 rounded-full" style={{ backgroundColor: "#2fa0df" }} />
-              4 new bookings from OTA partners
+              Staff attendance tracking updated
             </li>
             <li className="flex items-start gap-2">
               <span className="mt-1 h-2.5 w-2.5 rounded-full" style={{ backgroundColor: "#006bb8" }} />
-              Peak occupancy expected this weekend
+              {loading ? 'Loading staff data...' :
+               error ? 'Unable to load staff data' :
+               activeStaffCount > 0 ? `${activeStaffCount} staff members currently active` : 'No active staff members'}
             </li>
           </ul>
         </div>
