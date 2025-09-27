@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Staff } from '@/types/staff';
 import { staffAPI } from '@/services/api';
 import { use } from 'react';
+import StaffPaymentHistory from '@/components/StaffPaymentHistory';
 
 interface StaffDetailsPageProps {
   params: Promise<{
@@ -82,7 +83,8 @@ export default function StaffDetailsPage({ params }: StaffDetailsPageProps) {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-4xl mx-auto space-y-8">
+      {/* Staff Details Card */}
       <div className="bg-white shadow overflow-hidden sm:rounded-lg">
         <div className="px-4 py-5 sm:px-6">
           <div className="flex justify-between items-center">
@@ -254,6 +256,19 @@ export default function StaffDetailsPage({ params }: StaffDetailsPageProps) {
               </dd>
             </div>
           </dl>
+        </div>
+      </div>
+
+      {/* Payment History Section */}
+      <div className="bg-white shadow sm:rounded-lg">
+        <div className="px-4 py-5 sm:px-6 border-b border-gray-200">
+          <h3 className="text-lg leading-6 font-medium text-gray-900">Payment History</h3>
+          <p className="mt-1 text-sm text-gray-500">
+            Salary payment records and financial information for {staff.fullName}
+          </p>
+        </div>
+        <div className="p-6">
+          <StaffPaymentHistory staffId={staff._id} />
         </div>
       </div>
     </div>

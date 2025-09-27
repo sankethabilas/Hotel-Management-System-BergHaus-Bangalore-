@@ -4,6 +4,7 @@ const cors = require("cors");
 const router = require("./Route/StaffRoute");
 const leaveRoutes = require("./Route/leaveRoute");
 const attendanceRoutes = require("./Route/attendanceRoute");
+const paymentRoutes = require("./Route/paymentRoute");
 
 const app = express();
 
@@ -16,6 +17,7 @@ app.use(express.json());
 
 app.use("/staff", router);
 app.use("/leave", leaveRoutes);
+app.use("/api/payments", paymentRoutes);
 // Temporarily disabled: app.use("/api/attendance", attendanceRoutes);
 
 
