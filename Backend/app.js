@@ -3,18 +3,20 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const router = require("./Route/StaffRoute");
 const leaveRoutes = require("./Route/leaveRoute");
+const attendanceRoutes = require("./Route/attendanceRoute");
 
 const app = express();
 
 //middleware
 app.use(cors({
-  origin: 'http://localhost:3000', // Frontend URL
+  origin: ['http://localhost:3000', 'http://localhost:3001'], // Frontend URLs
   credentials: true
 }));
 app.use(express.json());
 
 app.use("/staff", router);
 app.use("/leave", leaveRoutes);
+// Temporarily disabled: app.use("/api/attendance", attendanceRoutes);
 
 
 //database connect
