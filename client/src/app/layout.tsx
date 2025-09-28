@@ -1,4 +1,5 @@
 import '@/styles/globals.css'
+import { CartProvider } from '@/contexts/CartContext'
 
 export const metadata = {
   title: 'BergHaus Hotel Management System',
@@ -13,7 +14,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        {children}
+        <CartProvider>
+          {children}
+        </CartProvider>
       </body>
     </html>
   )

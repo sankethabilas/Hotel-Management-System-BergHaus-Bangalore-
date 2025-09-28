@@ -8,30 +8,46 @@ import Layout from '@/components/layout/Layout'
 import { formatCurrency } from '@/utils/currency'
 import { Search, Filter, ShoppingCart, Star, Clock, DollarSign } from 'lucide-react'
 import api, { MenuItem } from '@/services/api'
+import { useCart } from '@/contexts/CartContext'
+import OrderCustomization from '@/components/OrderCustomization'
+import PromotionBanner from '@/components/PromotionBanner'
 
 // Categories mapping from backend to frontend
-const categories = ["All", "starters", "mains", "desserts", "beverages", "specials"]
+const categories = ["All", "breakfast", "lunch", "dinner", "beverages", "desserts", "snacks", "appetizers", "specials"]
 const categoryLabels = {
-  "All": "All",
-  "starters": "Starters", 
-  "mains": "Main Course",
-  "desserts": "Desserts",
+  "All": "All Items",
+  "breakfast": "Breakfast", 
+  "lunch": "Lunch",
+  "dinner": "Dinner",
   "beverages": "Beverages",
+  "desserts": "Desserts",
+  "snacks": "Snacks",
+  "appetizers": "Appetizers",
   "specials": "Chef's Specials"
+}
+
+// Time-based meal suggestions
+const getCurrentMealSuggestion = () => {
+  const hour = new Date().getHours();
+  if (hour >= 6 && hour < 11) return 'breakfast';
+  if (hour >= 11 && hour < 15) return 'lunch';
+  if (hour >= 15 && hour < 22) return 'dinner';
+  return 'anytime';
 }
 
 const dietaryFilters = ["Vegetarian", "Vegan", "Gluten-Free"]
 
 export default function MenuPage() {
+  const { cartItems, addToCart, getTotalItems } = useCart()
   const [menuItems, setMenuItems] = useState<MenuItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState('All')
+  const [selectedCategory, setSelectedCategory] = useState(getCurrentMealSuggestion())
   const [selectedDietary, setSelectedDietary] = useState<string[]>([])
   const [sortBy, setSortBy] = useState('name')
   const [showFilters, setShowFilters] = useState(false)
-  const [cartItems, setCartItems] = useState<string[]>([])
+  const [customizingItem, setCustomizingItem] = useState<MenuItem | null>(null)
 
   // Load menu items from API
   useEffect(() => {
@@ -90,8 +106,26 @@ export default function MenuPage() {
     }
   })
 
-  const addToCart = (itemId: string) => {
-    setCartItems(prev => [...prev, itemId])
+  const handleAddToCart = (item: MenuItem) => {
+    addToCart({
+      _id: item._id,
+      name: item.name,
+      price: item.price * (1 - (item.discount || 0) / 100),
+      image: item.image,
+      preparationTime: item.preparationTime
+    })
+  }
+
+  const handleCustomizeAndAdd = (item: MenuItem, customization: any, finalPrice: number) => {
+    addToCart({
+      _id: item._id,
+      name: item.name,
+      price: finalPrice,
+      image: item.image,
+      preparationTime: item.preparationTime,
+      customization: customization
+    })
+    setCustomizingItem(null)
   }
 
   const toggleDietaryFilter = (filter: string) => {
@@ -143,21 +177,41 @@ export default function MenuPage() {
           <div className="container mx-auto px-6 py-4">
             <div className="flex items-center justify-between">
               <h1 className="text-3xl font-bold text-gray-900">Our Menu</h1>
-              <div className="flex items-center space-x-4">
-                <div className="relative">
-                  <ShoppingCart className="w-6 h-6 text-gray-600" />
-                  {cartItems.length > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                      {cartItems.length}
-                    </span>
-                  )}
-                </div>
-              </div>
             </div>
           </div>
         </div>
 
         <div className="container mx-auto px-6 py-8">
+          {/* Promotions Banner */}
+          <PromotionBanner />
+          
+          {/* Meal Time Suggestion */}
+          {selectedCategory !== 'All' && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="bg-blue-500 text-white rounded-full p-2">
+                    <Clock className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-blue-900">
+                      Perfect Time for {categoryLabels[selectedCategory as keyof typeof categoryLabels]}!
+                    </h4>
+                    <p className="text-sm text-blue-700">
+                      We've filtered the menu to show the best options for this time of day.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setSelectedCategory('All')}
+                  className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                >
+                  View All Items
+                </button>
+              </div>
+            </div>
+          )}
+          
           <div className="flex flex-col lg:flex-row gap-8">
             {/* Sidebar Filters */}
             <div className="lg:w-1/4">
@@ -366,10 +420,10 @@ export default function MenuPage() {
                             View Details
                           </Link>
                           <button
-                            onClick={() => addToCart(item._id)}
+                            onClick={() => setCustomizingItem(item)}
                             className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
                           >
-                            Add to Cart
+                            Customize & Add
                           </button>
                         </div>
                       </div>
@@ -380,6 +434,16 @@ export default function MenuPage() {
             </div>
           </div>
         </div>
+
+        {/* Customization Modal */}
+        {customizingItem && (
+          <OrderCustomization
+            menuItem={customizingItem}
+            isOpen={!!customizingItem}
+            onClose={() => setCustomizingItem(null)}
+            onConfirm={(customization, finalPrice) => handleCustomizeAndAdd(customizingItem, customization, finalPrice)}
+          />
+        )}
       </div>
     </Layout>
   )

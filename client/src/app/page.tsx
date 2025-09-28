@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import Header from '@/components/layout/Header';
+import BannerSlideshow from '@/components/BannerSlideshow';
 import { ShoppingCart, Clock, Star, Utensils } from 'lucide-react';
 
 export default function HomePage() {
@@ -9,27 +10,21 @@ export default function HomePage() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-amber-50">
       <Header />
       
-      {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-r from-primary-600 to-primary-800 text-white">
-        <div className="absolute inset-0 bg-black opacity-20"></div>
-        <div className="relative container mx-auto px-6 py-20">
-          <div className="max-w-4xl mx-auto text-center">
-            <h1 className="text-5xl md:text-6xl font-bold mb-6">
-              Welcome to <span className="text-secondary-300">BergHaus</span>
-            </h1>
-            <p className="text-xl md:text-2xl mb-8 text-primary-100">
-              Experience exceptional dining with our premium food & beverage service
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link
-                href="/guest/menu"
-                className="bg-secondary-500 hover:bg-secondary-600 text-primary-900 font-semibold px-8 py-3 rounded-lg transition-colors inline-flex items-center"
-              >
-                <Utensils className="mr-2 h-5 w-5" />
-                Browse Menu
-              </Link>
-            </div>
-          </div>
+      {/* Welcome Hero Section */}
+      <section className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-20">
+        <div className="container mx-auto px-6 text-center">
+          <h1 className="text-5xl font-bold mb-6">Welcome to BergHaus</h1>
+          <p className="text-xl mb-8 max-w-3xl mx-auto">
+            Experience exceptional dining with our premium food and beverage service. 
+            Order from your room or enjoy our restaurant facilities.
+          </p>
+          <Link
+            href="/guest/menu"
+            className="bg-white text-blue-600 font-semibold px-8 py-4 rounded-lg hover:bg-gray-100 transition-colors inline-flex items-center text-lg"
+          >
+            <Utensils className="mr-3 h-6 w-6" />
+            Order Now
+          </Link>
         </div>
       </section>
 
@@ -42,6 +37,16 @@ export default function HomePage() {
               We provide an exceptional dining experience with quality food and seamless service
             </p>
           </div>
+
+        </div>
+      </section>
+
+      {/* Banner Slideshow Section - Full Width */}
+      <BannerSlideshow />
+
+      {/* Features Section Continued */}
+      <section className="py-20">
+        <div className="container mx-auto px-6">
 
           <div className="grid md:grid-cols-3 gap-8">
             {/* Feature 1 */}

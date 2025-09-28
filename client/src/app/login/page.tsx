@@ -35,15 +35,23 @@ export default function LoginPage() {
       });
 
       const data = await response.json();
+      console.log('Login response:', data);
 
       if (data.success) {
+        console.log('Login successful, storing data...');
+        console.log('Token:', data.data.token);
+        console.log('User:', data.data.user);
+        
         // Store token in localStorage
         localStorage.setItem('adminToken', data.data.token);
         localStorage.setItem('adminUser', JSON.stringify(data.data.user));
         
+        console.log('Data stored, attempting redirect...');
         // Redirect to admin dashboard
-        router.push('/admin/dashboard');
+        window.location.href = '/admin/dashboard';
+        console.log('Redirect called');
       } else {
+        console.log('Login failed:', data.message);
         setError(data.message || 'Login failed');
       }
     } catch (error) {

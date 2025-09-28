@@ -24,10 +24,11 @@ export default function MenuItemDetail() {
         setLoading(true)
         setError(null)
         
-        const response = await api.getMenuItemById(params.id as string)
+        const response = await fetch(`http://localhost:5001/api/menu/${params.id}`)
+        const data = await response.json()
         
-        if (response.success && response.data) {
-          setMenuItem(response.data)
+        if (data.success && data.data) {
+          setMenuItem(data.data)
         } else {
           setError('Menu item not found')
         }
@@ -105,7 +106,7 @@ export default function MenuItemDetail() {
               <div className="aspect-square relative bg-gray-200 rounded-lg overflow-hidden">
                 {menuItem.image ? (
                   <Image
-                    src={menuItem.image}
+                    src={`http://localhost:5001${menuItem.image}`}
                     alt={menuItem.name}
                     fill
                     className="object-cover"

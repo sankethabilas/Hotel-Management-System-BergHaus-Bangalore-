@@ -21,8 +21,23 @@ const menuItemSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Category is required'],
     enum: {
-      values: ['starters', 'mains', 'desserts', 'beverages', 'specials'],
-      message: 'Category must be one of: starters, mains, desserts, beverages, specials'
+      values: ['breakfast', 'lunch', 'dinner', 'beverages', 'desserts', 'snacks', 'appetizers', 'specials'],
+      message: 'Category must be one of: breakfast, lunch, dinner, beverages, desserts, snacks, appetizers, specials'
+    }
+  },
+  mealType: {
+    type: String,
+    enum: ['breakfast', 'lunch', 'dinner', 'anytime'],
+    default: 'anytime'
+  },
+  availableHours: {
+    start: {
+      type: String, // Format: "HH:MM" (24-hour)
+      default: "00:00"
+    },
+    end: {
+      type: String, // Format: "HH:MM" (24-hour)  
+      default: "23:59"
     }
   },
   image: {
@@ -83,11 +98,32 @@ const menuItemSchema = new mongoose.Schema({
     type: String,
     trim: true
   }],
-  createdBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Admin',
-    required: true
-  }
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Admin',
+      required: true
+    },
+    // Customization fields
+    dietaryInfo: {
+      vegetarian: { type: Boolean, default: false },
+      vegan: { type: Boolean, default: false },
+      glutenFree: { type: Boolean, default: false },
+      nutFree: { type: Boolean, default: false },
+      dairyFree: { type: Boolean, default: false },
+      halal: { type: Boolean, default: false },
+      kosher: { type: Boolean, default: false }
+    },
+    customizationOptions: {
+      allowPortionSize: { type: Boolean, default: true },
+      allowModifications: { type: Boolean, default: true },
+      allowSpecialInstructions: { type: Boolean, default: true },
+      commonModifications: { type: [String], default: [] }
+    },
+    portionPricing: {
+      small: { type: Number, default: 0 }, // Discount for small
+      regular: { type: Number, default: 0 }, // Base price
+      large: { type: Number, default: 0 } // Extra charge for large
+    }
 }, {
   timestamps: true
 });
@@ -104,6 +140,33 @@ menuItemSchema.virtual('discountedPrice').get(function() {
   }
   return this.price;
 });
+
+// Method to check if item is available at current time
+menuItemSchema.methods.isAvailableNow = function() {
+  if (!this.isAvailable) return false;
+  
+  const now = new Date();
+  const currentTime = now.toTimeString().slice(0, 5); // HH:MM format
+  
+  // Check if current time is within available hours
+  return currentTime >= this.availableHours.start && currentTime <= this.availableHours.end;
+};
+
+// Method to get appropriate meal type based on current time
+menuItemSchema.statics.getCurrentMealType = function() {
+  const now = new Date();
+  const currentHour = now.getHours();
+  
+  if (currentHour >= 6 && currentHour < 11) {
+    return 'breakfast';
+  } else if (currentHour >= 11 && currentHour < 15) {
+    return 'lunch';
+  } else if (currentHour >= 15 && currentHour < 22) {
+    return 'dinner';
+  } else {
+    return 'anytime';
+  }
+};
 
 // Ensure virtual fields are serialized
 menuItemSchema.set('toJSON', { virtuals: true });
