@@ -90,6 +90,12 @@ class StaffAPI {
     });
     return response.staff!;
   }
+
+  // Get staff by employee ID (for employee login)
+  async getStaffByEmployeeId(employeeId: string): Promise<Staff> {
+    const response = await this.request<ApiResponse<Staff>>(`/employee/${employeeId}`);
+    return response.staff!;
+  }
 }
 
 export const staffAPI = new StaffAPI();

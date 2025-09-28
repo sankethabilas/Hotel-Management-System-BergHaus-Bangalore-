@@ -136,8 +136,28 @@ const deleteStaff = async (req,res,next)=>{
     return res.status(200).json({ staff });
 };
 
+//get by Employee ID (for employee login)
+const getByEmployeeId = async (req, res, next) => {
+    const employeeId = req.params.employeeId;
+
+    let staff;
+    try {
+        staff = await Staff.findOne({ employeeId: employeeId, isActive: true });
+    } catch (err) {
+        console.log(err);
+        return res.status(500).json({ message: "Database error", error: err.message });
+    }
+
+    if (!staff) {
+        return res.status(404).json({ message: "Employee not found or inactive" });
+    }
+
+    return res.status(200).json({ staff });
+};
+
 module.exports.getAllStaff = getAllStaff;
 module.exports.addStaff = addStaff;
 module.exports.getById = getById;
+module.exports.getByEmployeeId = getByEmployeeId;
 module.exports.updateStaff = updateStaff;
 module.exports.deleteStaff = deleteStaff;
