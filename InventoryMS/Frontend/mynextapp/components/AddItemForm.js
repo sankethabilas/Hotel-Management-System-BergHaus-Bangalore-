@@ -10,6 +10,7 @@ export default function AddItemForm({ onAdded, onClose }) {
     description: "",
     supplierName: "",
     supplierEmail: "",
+    supplierPhone: "",
     category: "", // new field
     price: 0,
   });
@@ -31,14 +32,19 @@ export default function AddItemForm({ onAdded, onClose }) {
       newErrors.name = "Item name should contain only letters and spaces";
     }
 
-    // Supplier name validation - only letters and spaces
+    // Supplier name validation - only letters if provided
     if (form.supplierName && !/^[a-zA-Z\s]+$/.test(form.supplierName)) {
       newErrors.supplierName = "Supplier name should contain only letters and spaces";
     }
-    
-    // Email validation
+
+    // Email validation if provided
     if (form.supplierEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.supplierEmail)) {
       newErrors.supplierEmail = "Please enter a valid email address";
+    }
+
+    // Phone validation if provided
+    if (form.supplierPhone && !/^[0-9+\-\s()]+$/.test(form.supplierPhone)) {
+      newErrors.supplierPhone = "Please enter a valid phone number";
     }
 
     // URL validation
@@ -261,7 +267,7 @@ export default function AddItemForm({ onAdded, onClose }) {
               <svg className="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
-              Supplier Information
+              Supplier Information (Optional)
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Supplier Name */}
@@ -298,6 +304,24 @@ export default function AddItemForm({ onAdded, onClose }) {
                   placeholder="supplier@example.com"
                 />
                 {errors.supplierEmail && <p className="text-red-500 text-sm mt-1">{errors.supplierEmail}</p>}
+              </div>
+
+              {/* Supplier Phone */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Supplier Phone
+                </label>
+                <input
+                  type="text"
+                  name="supplierPhone"
+                  value={form.supplierPhone}
+                  onChange={handleChange}
+                  className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
+                    errors.supplierPhone ? 'border-red-500 bg-red-50' : 'border-gray-300'
+                  }`}
+                  placeholder="+94 77 123 4567"
+                />
+                {errors.supplierPhone && <p className="text-red-500 text-sm mt-1">{errors.supplierPhone}</p>}
               </div>
             </div>
           </div>

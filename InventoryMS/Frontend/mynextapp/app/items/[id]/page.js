@@ -214,7 +214,16 @@ export default function ItemOverview() {
             {/* Basic supplier info - always visible */}
             <div className="mt-2">
               <p className="text-indigo-700 font-medium">
-                {item.supplierName || 'Not specified'} 
+                {item.supplierName ? (
+                  <Link 
+                    href={`/Suppliers/${encodeURIComponent(item.supplierName)}`} 
+                    className="text-indigo-600 hover:text-indigo-800 underline font-semibold"
+                  >
+                    {item.supplierName}
+                  </Link>
+                ) : (
+                  'Not specified'
+                )}
                 {item.supplierEmail && (
                   <span className="text-indigo-600 ml-2">({item.supplierEmail})</span>
                 )}

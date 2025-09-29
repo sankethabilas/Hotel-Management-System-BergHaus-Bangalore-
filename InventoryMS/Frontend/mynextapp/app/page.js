@@ -19,7 +19,9 @@ export default function Page() {
     setItems(res.data.existingItems);
   };
 
-  useEffect(() => { fetchItems(); }, []);
+  useEffect(() => { 
+    fetchItems(); 
+  }, []);
 
   const handleDelete = async (id) => {
     await deleteItem(id);
@@ -51,7 +53,7 @@ export default function Page() {
     <div>
       <Navbar active="inventory" />
     <div className="p-4 sm:p-6">
-      {/* Header + Search + Filter + Add Button */}
+      {/* Header + Search + Filter + Add Buttons */}
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 space-y-3 sm:space-y-0">
         <h1 className="text-lg sm:text-xl font-bold">Inventory Items</h1>
 
@@ -80,8 +82,11 @@ export default function Page() {
           {/* Add Item Button */}
           <button
             onClick={() => setShowAdd(true)}
-            className="px-3 py-2 bg-blue-600 text-white rounded-lg w-full sm:w-auto text-sm sm:text-base"
+            className="px-3 py-2 bg-blue-600 text-white rounded-lg text-sm sm:text-base hover:bg-blue-700 transition-colors duration-200 flex items-center justify-center"
           >
+            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+            </svg>
             + Add Item
           </button>
         </div>

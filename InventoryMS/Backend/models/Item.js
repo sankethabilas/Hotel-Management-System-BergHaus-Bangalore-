@@ -29,8 +29,10 @@ const itemSchema = new mongoose.Schema({
   },
   imageUrl: { type: String }, // store image link (upload service needed if storing files)
   description: { type: String },
+  // Supplier details stored directly in item
   supplierName: { type: String },
   supplierEmail: { type: String },
+  supplierPhone: { type: String },
   // New category field
   category: {
     type: String,
