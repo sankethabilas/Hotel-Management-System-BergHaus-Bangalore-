@@ -4,22 +4,48 @@ import React, { useState, useEffect } from 'react';
 import { Staff } from '../../types/staff';
 import { Leave } from '../../types/leave';
 
-// Global styles to hide only the right-edge scrollbar
+// Global styles to reduce scrollbar visibility
 const globalStyles = `
   html {
-    overflow-y: hidden !important; /* Hide right-edge vertical scrollbar */
-    overflow-x: auto !important;   /* Keep horizontal scroll if needed */
+    overflow-y: auto !important;
+    overflow-x: auto !important;
   }
   
   body {
     margin: 0;
     padding: 0;
     height: 100vh;
-    overflow: hidden; /* Prevent body scrollbar */
+    overflow: auto;
   }
   
   * {
     box-sizing: border-box;
+  }
+  
+  /* Custom scrollbar styles for reduced visibility */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 3px;
+    transition: background 0.3s ease;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.2);
+  }
+  
+  /* Firefox scrollbar styling */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.1) transparent;
   }
 `;
 
@@ -76,6 +102,18 @@ const ExclamationCircleIcon = ({ className }: { className: string }) => (
 const LogoutIcon = ({ className }: { className: string }) => (
   <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+  </svg>
+);
+
+const ChartBarIcon = ({ className }: { className: string }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+  </svg>
+);
+
+const ClipboardListIcon = ({ className }: { className: string }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
   </svg>
 );
 
@@ -265,8 +303,8 @@ export default function StaffDashboard() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600 mb-1">This Month</p>
-                    <p className="text-2xl font-bold text-gray-900">₹80,500</p>
-                    <p className="text-sm text-green-600">+₹5,500 overtime</p>
+                    <p className="text-2xl font-bold text-gray-900">Rs. 80,500</p>
+                    <p className="text-sm text-green-600">+Rs. 15,500 overtime</p>
                   </div>
                   <div className="p-3 bg-yellow-100 rounded-lg">
                     <CurrencyDollarIcon className="h-6 w-6 text-yellow-600" />
@@ -279,8 +317,8 @@ export default function StaffDashboard() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600 mb-1">Tasks Today</p>
-                    <p className="text-2xl font-bold text-gray-900">7/9</p>
-                    <p className="text-sm text-blue-600">2 remaining</p>
+                    <p className="text-2xl font-bold text-gray-900">7/10</p>
+                    <p className="text-sm text-blue-600">3 remaining</p>
                   </div>
                   <div className="p-3 bg-purple-100 rounded-lg">
                     <CheckCircleIcon className="h-6 w-6 text-purple-600" />
@@ -337,10 +375,123 @@ export default function StaffDashboard() {
                       </div>
                     </button>
 
+                    {/* Department Dashboard */}
+                    <button className="w-full bg-purple-600 text-white rounded-lg p-4 hover:bg-purple-700 transition-colors">
+                      <div className="flex items-center space-x-3">
+                        <div className="p-2 bg-purple-500 rounded-lg">
+                          <ChartBarIcon className="h-5 w-5" />
+                        </div>
+                        <div className="text-left">
+                          <h3 className="font-semibold">Department Dashboard</h3>
+                          <p className="text-purple-100 text-sm">View department metrics</p>
+                        </div>
+                      </div>
+                    </button>
+
+                    {/* Request Inventory */}
+                    <button className="w-full bg-orange-600 text-white rounded-lg p-4 hover:bg-orange-700 transition-colors">
+                      <div className="flex items-center space-x-3">
+                        <div className="p-2 bg-orange-500 rounded-lg">
+                          <ClipboardListIcon className="h-5 w-5" />
+                        </div>
+                        <div className="text-left">
+                          <h3 className="font-semibold">Request Inventory</h3>
+                          <p className="text-orange-100 text-sm">Request supplies & equipment</p>
+                        </div>
+                      </div>
+                    </button>
+
                   </div>
                 </div>
+              </div>
 
-                {/* Notifications Panel */}
+              {/* Tasks & Schedule - Center */}
+              <div className="lg:col-span-5">
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-lg font-semibold text-gray-900">Today's Schedule & Tasks</h2>
+                    <div className="text-sm text-gray-500">
+                      {staffData.jobRole} • {staffData.department}
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-4 max-h-96 overflow-y-auto">
+                    
+                    {/* Current Task */}
+                    <div className="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2 mb-2">
+                            <h4 className="font-semibold text-gray-900">Prepare breakfast </h4>
+                            <span className="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs font-medium">HIGH</span>
+                          </div>
+                          <p className="text-sm text-gray-600 mb-2">Set up ingredients and equipment for morning service</p>
+                          <div className="flex items-center space-x-4 text-xs text-gray-500">
+                            
+                          </div>
+                        </div>
+                        <button className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                          Complete
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Upcoming Tasks */}
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2 mb-2">
+                            <h4 className="font-semibold text-gray-900">Stock inventory check</h4>
+                            <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium">MEDIUM</span>
+                          </div>
+                          <p className="text-sm text-gray-600 mb-2">Check and update ingredient levels</p>
+                          <div className="flex items-center space-x-4 text-xs text-gray-500">
+                    
+                          </div>
+                        </div>
+                        <span className="px-3 py-1 bg-gray-200 text-gray-600 rounded-lg text-sm">Pending</span>
+                      </div>
+                    </div>
+
+                    <div className="bg-gray-50 rounded-lg p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2 mb-2">
+                            <h4 className="font-semibold text-gray-900">Lunch menu preparation</h4>
+                            <span className="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs font-medium">HIGH</span>
+                          </div>
+                          <p className="text-sm text-gray-600 mb-2">Prepare today's lunch specials</p>
+                          <div className="flex items-center space-x-4 text-xs text-gray-500">
+                            
+                          </div>
+                        </div>
+                        <span className="px-3 py-1 bg-gray-200 text-gray-600 rounded-lg text-sm">Scheduled</span>
+                      </div>
+                    </div>
+
+                    {/* Completed Tasks */}
+                    <div className="bg-green-50 rounded-lg p-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2 mb-2">
+                            <h4 className="font-semibold text-gray-700">Equipment sanitization</h4>
+                            <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">COMPLETED</span>
+                          </div>
+                          <p className="text-sm text-gray-600 mb-2">Clean and sanitize all kitchen equipment</p>
+                          <div className="flex items-center space-x-4 text-xs text-gray-500">
+                            
+                          </div>
+                        </div>
+                        <CheckCircleIcon className="h-5 w-5 text-green-500" />
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+              </div>
+
+              {/* Recent Updates - Right Side */}
+              <div className="lg:col-span-3">
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Updates</h3>
                   <div className="space-y-3">
@@ -365,99 +516,6 @@ export default function StaffDashboard() {
                         <p className="text-xs text-gray-500">3 days ago</p>
                       </div>
                     </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Tasks & Schedule - Right Side */}
-              <div className="lg:col-span-8">
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-lg font-semibold text-gray-900">Today's Schedule & Tasks</h2>
-                    <div className="text-sm text-gray-500">
-                      {staffData.jobRole} • {staffData.department}
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-4 max-h-96 overflow-y-auto">
-                    
-                    {/* Current Task */}
-                    <div className="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-2 mb-2">
-                            <h4 className="font-semibold text-gray-900">🔥 CURRENT: Prep breakfast station</h4>
-                            <span className="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs font-medium">HIGH</span>
-                          </div>
-                          <p className="text-sm text-gray-600 mb-2">Set up ingredients and equipment for morning service</p>
-                          <div className="flex items-center space-x-4 text-xs text-gray-500">
-                            <span>⏰ Started: 07:00 AM</span>
-                            <span>📍 Main Kitchen</span>
-                            <span>⏱️ Est. 2 hours</span>
-                          </div>
-                        </div>
-                        <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                          Complete
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Upcoming Tasks */}
-                    <div className="bg-gray-50 rounded-lg p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-2 mb-2">
-                            <h4 className="font-semibold text-gray-900">Stock inventory check</h4>
-                            <span className="px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full text-xs font-medium">MEDIUM</span>
-                          </div>
-                          <p className="text-sm text-gray-600 mb-2">Check and update ingredient levels</p>
-                          <div className="flex items-center space-x-4 text-xs text-gray-500">
-                            <span>⏰ 10:00 AM</span>
-                            <span>📍 Storage Room</span>
-                            <span>⏱️ 45 minutes</span>
-                          </div>
-                        </div>
-                        <span className="px-3 py-1 bg-gray-200 text-gray-600 rounded-lg text-sm">Pending</span>
-                      </div>
-                    </div>
-
-                    <div className="bg-gray-50 rounded-lg p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-2 mb-2">
-                            <h4 className="font-semibold text-gray-900">Lunch menu preparation</h4>
-                            <span className="px-2 py-1 bg-red-100 text-red-800 rounded-full text-xs font-medium">HIGH</span>
-                          </div>
-                          <p className="text-sm text-gray-600 mb-2">Prepare today's lunch specials</p>
-                          <div className="flex items-center space-x-4 text-xs text-gray-500">
-                            <span>⏰ 11:30 AM</span>
-                            <span>📍 Main Kitchen</span>
-                            <span>⏱️ 2 hours</span>
-                          </div>
-                        </div>
-                        <span className="px-3 py-1 bg-gray-200 text-gray-600 rounded-lg text-sm">Scheduled</span>
-                      </div>
-                    </div>
-
-                    {/* Completed Tasks */}
-                    <div className="bg-green-50 rounded-lg p-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-2 mb-2">
-                            <h4 className="font-semibold text-gray-700">Equipment sanitization</h4>
-                            <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">COMPLETED</span>
-                          </div>
-                          <p className="text-sm text-gray-600 mb-2">Clean and sanitize all kitchen equipment</p>
-                          <div className="flex items-center space-x-4 text-xs text-gray-500">
-                            <span>✅ Completed: 06:30 AM</span>
-                            <span>📍 Main Kitchen</span>
-                            <span>⏱️ 30 minutes</span>
-                          </div>
-                        </div>
-                        <CheckCircleIcon className="h-5 w-5 text-green-500" />
-                      </div>
-                    </div>
-
                   </div>
                 </div>
               </div>
