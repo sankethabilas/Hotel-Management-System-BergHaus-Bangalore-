@@ -4,6 +4,32 @@ import React, { useState, useEffect } from 'react';
 import { Staff } from '../../types/staff';
 import { Leave } from '../../types/leave';
 
+// Global styles to hide only the right-edge scrollbar
+const globalStyles = `
+  html {
+    overflow-y: hidden !important; /* Hide right-edge vertical scrollbar */
+    overflow-x: auto !important;   /* Keep horizontal scroll if needed */
+  }
+  
+  body {
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    overflow: hidden; /* Prevent body scrollbar */
+  }
+  
+  * {
+    box-sizing: border-box;
+  }
+`;
+
+// Inject styles
+if (typeof document !== 'undefined') {
+  const styleElement = document.createElement('style');
+  styleElement.textContent = globalStyles;
+  document.head.appendChild(styleElement);
+}
+
 // Icon components
 const ClockIcon = ({ className }: { className: string }) => (
   <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -201,7 +227,7 @@ export default function StaffDashboard() {
         </header>
 
         {/* Main Dashboard Content */}
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1" style={{height: 'calc(100vh - 64px)', overflowY: 'auto'}}>
           <div className="p-6 max-w-7xl mx-auto">
             
             {/* Stats Row */}
@@ -353,7 +379,7 @@ export default function StaffDashboard() {
                     </div>
                   </div>
                   
-                  <div className="space-y-4 max-h-96 overflow-auto">
+                  <div className="space-y-4 max-h-96 overflow-y-auto">
                     
                     {/* Current Task */}
                     <div className="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-4">
