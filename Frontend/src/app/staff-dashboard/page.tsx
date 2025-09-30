@@ -83,7 +83,7 @@ const QrCodeIcon = ({ className }: { className: string }) => (
 
 const BellIcon = ({ className }: { className: string }) => (
   <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5-5V9a6 6 0 10-12 0v3l-5 5h5m7 0v1a3 3 0 11-6 0v-1m6 0H9" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.89 2 2 2zm6-6v-5c0-3.07-1.64-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z" />
   </svg>
 );
 
@@ -117,21 +117,34 @@ const ClipboardListIcon = ({ className }: { className: string }) => (
   </svg>
 );
 
+const ChevronDownIcon = ({ className }: { className: string }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+  </svg>
+);
+
+const KeyIcon = ({ className }: { className: string }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+  </svg>
+);
+
 export default function StaffDashboard() {
   const [staffData, setStaffData] = useState<Staff | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
 
   useEffect(() => {
     // Mock staff data
     const mockStaff: Staff = {
       _id: '1',
       employeeId: 'EMP001',
-      fullName: 'John Doe',
+      fullName: 'Namal Rajapaksha',
       dob: '1990-05-15',
       gender: 'Male',
       nicPassport: '123456789V',
       phone: '+94771234567',
-      email: 'john.doe@berghaus.com',
+      email: 'Namal.rajapaksha@berghaus.com',
       address: '123 Main St, Bangalore',
       jobRole: 'Senior Chef',
       department: 'Kitchen',
@@ -240,24 +253,64 @@ export default function StaffDashboard() {
                 </button>
 
                 {/* Profile */}
-                <div className="flex items-center space-x-3 bg-gray-50 rounded-lg p-3">
-                  <div className="h-8 w-8 rounded-lg bg-gray-300 flex items-center justify-center">
-                    <svg className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                  </div>
-                  <div className="text-left">
-                    <div className="flex items-center space-x-2">
-                      <p className="text-sm font-semibold text-gray-900">{staffData.fullName}</p>
-                      <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium border ${getDepartmentColor(staffData.department)}`}>
-                        {staffData.department}
-                      </span>
+                <div className="relative">
+                  <button 
+                    onClick={() => setIsProfileDropdownOpen(!isProfileDropdownOpen)}
+                    className="flex items-center space-x-3 bg-gray-50 rounded-lg p-3 hover:bg-gray-100 transition-colors w-full"
+                  >
+                    <div className="h-8 w-8 rounded-lg bg-gray-300 flex items-center justify-center">
+                      <svg className="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
                     </div>
-                    <p className="text-xs text-gray-500">ID: {staffData.employeeId}</p>
-                  </div>
-                  <button className="p-1 hover:bg-gray-200 rounded transition-colors">
-                    <LogoutIcon className="h-4 w-4 text-gray-400" />
+                    <div className="text-left flex-1">
+                      <div className="flex items-center space-x-2">
+                        <p className="text-sm font-semibold text-gray-900">{staffData.fullName}</p>
+                        <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium border ${getDepartmentColor(staffData.department)}`}>
+                          {staffData.department}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500">ID: {staffData.employeeId}</p>
+                    </div>
+                    <ChevronDownIcon className={`h-4 w-4 text-gray-400 transition-transform duration-200 ${isProfileDropdownOpen ? 'rotate-180' : ''}`} />
                   </button>
+
+                  {/* Dropdown Menu */}
+                  {isProfileDropdownOpen && (
+                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                      <button 
+                        onClick={() => {
+                          setIsProfileDropdownOpen(false);
+                          // Add change password logic here
+                          console.log('Change password clicked');
+                        }}
+                        className="flex items-center space-x-3 w-full px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+                      >
+                        <KeyIcon className="h-5 w-5 text-gray-500" />
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">Change Password</p>
+                          <p className="text-xs text-gray-500">Update your account password</p>
+                        </div>
+                      </button>
+                      
+                      <div className="border-t border-gray-100 my-1"></div>
+                      
+                      <button 
+                        onClick={() => {
+                          setIsProfileDropdownOpen(false);
+                          // Add logout logic here
+                          console.log('Logout clicked');
+                        }}
+                        className="flex items-center space-x-3 w-full px-4 py-3 text-left hover:bg-red-50 transition-colors group"
+                      >
+                        <LogoutIcon className="h-5 w-5 text-gray-500 group-hover:text-red-500" />
+                        <div>
+                          <p className="text-sm font-medium text-gray-900 group-hover:text-red-700">Log Out</p>
+                          <p className="text-xs text-gray-500 group-hover:text-red-500">Sign out of your account</p>
+                        </div>
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
