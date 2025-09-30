@@ -8,6 +8,7 @@ const StaffControler = require("../Controlers/StaffControler");
 
 router.get("/", StaffControler.getAllStaff);
 router.post("/", StaffControler.addStaff);
+router.post("/login", StaffControler.loginStaff);
 router.get("/employee/:employeeId", StaffControler.getByEmployeeId);
 router.get("/:id", StaffControler.getById);
 router.put("/:id", StaffControler.updateStaff);

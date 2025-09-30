@@ -17,8 +17,8 @@ export default function Layout({ children }: LayoutProps) {
     { href: '/leave/manage', label: 'HR - Manage Leaves', icon: '👔' },
   ];
 
-  // For admin routes, render without the staff top navigation/layout
-  if (pathname?.startsWith('/admin')) {
+  // For admin routes, staff-login, and staff-dashboard, render without the staff management navigation
+  if (pathname?.startsWith('/admin') || pathname === '/staff-login' || pathname === '/staff-dashboard') {
     return <>{children}</>;
   }
 

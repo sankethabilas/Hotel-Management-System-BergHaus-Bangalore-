@@ -135,36 +135,58 @@ export default function StaffDashboard() {
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
 
   useEffect(() => {
-    // Mock staff data
-    const mockStaff: Staff = {
-      _id: '1',
-      employeeId: 'EMP001',
-      fullName: 'Namal Rajapaksha',
-      dob: '1990-05-15',
-      gender: 'Male',
-      nicPassport: '123456789V',
-      phone: '+94771234567',
-      email: 'Namal.rajapaksha@berghaus.com',
-      address: '123 Main St, Bangalore',
-      jobRole: 'Senior Chef',
-      department: 'Kitchen',
-      joinDate: '2022-01-15',
-      salary: 75000,
-      overtimeRate: 1000,
-      bankAccount: '1234567890',
-      bankName: 'Bank of Ceylon',
-      branch: 'Bangalore Branch',
-      profilePic: '',
-      isActive: true,
-      createdAt: '2022-01-15T00:00:00Z',
-      updatedAt: '2025-09-28T00:00:00Z'
-    };
+    // Check if user is logged in
+    const token = localStorage.getItem('staffToken');
+    const savedStaffData = localStorage.getItem('staffData');
 
-    setTimeout(() => {
-      setStaffData(mockStaff);
+    if (!token || !savedStaffData) {
+      // Redirect to login if not authenticated
+      window.location.href = '/staff-login';
+      return;
+    }
+
+    try {
+      const parsedStaffData = JSON.parse(savedStaffData);
+      
+      // Create complete staff data object with defaults for missing fields
+      const completeStaffData: Staff = {
+        _id: parsedStaffData.id || parsedStaffData._id,
+        employeeId: parsedStaffData.employeeId,
+        fullName: parsedStaffData.fullName,
+        dob: parsedStaffData.dob || '1990-01-01',
+        gender: parsedStaffData.gender || 'Male',
+        nicPassport: parsedStaffData.nicPassport || 'N/A',
+        phone: parsedStaffData.phone || 'N/A',
+        email: parsedStaffData.email,
+        address: parsedStaffData.address || 'N/A',
+        jobRole: parsedStaffData.jobRole,
+        department: parsedStaffData.department,
+        joinDate: parsedStaffData.joinDate || new Date().toISOString(),
+        salary: parsedStaffData.salary || 0,
+        overtimeRate: parsedStaffData.overtimeRate || 0,
+        bankAccount: parsedStaffData.bankAccount || 'N/A',
+        bankName: parsedStaffData.bankName || 'N/A',
+        branch: parsedStaffData.branch || 'N/A',
+        profilePic: parsedStaffData.profilePic || '',
+        isActive: parsedStaffData.isActive !== false
+      };
+
+      setStaffData(completeStaffData);
+    } catch (error) {
+      console.error('Error parsing staff data:', error);
+      // Redirect to login if data is corrupted
+      window.location.href = '/staff-login';
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   }, []);
+
+  // Handle logout
+  const handleLogout = () => {
+    localStorage.removeItem('staffToken');
+    localStorage.removeItem('staffData');
+    window.location.href = '/staff-login';
+  };
 
   if (loading) {
     return (
@@ -298,8 +320,7 @@ export default function StaffDashboard() {
                       <button 
                         onClick={() => {
                           setIsProfileDropdownOpen(false);
-                          // Add logout logic here
-                          console.log('Logout clicked');
+                          handleLogout();
                         }}
                         className="flex items-center space-x-3 w-full px-4 py-3 text-left hover:bg-red-50 transition-colors group"
                       >

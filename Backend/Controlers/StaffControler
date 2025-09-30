@@ -155,9 +155,64 @@ const getByEmployeeId = async (req, res, next) => {
     return res.status(200).json({ staff });
 };
 
+// Staff Login Function
+const loginStaff = async (req, res, next) => {
+    const { email, password } = req.body;
+
+    // Basic validation
+    if (!email || !password) {
+        return res.status(400).json({ message: "Email and password are required" });
+    }
+
+    let staff;
+    try {
+        // Find staff by email and check if active
+        staff = await Staff.findOne({ 
+            email: email.toLowerCase().trim(), 
+            isActive: true 
+        });
+    } catch (err) {
+        console.log(err);
+        return res.status(500).json({ message: "Database error", error: err.message });
+    }
+
+    if (!staff) {
+        return res.status(401).json({ message: "Invalid email or password" });
+    }
+
+    // For now, we'll use a simple password check
+    // In production, you should hash passwords and compare hashed versions
+    // For this demo, let's assume password is stored as plain text or use employeeId as password
+    
+    // Simple password validation (you can modify this logic)
+    // Option 1: Use employeeId as password
+    if (password !== staff.employeeId) {
+        return res.status(401).json({ message: "Invalid email or password" });
+    }
+
+    // Create a simple token (in production, use JWT)
+    const token = `staff_${staff._id}_${Date.now()}`;
+
+    // Return success response
+    return res.status(200).json({ 
+        message: "Login successful",
+        token: token,
+        staff: {
+            id: staff._id,
+            employeeId: staff.employeeId,
+            fullName: staff.fullName,
+            email: staff.email,
+            department: staff.department,
+            jobRole: staff.jobRole,
+            profilePic: staff.profilePic
+        }
+    });
+};
+
 module.exports.getAllStaff = getAllStaff;
 module.exports.addStaff = addStaff;
 module.exports.getById = getById;
 module.exports.getByEmployeeId = getByEmployeeId;
+module.exports.loginStaff = loginStaff;
 module.exports.updateStaff = updateStaff;
 module.exports.deleteStaff = deleteStaff;
