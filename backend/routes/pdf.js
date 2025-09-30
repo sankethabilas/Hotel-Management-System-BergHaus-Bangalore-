@@ -3,10 +3,10 @@ const router = express.Router();
 const { protect } = require('../middleware/auth');
 const { downloadBookingConfirmation, generateBookingPDF } = require('../controllers/pdfController');
 
-// @route   GET /api/pdf/booking/:reservationId
+// @route   GET /api/pdf/booking/:bookingId
 // @desc    Download booking confirmation PDF
 // @access  Private
-router.get('/booking/:reservationId', protect, downloadBookingConfirmation);
+router.get('/booking/:bookingId', protect, downloadBookingConfirmation);
 
 // @route   POST /api/pdf/booking/generate
 // @desc    Generate PDF from booking data

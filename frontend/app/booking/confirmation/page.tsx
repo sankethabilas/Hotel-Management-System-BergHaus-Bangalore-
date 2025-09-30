@@ -2,358 +2,427 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Calendar, 
-  Users, 
-  MapPin, 
-  Star, 
-  Wifi, 
-  Car, 
-  Coffee, 
-  Shield, 
-  CreditCard,
-  Clock,
-  CheckCircle,
-  AlertCircle,
-  Lock,
-  User,
-  Phone,
-  Mail,
-  FileText
-} from 'lucide-react';
+import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/AuthContext';
+import { CheckCircle, Download, Home, Calendar, User, Mail, Phone, CreditCard } from 'lucide-react';
 
-interface BookingData {
-  roomId: string;
-  roomNumber: string;
-  roomType: string;
-  checkIn: string;
-  checkOut: string;
-  nights: number;
-  adults: number;
-  children: number;
-  pricePerNight: number;
-  totalPrice: number;
-  tax: number;
-  finalPrice: number;
-  amenities: string[];
-  description: string;
-  images: string[];
-}
-
-interface GuestDetails {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  country: string;
-  idNumber: string;
-  idType: 'passport' | 'national_id' | 'driving_license';
+interface Booking {
+  _id: string;
+  bookingReference: string;
+  roomId: {
+    _id: string;
+    roomNumber: string;
+    roomType: string;
+    capacity: number;
+    amenities: string[];
+  };
+  guestId: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+  };
+  guestName: string;
+  guestEmail: string;
+  guestPhone: string;
+  checkInDate: string;
+  checkOutDate: string;
+  numberOfGuests: number;
+  totalNights: number;
+  roomPrice: number;
+  totalAmount: number;
+  taxAmount: number;
+  paymentMethod: string;
+  paymentStatus: string;
+  status: string;
   specialRequests: string;
-  arrivalTime: string;
-  isMainGuest: boolean;
-  isBusinessTravel: boolean;
-  marketingConsent: boolean;
+  bookingDate: string;
 }
 
 export default function BookingConfirmationPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
-  const { user, refreshUser } = useAuth();
-  
-  const [bookingData, setBookingData] = useState<BookingData | null>(null);
-  const [guestDetails, setGuestDetails] = useState<GuestDetails>({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    country: 'Sri Lanka',
-    idNumber: '',
-    idType: 'passport',
-    specialRequests: '',
-    arrivalTime: '',
-    isMainGuest: true,
-    isBusinessTravel: false,
-    marketingConsent: false
-  });
-  
-  const [loading, setLoading] = useState(false);
-  const [currentStep, setCurrentStep] = useState(1);
+  const [booking, setBooking] = useState<Booking | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const bookingReference = searchParams?.get('ref');
 
   useEffect(() => {
-    // Get booking data from URL params or localStorage
-    const bookingInfo = searchParams?.get('booking');
-    if (bookingInfo) {
-      try {
-        const parsed = JSON.parse(decodeURIComponent(bookingInfo));
-        setBookingData(parsed);
-      } catch (error) {
-        console.error('Error parsing booking data:', error);
+    if (bookingReference) {
+      fetchBookingDetails();
+    } else {
+      setLoading(false);
+      toast({
+        title: "Error",
+        description: "No booking reference provided.",
+        variant: "destructive"
+      });
+    }
+  }, [bookingReference]);
+
+  const fetchBookingDetails = async () => {
+    try {
+      const response = await fetch(`/api/bookings/${bookingReference}`);
+      const data = await response.json();
+
+      if (data.success) {
+        setBooking(data.data.booking);
+      } else {
         toast({
           title: "Error",
-          description: "Invalid booking data. Please try again.",
-          variant: "destructive",
+          description: data.message || "Failed to fetch booking details.",
+          variant: "destructive"
         });
-        router.push('/availability');
       }
-    } else {
-      // Try to get from localStorage
-      const stored = localStorage.getItem('bookingData');
-      if (stored) {
-        setBookingData(JSON.parse(stored));
-      } else {
-        router.push('/availability');
-      }
-    }
-  }, [searchParams, router, toast]);
-
-  // Auto-populate guest details when user data is available
-  useEffect(() => {
-    if (user) {
-      setGuestDetails(prev => ({
-        ...prev,
-        firstName: user.firstName || prev.firstName,
-        lastName: user.lastName || prev.lastName,
-        email: user.email || prev.email,
-        phone: user.phone || prev.phone,
-        country: user.address?.country || prev.country || 'Sri Lanka',
-        idType: user.idDetails?.idType || prev.idType,
-        idNumber: user.idDetails?.idNumber || prev.idNumber
-      }));
-    }
-  }, [user]);
-
-  const handleInputChange = (field: keyof GuestDetails, value: string | boolean) => {
-    setGuestDetails(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  const handleCompleteBooking = async () => {
-    if (!bookingData) return;
-
-    // Validate required fields
-    const requiredFields = ['firstName', 'lastName', 'email', 'phone', 'idNumber'];
-    const missingFields = requiredFields.filter(field => !guestDetails[field as keyof GuestDetails]);
-    
-    if (missingFields.length > 0) {
+    } catch (error) {
+      console.error('Fetch booking error:', error);
       toast({
-        title: "Missing Information",
-        description: `Please fill in: ${missingFields.join(', ')}`,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setLoading(true);
-    
-    try {
-      const { bookingAPI } = await import('@/lib/api');
-      
-      const bookingPayload = {
-        roomId: bookingData.roomId,
-        checkIn: bookingData.checkIn,
-        checkOut: bookingData.checkOut,
-        adults: bookingData.adults,
-        children: bookingData.children,
-        guestDetails,
-        specialRequests: guestDetails.specialRequests
-      };
-      
-      console.log('Sending booking data:', bookingPayload);
-      
-      const response = await bookingAPI.createBooking(bookingPayload);
-
-      if (!response.success) {
-        throw new Error(response.message || 'Booking failed');
-      }
-
-      toast({
-        title: "Booking Confirmed!",
-        description: "Your booking has been successfully confirmed. You will receive a confirmation email shortly.",
-      });
-
-      // Refresh user data to get updated ID details
-      await refreshUser();
-
-      // Store booking data for success page
-      const successData = {
-        bookingReference: response.data?.reservation?.bookingReference,
-        reservationId: response.data?.reservation?.id,
-        ...response.data?.reservation
-      };
-      localStorage.setItem('bookingSuccessData', JSON.stringify(successData));
-      
-      // Clear booking data from localStorage
-      localStorage.removeItem('bookingData');
-      
-      // Redirect to booking success page
-      router.push('/booking/success');
-      
-    } catch (error: any) {
-      console.error('Booking error:', error);
-      
-      let errorMessage = "There was an error processing your booking. Please try again.";
-      
-      if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      
-      toast({
-        title: "Booking Failed",
-        description: errorMessage,
-        variant: "destructive",
+        title: "Error",
+        description: "Failed to fetch booking details.",
+        variant: "destructive"
       });
     } finally {
       setLoading(false);
     }
   };
 
-  if (!bookingData) {
+  const handleDownloadReceipt = async () => {
+    if (!booking) {
+      toast({
+        title: "Error",
+        description: "No booking data available for download.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      toast({
+        title: "Download Started",
+        description: "Your booking receipt is being prepared for download.",
+      });
+
+      // Import PDF generation libraries
+      const { default: jsPDF } = await import('jspdf');
+      const { default: html2canvas } = await import('html2canvas');
+      
+      // Create a temporary container for PDF generation
+      const tempContainer = document.createElement('div');
+      tempContainer.style.position = 'absolute';
+      tempContainer.style.left = '-9999px';
+      tempContainer.style.top = '0';
+      tempContainer.style.width = '800px';
+      tempContainer.style.backgroundColor = 'white';
+      tempContainer.style.padding = '20px';
+      document.body.appendChild(tempContainer);
+
+      // Generate HTML content for the receipt
+      const receiptHTML = generateReceiptHTML(booking);
+      tempContainer.innerHTML = receiptHTML;
+
+      // Wait for rendering to complete
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Generate canvas from the temporary container
+      const canvas = await html2canvas(tempContainer, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        width: 800,
+        height: tempContainer.scrollHeight
+      });
+
+      // Clean up
+      document.body.removeChild(tempContainer);
+
+      // Create PDF
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      
+      // Calculate dimensions
+      const imgWidth = 210; // A4 width in mm
+      const pageHeight = 295; // A4 height in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+
+      let position = 0;
+
+      // Add image to PDF
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      // Add new pages if content is longer than one page
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      // Download the PDF
+      pdf.save(`booking-receipt-${booking.bookingReference}.pdf`);
+      
+      toast({
+        title: "Download Complete",
+        description: "Your booking receipt PDF has been downloaded.",
+      });
+      
+    } catch (error: any) {
+      console.error('Error generating PDF:', error);
+      
+      // Fallback to HTML download
+      try {
+        const receiptHTML = generateReceiptHTML(booking);
+        const blob = new Blob([receiptHTML], { type: 'text/html' });
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `booking-receipt-${booking.bookingReference}.html`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+
+        toast({
+          title: "Download Complete",
+          description: "Your booking receipt has been downloaded as HTML file.",
+        });
+      } catch (fallbackError) {
+        console.error('Fallback download failed:', fallbackError);
+        toast({
+          title: "Download Failed",
+          description: "Failed to download receipt. Please try again.",
+          variant: "destructive"
+        });
+      }
+    }
+  };
+
+  const generateReceiptHTML = (booking: Booking) => {
+    return `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Booking Receipt - ${booking.bookingReference}</title>
+        <style>
+            body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+            .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 30px; }
+            .section { margin-bottom: 25px; }
+            .section h3 { color: #333; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
+            .info-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
+            .label { font-weight: bold; }
+            .total { font-size: 18px; font-weight: bold; color: #2c5aa0; text-align: center; margin-top: 20px; padding: 15px; background: #f0f8ff; border-radius: 5px; }
+            .footer { margin-top: 40px; text-align: center; font-size: 12px; color: #666; }
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <h1>🏨 HMS Hotel Management System</h1>
+            <h2>Booking Receipt</h2>
+            <p>Reference: <strong>${booking.bookingReference}</strong></p>
+        </div>
+
+        <div class="section">
+            <h3>Guest Information</h3>
+            <div class="info-row">
+                <span class="label">Name:</span>
+                <span>${booking.guestName}</span>
+            </div>
+            <div class="info-row">
+                <span class="label">Email:</span>
+                <span>${booking.guestEmail}</span>
+            </div>
+            <div class="info-row">
+                <span class="label">Phone:</span>
+                <span>${booking.guestPhone}</span>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>Booking Details</h3>
+            <div class="info-row">
+                <span class="label">Room Number:</span>
+                <span>${booking.roomNumber}</span>
+            </div>
+            <div class="info-row">
+                <span class="label">Room Type:</span>
+                <span>${booking.roomType}</span>
+            </div>
+            <div class="info-row">
+                <span class="label">Check-in:</span>
+                <span>${new Date(booking.checkInDate).toLocaleDateString()}</span>
+            </div>
+            <div class="info-row">
+                <span class="label">Check-out:</span>
+                <span>${new Date(booking.checkOutDate).toLocaleDateString()}</span>
+            </div>
+            <div class="info-row">
+                <span class="label">Number of Guests:</span>
+                <span>${booking.numberOfGuests}</span>
+            </div>
+            <div class="info-row">
+                <span class="label">Total Nights:</span>
+                <span>${booking.totalNights}</span>
+            </div>
+        </div>
+
+        <div class="section">
+            <h3>Payment Summary</h3>
+            <div class="info-row">
+                <span class="label">Room Rate (${booking.totalNights} nights):</span>
+                <span>$${(booking.roomPrice * booking.totalNights).toFixed(2)}</span>
+            </div>
+            <div class="info-row">
+                <span class="label">Tax (10%):</span>
+                <span>$${booking.taxAmount.toFixed(2)}</span>
+            </div>
+            <div class="info-row">
+                <span class="label">Payment Method:</span>
+                <span>${booking.paymentMethod.charAt(0).toUpperCase() + booking.paymentMethod.slice(1)}</span>
+            </div>
+            <div class="info-row">
+                <span class="label">Payment Status:</span>
+                <span>${booking.paymentStatus.charAt(0).toUpperCase() + booking.paymentStatus.slice(1)}</span>
+            </div>
+        </div>
+
+        <div class="total">
+            Total Amount: $${booking.totalAmount.toFixed(2)}
+        </div>
+
+        ${booking.specialRequests ? `
+        <div class="section">
+            <h3>Special Requests</h3>
+            <p>${booking.specialRequests}</p>
+        </div>
+        ` : ''}
+
+        <div class="footer">
+            <p>Thank you for choosing HMS Hotel Management System!</p>
+            <p>Booking Date: ${new Date(booking.bookingDate).toLocaleDateString()}</p>
+            <p>For any queries, please contact us at info@hmshotel.com</p>
+        </div>
+    </body>
+    </html>
+    `;
+  };
+
+  const getStatusBadgeVariant = (status: string) => {
+    switch (status) {
+      case 'confirmed':
+        return 'default';
+      case 'pending':
+        return 'secondary';
+      case 'cancelled':
+        return 'destructive';
+      default:
+        return 'outline';
+    }
+  };
+
+  const getPaymentStatusBadgeVariant = (status: string) => {
+    switch (status) {
+      case 'paid':
+        return 'default';
+      case 'pending':
+        return 'secondary';
+      case 'failed':
+        return 'destructive';
+      default:
+        return 'outline';
+    }
+  };
+
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-hms-primary"></div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#006bb8] mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading booking details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!booking) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-8 text-center">
+            <div className="text-red-500 mb-4">
+              <CheckCircle className="w-16 h-16 mx-auto" />
+            </div>
+            <h2 className="text-xl font-semibold mb-2">Booking Not Found</h2>
+            <p className="text-gray-600 mb-4">
+              The booking reference you provided could not be found.
+            </p>
+            <Button onClick={() => router.push('/')}>
+              Return to Home
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      <div className="container mx-auto px-4 max-w-7xl">
-        {/* Progress Bar */}
-        <div className="mb-8">
-          <div className="flex items-center justify-center space-x-8">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-hms-primary text-white rounded-full flex items-center justify-center">
-                <CheckCircle className="w-5 h-5" />
-              </div>
-              <span className="text-sm font-medium text-hms-primary">Your Selection</span>
-            </div>
-            <div className="w-16 h-1 bg-hms-primary"></div>
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-hms-primary text-white rounded-full flex items-center justify-center">
-                <CheckCircle className="w-5 h-5" />
-              </div>
-              <span className="text-sm font-medium text-hms-primary">Your Details</span>
-            </div>
-            <div className="w-16 h-1 bg-hms-primary"></div>
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-hms-primary text-white rounded-full flex items-center justify-center">
-                <span className="text-sm font-bold">3</span>
-              </div>
-              <span className="text-sm font-medium text-hms-primary">Complete Booking</span>
-            </div>
+      <div className="max-w-4xl mx-auto px-4">
+        {/* Success Header */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
+            <CheckCircle className="w-8 h-8 text-green-600" />
           </div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Booking Confirmed!</h1>
+          <p className="text-gray-600">
+            Your reservation has been successfully created. You will receive a confirmation email shortly.
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column - Booking Summary */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Booking Details */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Property Information */}
-            <Card className="overflow-hidden">
-              <div className="relative">
-                <div className="h-64 bg-gradient-to-r from-hms-primary to-hms-secondary flex items-center justify-center">
-                  <div className="text-center text-white">
-                    <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Star className="w-8 h-8" />
-                    </div>
-                    <h2 className="text-2xl font-bold">HMS Hotel</h2>
-                    <p className="text-white/80">Premium Accommodation</p>
-                  </div>
-                </div>
-                <div className="absolute top-4 right-4">
-                  <Badge className="bg-white/90 text-hms-primary">
-                    <Star className="w-4 h-4 mr-1" />
-                    4.8 Excellent
-                  </Badge>
-                </div>
-              </div>
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-900">HMS Hotel</h3>
-                    <div className="flex items-center text-gray-600 mt-1">
-                      <MapPin className="w-4 h-4 mr-1" />
-                      <span>Colombo, Sri Lanka</span>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="flex items-center text-green-600">
-                      <Star className="w-4 h-4 mr-1" />
-                      <span className="font-semibold">4.8</span>
-                    </div>
-                    <p className="text-sm text-gray-500">Excellent - 127 reviews</p>
-                  </div>
-                </div>
-                
-                <div className="flex flex-wrap gap-2">
-                  <Badge variant="secondary" className="flex items-center">
-                    <Wifi className="w-3 h-3 mr-1" />
-                    Free WiFi
-                  </Badge>
-                  <Badge variant="secondary" className="flex items-center">
-                    <Car className="w-3 h-3 mr-1" />
-                    Parking
-                  </Badge>
-                  <Badge variant="secondary" className="flex items-center">
-                    <Coffee className="w-3 h-3 mr-1" />
-                    Breakfast
-                  </Badge>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Booking Details */}
+            {/* Booking Information */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Calendar className="w-5 h-5 mr-2" />
-                  Your Booking Details
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="w-5 h-5" />
+                  Booking Information
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label className="text-sm text-gray-600">Check-in</Label>
-                    <p className="font-semibold">{new Date(bookingData.checkIn).toLocaleDateString('en-US', { 
-                      weekday: 'short', 
-                      day: 'numeric', 
-                      month: 'short', 
-                      year: 'numeric' 
-                    })}</p>
+                    <Label className="text-sm font-medium text-gray-500">Booking Reference</Label>
+                    <p className="text-lg font-semibold text-[#006bb8]">{booking.bookingReference}</p>
                   </div>
                   <div>
-                    <Label className="text-sm text-gray-600">Check-out</Label>
-                    <p className="font-semibold">{new Date(bookingData.checkOut).toLocaleDateString('en-US', { 
-                      weekday: 'short', 
-                      day: 'numeric', 
-                      month: 'short', 
-                      year: 'numeric' 
-                    })}</p>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-sm text-gray-600">Length of stay</Label>
-                    <p className="font-semibold">{bookingData.nights} night{bookingData.nights > 1 ? 's' : ''}</p>
+                    <Label className="text-sm font-medium text-gray-500">Booking Date</Label>
+                    <p className="text-lg">{new Date(booking.bookingDate).toLocaleDateString()}</p>
                   </div>
                   <div>
-                    <Label className="text-sm text-gray-600">Guests</Label>
-                    <p className="font-semibold">{bookingData.adults} adult{bookingData.adults > 1 ? 's' : ''}{bookingData.children > 0 ? `, ${bookingData.children} child${bookingData.children > 1 ? 'ren' : ''}` : ''}</p>
+                    <Label className="text-sm font-medium text-gray-500">Status</Label>
+                    <div className="mt-1">
+                      <Badge variant={getStatusBadgeVariant(booking.status)}>
+                        {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+                      </Badge>
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-gray-500">Payment Status</Label>
+                    <div className="mt-1">
+                      <Badge variant={getPaymentStatusBadgeVariant(booking.paymentStatus)}>
+                        {booking.paymentStatus.charAt(0).toUpperCase() + booking.paymentStatus.slice(1)}
+                      </Badge>
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -362,286 +431,165 @@ export default function BookingConfirmationPage() {
             {/* Room Details */}
             <Card>
               <CardHeader>
-                <CardTitle>{bookingData.roomType} Room</CardTitle>
+                <CardTitle>Room Details</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Room Number</span>
-                    <span className="font-semibold">{bookingData.roomNumber}</span>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-sm font-medium text-gray-500">Room Number</Label>
+                    <p className="text-lg font-semibold">Room {booking.roomId.roomNumber}</p>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Price per night</span>
-                    <span className="font-semibold">LKR {bookingData.pricePerNight.toLocaleString()}</span>
+                  <div>
+                    <Label className="text-sm font-medium text-gray-500">Room Type</Label>
+                    <p className="text-lg">{booking.roomId.roomType.charAt(0).toUpperCase() + booking.roomId.roomType.slice(1)}</p>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Total nights</span>
-                    <span className="font-semibold">{bookingData.nights}</span>
+                  <div>
+                    <Label className="text-sm font-medium text-gray-500">Capacity</Label>
+                    <p className="text-lg">{booking.roomId.capacity} {booking.roomId.capacity === 1 ? 'Guest' : 'Guests'}</p>
                   </div>
-                  <Separator />
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Subtotal</span>
-                    <span className="font-semibold">LKR {bookingData.totalPrice.toLocaleString()}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-600">Tax (10%)</span>
-                    <span className="font-semibold">LKR {bookingData.tax.toLocaleString()}</span>
-                  </div>
-                  <Separator />
-                  <div className="flex items-center justify-between text-lg">
-                    <span className="font-bold">Total</span>
-                    <span className="font-bold text-hms-primary">LKR {bookingData.finalPrice.toLocaleString()}</span>
+                  <div>
+                    <Label className="text-sm font-medium text-gray-500">Total Nights</Label>
+                    <p className="text-lg">{booking.totalNights} {booking.totalNights === 1 ? 'Night' : 'Nights'}</p>
                   </div>
                 </div>
+                
+                {booking.roomId.amenities && booking.roomId.amenities.length > 0 && (
+                  <div className="mt-4">
+                    <Label className="text-sm font-medium text-gray-500">Amenities</Label>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      {booking.roomId.amenities.map((amenity, index) => (
+                        <Badge key={index} variant="outline">
+                          {amenity}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Guest Information */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <User className="w-5 h-5" />
+                  Guest Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label className="text-sm font-medium text-gray-500">Guest Name</Label>
+                    <p className="text-lg">{booking.guestName}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-gray-500">Email</Label>
+                    <p className="text-lg">{booking.guestEmail}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-gray-500">Phone</Label>
+                    <p className="text-lg">{booking.guestPhone}</p>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium text-gray-500">Number of Guests</Label>
+                    <p className="text-lg">{booking.numberOfGuests}</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Special Requests */}
+            {booking.specialRequests && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Special Requests</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-gray-700">{booking.specialRequests}</p>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
+          {/* Booking Summary Sidebar */}
+          <div className="space-y-6">
+            {/* Dates */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Stay Dates</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div>
+                  <Label className="text-sm font-medium text-gray-500">Check-in</Label>
+                  <p className="text-lg font-semibold">{new Date(booking.checkInDate).toLocaleDateString()}</p>
+                  <p className="text-sm text-gray-600">3:00 PM</p>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-500">Check-out</Label>
+                  <p className="text-lg font-semibold">{new Date(booking.checkOutDate).toLocaleDateString()}</p>
+                  <p className="text-sm text-gray-600">11:00 AM</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Payment Summary */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Payment Summary</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex justify-between">
+                  <span>Room Rate ({booking.totalNights} nights)</span>
+                  <span>${(booking.roomPrice * booking.totalNights).toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Tax (10%)</span>
+                  <span>${booking.taxAmount.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between font-semibold text-lg border-t pt-2">
+                  <span>Total</span>
+                  <span>${booking.totalAmount.toFixed(2)}</span>
+                </div>
+                <div className="mt-3">
+                  <Label className="text-sm font-medium text-gray-500">Payment Method</Label>
+                  <p className="text-sm">{booking.paymentMethod.charAt(0).toUpperCase() + booking.paymentMethod.slice(1)}</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Action Buttons */}
+            <Card>
+              <CardContent className="p-4 space-y-3">
+                <Button 
+                  onClick={handleDownloadReceipt}
+                  className="w-full flex items-center gap-2"
+                  variant="outline"
+                >
+                  <Download className="w-4 h-4" />
+                  Download Receipt
+                </Button>
+                <Button 
+                  onClick={() => router.push('/')}
+                  className="w-full flex items-center gap-2"
+                >
+                  <Home className="w-4 h-4" />
+                  Return to Home
+                </Button>
               </CardContent>
             </Card>
 
             {/* Important Information */}
-            <Card className="border-orange-200 bg-orange-50">
+            <Card className="bg-blue-50 border-blue-200">
               <CardContent className="p-4">
-                <div className="flex items-start space-x-3">
-                  <AlertCircle className="w-5 h-5 text-orange-600 mt-0.5" />
-                  <div>
-                    <h4 className="font-semibold text-orange-800">Important Information</h4>
-                    <ul className="text-sm text-orange-700 mt-2 space-y-1">
-                      <li>• No payment required today - pay at the property</li>
-                      <li>• Free cancellation up to 24 hours before check-in</li>
-                      <li>• Check-in time: 2:00 PM - 10:00 PM</li>
-                      <li>• Check-out time: 11:00 AM</li>
-                    </ul>
-                  </div>
-                </div>
+                <h4 className="font-semibold text-blue-900 mb-2">Important Information</h4>
+                <ul className="text-sm text-blue-800 space-y-1">
+                  <li>• Check-in: 3:00 PM</li>
+                  <li>• Check-out: 11:00 AM</li>
+                  <li>• Bring valid ID</li>
+                  <li>• Free cancellation up to 24 hours before check-in</li>
+                </ul>
               </CardContent>
             </Card>
-          </div>
-
-          {/* Right Column - Guest Details Form */}
-          <div className="space-y-6">
-            {/* Guest Details Form */}
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center">
-                    <User className="w-5 h-5 mr-2" />
-                    Guest Details
-                  </CardTitle>
-                  {user && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setGuestDetails(prev => ({
-                          ...prev,
-                          firstName: user.firstName || prev.firstName,
-                          lastName: user.lastName || prev.lastName,
-                          email: user.email || prev.email,
-                          phone: user.phone || prev.phone,
-                          country: user.address?.country || prev.country || 'Sri Lanka',
-                          idType: user.idDetails?.idType || prev.idType,
-                          idNumber: user.idDetails?.idNumber || prev.idNumber
-                        }));
-                        toast({
-                          title: "Profile Data Loaded",
-                          description: "Your profile information has been filled in automatically.",
-                        });
-                      }}
-                      className="text-xs"
-                    >
-                      <User className="w-3 h-3 mr-1" />
-                      Fill from Profile
-                    </Button>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="firstName">First Name *</Label>
-                    <Input
-                      id="firstName"
-                      value={guestDetails.firstName}
-                      onChange={(e) => handleInputChange('firstName', e.target.value)}
-                      placeholder="Enter first name"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="lastName">Last Name *</Label>
-                    <Input
-                      id="lastName"
-                      value={guestDetails.lastName}
-                      onChange={(e) => handleInputChange('lastName', e.target.value)}
-                      placeholder="Enter last name"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <Label htmlFor="email">Email Address *</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={guestDetails.email}
-                    onChange={(e) => handleInputChange('email', e.target.value)}
-                    placeholder="Enter email address"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">Confirmation email will be sent to this address</p>
-                </div>
-
-                <div>
-                  <Label htmlFor="phone">Phone Number *</Label>
-                  <Input
-                    id="phone"
-                    value={guestDetails.phone}
-                    onChange={(e) => handleInputChange('phone', e.target.value)}
-                    placeholder="Enter phone number"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="country">Country/Region *</Label>
-                  <Select value={guestDetails.country} onValueChange={(value) => handleInputChange('country', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select country" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Sri Lanka">Sri Lanka</SelectItem>
-                      <SelectItem value="India">India</SelectItem>
-                      <SelectItem value="United States">United States</SelectItem>
-                      <SelectItem value="United Kingdom">United Kingdom</SelectItem>
-                      <SelectItem value="Australia">Australia</SelectItem>
-                      <SelectItem value="Canada">Canada</SelectItem>
-                      <SelectItem value="Germany">Germany</SelectItem>
-                      <SelectItem value="France">France</SelectItem>
-                      <SelectItem value="Japan">Japan</SelectItem>
-                      <SelectItem value="Singapore">Singapore</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="idType">ID Type *</Label>
-                  <Select value={guestDetails.idType} onValueChange={(value: 'passport' | 'national_id' | 'driving_license') => handleInputChange('idType', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select ID type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="passport">Passport</SelectItem>
-                      <SelectItem value="national_id">National ID</SelectItem>
-                      <SelectItem value="driving_license">Driving License</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="idNumber">ID/Passport Number *</Label>
-                  <Input
-                    id="idNumber"
-                    value={guestDetails.idNumber}
-                    onChange={(e) => handleInputChange('idNumber', e.target.value)}
-                    placeholder={`Enter ${guestDetails.idType.replace('_', ' ')} number`}
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="arrivalTime">Estimated Arrival Time</Label>
-                  <Select value={guestDetails.arrivalTime} onValueChange={(value) => handleInputChange('arrivalTime', value)}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select arrival time" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="14:00">2:00 PM</SelectItem>
-                      <SelectItem value="15:00">3:00 PM</SelectItem>
-                      <SelectItem value="16:00">4:00 PM</SelectItem>
-                      <SelectItem value="17:00">5:00 PM</SelectItem>
-                      <SelectItem value="18:00">6:00 PM</SelectItem>
-                      <SelectItem value="19:00">7:00 PM</SelectItem>
-                      <SelectItem value="20:00">8:00 PM</SelectItem>
-                      <SelectItem value="21:00">9:00 PM</SelectItem>
-                      <SelectItem value="22:00">10:00 PM</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label htmlFor="specialRequests">Special Requests (Optional)</Label>
-                  <Textarea
-                    id="specialRequests"
-                    value={guestDetails.specialRequests}
-                    onChange={(e) => handleInputChange('specialRequests', e.target.value)}
-                    placeholder="Any special requests or notes..."
-                    rows={3}
-                  />
-                </div>
-
-                <div className="space-y-3">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="isMainGuest"
-                      checked={guestDetails.isMainGuest}
-                      onCheckedChange={(checked) => handleInputChange('isMainGuest', checked as boolean)}
-                    />
-                    <Label htmlFor="isMainGuest" className="text-sm">I am the main guest</Label>
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="isBusinessTravel"
-                      checked={guestDetails.isBusinessTravel}
-                      onCheckedChange={(checked) => handleInputChange('isBusinessTravel', checked as boolean)}
-                    />
-                    <Label htmlFor="isBusinessTravel" className="text-sm">This is business travel</Label>
-                  </div>
-
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="marketingConsent"
-                      checked={guestDetails.marketingConsent}
-                      onCheckedChange={(checked) => handleInputChange('marketingConsent', checked as boolean)}
-                    />
-                    <Label htmlFor="marketingConsent" className="text-sm">I agree to receive marketing emails</Label>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Payment Information */}
-            <Card className="border-green-200 bg-green-50">
-              <CardContent className="p-4">
-                <div className="flex items-start space-x-3">
-                  <Shield className="w-5 h-5 text-green-600 mt-0.5" />
-                  <div>
-                    <h4 className="font-semibold text-green-800">No Payment Required Today</h4>
-                    <p className="text-sm text-green-700 mt-1">
-                      You'll pay directly at the property when you arrive. No credit card needed for booking.
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Complete Booking Button */}
-            <Button
-              onClick={handleCompleteBooking}
-              disabled={loading}
-              className="w-full bg-hms-primary hover:bg-hms-primary/90 text-white py-3 text-lg font-semibold"
-            >
-              {loading ? (
-                <>
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                  Processing Booking...
-                </>
-              ) : (
-                <>
-                  <Lock className="w-5 h-5 mr-2" />
-                  Complete Booking
-                </>
-              )}
-            </Button>
-
-            <p className="text-xs text-gray-500 text-center">
-              By completing this booking, you agree to our terms and conditions and privacy policy.
-            </p>
           </div>
         </div>
       </div>

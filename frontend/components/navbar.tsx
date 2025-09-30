@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Menu, X, User, LogOut, Settings } from 'lucide-react';
+import { Menu, X, User, LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { ThemeToggle } from '@/components/theme-toggle';
 
@@ -81,12 +81,6 @@ export default function Navbar({ className }: NavbarProps) {
               Rooms
             </Link>
             <Link 
-              href="/availability" 
-              className="text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary transition-colors duration-200 font-medium"
-            >
-              Book Now
-            </Link>
-            <Link 
               href="/facilities" 
               className="text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary transition-colors duration-200 font-medium"
             >
@@ -103,6 +97,18 @@ export default function Navbar({ className }: NavbarProps) {
               className="text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary transition-colors duration-200 font-medium"
             >
               Contact
+            </Link>
+            <Link 
+              href="/reservations" 
+              className="text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary transition-colors duration-200 font-medium"
+            >
+              Reservations
+            </Link>
+            <Link 
+              href="/booking" 
+              className="bg-hms-primary hover:bg-hms-primary/90 text-white px-4 py-2 rounded-md transition-all duration-200 hover:scale-105 font-medium"
+            >
+              Book Now
             </Link>
             
             {/* Desktop Actions */}
@@ -142,12 +148,6 @@ export default function Navbar({ className }: NavbarProps) {
                       <Link href="/profile" className="cursor-pointer">
                         <User className="mr-2 h-4 w-4" />
                         <span>Profile</span>
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href="/settings" className="cursor-pointer">
-                        <Settings className="mr-2 h-4 w-4" />
-                        <span>Settings</span>
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
@@ -200,13 +200,6 @@ export default function Navbar({ className }: NavbarProps) {
                 Rooms
               </Link>
               <Link
-                href="/availability"
-                className="block px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary hover:bg-gray-50 dark:hover:bg-gray-600 rounded-md transition-colors duration-200"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Book Now
-              </Link>
-              <Link
                 href="/facilities"
                 className="block px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary hover:bg-gray-50 dark:hover:bg-gray-600 rounded-md transition-colors duration-200"
                 onClick={() => setIsMenuOpen(false)}
@@ -226,6 +219,20 @@ export default function Navbar({ className }: NavbarProps) {
                 onClick={() => setIsMenuOpen(false)}
               >
                 Contact
+              </Link>
+              <Link
+                href="/reservations"
+                className="block px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary hover:bg-gray-50 dark:hover:bg-gray-600 rounded-md transition-colors duration-200"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Reservations
+              </Link>
+              <Link
+                href="/booking"
+                className="block px-3 py-2 bg-hms-primary hover:bg-hms-primary/90 text-white rounded-md transition-colors duration-200 text-center font-medium"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Book Now
               </Link>
               {/* Mobile Authentication Section */}
               {loading ? (
@@ -263,13 +270,6 @@ export default function Navbar({ className }: NavbarProps) {
                         onClick={() => setIsMenuOpen(false)}
                       >
                         Profile
-                      </Link>
-                      <Link
-                        href="/settings"
-                        className="block px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary hover:bg-gray-50 dark:hover:bg-gray-600 rounded-md transition-colors duration-200"
-                        onClick={() => setIsMenuOpen(false)}
-                      >
-                        Settings
                       </Link>
                       <button
                         onClick={handleLogout}

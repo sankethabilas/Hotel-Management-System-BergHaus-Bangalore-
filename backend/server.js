@@ -47,6 +47,7 @@ app.use('/api/reservations', require('./routes/reservations'));
 app.use('/api/rooms', require('./routes/rooms'));
 app.use('/api/availability', require('./routes/availability'));
 app.use('/api/booking', require('./routes/booking'));
+app.use('/api/bookings', require('./routes/bookingRoutes'));
 app.use('/api/pdf', require('./routes/pdf'));
 
 // Health check endpoint

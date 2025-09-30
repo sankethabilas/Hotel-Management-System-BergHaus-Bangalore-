@@ -4,7 +4,8 @@ const reservationSchema = new mongoose.Schema({
   guestId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: [true, 'Guest ID is required']
+    required: false, // Allow null for guest bookings
+    default: null
   },
   roomId: {
     type: mongoose.Schema.Types.ObjectId,

@@ -10,6 +10,7 @@ import Navbar from '@/components/navbar';
 import Footer from '@/components/footer';
 import Hero from '@/components/hero';
 import RoomCard from '@/components/room-card';
+import { EnhancedRoomCard } from '@/components/enhanced-room-card';
 import FacilityCard, { iconMap } from '@/components/facility-card';
 import ReviewCarousel from '@/components/review-carousel';
 import { 
@@ -266,11 +267,13 @@ export default function HomePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {rooms.map((room) => (
-              <RoomCard 
+              <EnhancedRoomCard 
                 key={room.id} 
-                {...room}
-                originalPrice={room.originalPrice}
-                discount={room.discount}
+                room={room}
+                onBook={(room) => {
+                  // Handle booking action
+                  window.location.href = `/availability?roomId=${room.id}`;
+                }}
               />
             ))}
           </div>

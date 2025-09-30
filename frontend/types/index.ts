@@ -30,7 +30,7 @@ export interface User {
   };
 }
 
-export type UserRole = 'admin' | 'employee' | 'guest' | 'manager';
+export type UserRole = 'admin' | 'employee' | 'guest' | 'manager' | 'frontdesk';
 
 // Auth Types
 export interface LoginCredentials {
@@ -133,3 +133,47 @@ export interface UserQueryParams {
   search?: string;
   isActive?: boolean;
 }
+
+// Booking Types
+export interface Booking {
+  _id: string;
+  roomId: string;
+  roomNumber: string;
+  roomType: string;
+  guestId: string;
+  guestName: string;
+  guestEmail: string;
+  guestPhone: string;
+  guestIdPassport: string;
+  checkInDate: string;
+  checkOutDate: string;
+  numberOfGuests: number;
+  totalNights: number;
+  arrivalTime?: string;
+  roomPrice: number;
+  totalAmount: number;
+  taxAmount: number;
+  discountAmount: number;
+  paymentMethod: string;
+  paymentStatus: string;
+  paymentReference?: string;
+  status: BookingStatus;
+  specialRequests?: string;
+  cancellationDate?: string;
+  cancellationReason?: string;
+  refundAmount: number;
+  bookingDate: string;
+  lastModified: string;
+  bookingReference: string;
+  confirmationEmailSent: boolean;
+  reminderEmailSent: boolean;
+  room?: {
+    _id: string;
+    roomNumber: string;
+    roomType: string;
+    capacity: number;
+    amenities: string[];
+  };
+}
+
+export type BookingStatus = 'pending' | 'confirmed' | 'checked_in' | 'checked_out' | 'cancelled' | 'no_show';

@@ -54,6 +54,7 @@ roomSchema.index({ roomNumber: 1 });
 roomSchema.index({ roomType: 1 });
 roomSchema.index({ status: 1 });
 
+
 // Virtual for room availability check
 roomSchema.virtual('isAvailable').get(function() {
   return this.status === 'available';

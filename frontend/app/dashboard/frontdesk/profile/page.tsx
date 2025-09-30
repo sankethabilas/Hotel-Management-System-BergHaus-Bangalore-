@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,8 +12,6 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { AuthService } from '@/lib/auth';
-import Navbar from '@/components/navbar';
-import Footer from '@/components/footer';
 import { 
   User, 
   Mail, 
@@ -28,17 +26,17 @@ import {
   CheckCircle,
   AlertCircle,
   Lock,
-  ArrowLeft
+  ArrowLeft,
+  Building,
+  UserCheck
 } from 'lucide-react';
 
-export default function ProfilePage() {
+export default function FrontdeskProfilePage() {
   const { user, updateUser, uploadProfilePicture, isAuthenticated, loading: authLoading } = useAuth();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { toast } = useToast();
   
   const [isEditing, setIsEditing] = useState(false);
-  const [showBackButton, setShowBackButton] = useState(false);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
@@ -71,35 +69,35 @@ export default function ProfilePage() {
       relationship: ''
     }
   });
-
-  // Redirect if not authenticated (only after auth loading is complete)
-  useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      router.push('/auth');
+  const [formErrors, setFormErrors] = useState({
+    firstName: '',
+    lastName: '',
+    phone: '',
+    address: {
+      street: '',
+      city: '',
+      state: '',
+      zipCode: '',
+      country: ''
+    },
+    emergencyContact: {
+      name: '',
+      phone: '',
+      relationship: ''
     }
-  }, [isAuthenticated, authLoading, router]);
+  });
 
-  // Determine if we should show back button based on user role and URL parameter
+  // Redirect if not authenticated or not frontdesk user
   useEffect(() => {
-    if (user && !authLoading) {
-      // Show back button for dashboard users (admin, manager, frontdesk, employee)
-      // or if they came from dashboard (check URL parameter)
-      const isDashboardUser = ['admin', 'manager', 'frontdesk', 'employee'].includes(user.role);
-      const cameFromDashboard = searchParams?.get('from') === 'dashboard';
-      
-      setShowBackButton(isDashboardUser || cameFromDashboard);
+    if (!authLoading && (!isAuthenticated || user?.role !== 'frontdesk')) {
+      router.push('/auth/signin');
     }
-  }, [user, authLoading, searchParams]);
+  }, [isAuthenticated, user?.role, authLoading, router]);
 
   // Initialize form data when user loads
   useEffect(() => {
     if (user) {
-      console.log('User object in profile page:', user);
-      console.log('User profileImage:', user.profileImage);
-      console.log('User firstName:', user.firstName);
-      console.log('User lastName:', user.lastName);
-      console.log('User email:', user.email);
-      console.log('User role:', user.role);
+      console.log('User object in frontdesk profile page:', user);
       setFormData({
         firstName: user.firstName || '',
         lastName: user.lastName || '',
@@ -122,7 +120,55 @@ export default function ProfilePage() {
     }
   }, [user]);
 
+  const validateField = (field: string, value: string): string => {
+    switch (field) {
+      case 'firstName':
+      case 'lastName':
+        return value.trim().length < 2 ? `${field === 'firstName' ? 'First' : 'Last'} name must be at least 2 characters` : '';
+      case 'phone':
+        const phoneRegex = /^[+0][\d]{7,14}$/;
+        return value && !phoneRegex.test(value) ? 'Phone number must start with + or 0 and have 8-15 digits total' : '';
+      case 'address.street':
+        return value.trim().length < 5 ? 'Street address must be at least 5 characters' : '';
+      case 'address.city':
+        return value.trim().length < 2 ? 'City must be at least 2 characters' : '';
+      case 'address.state':
+        return value.trim().length < 2 ? 'State must be at least 2 characters' : '';
+      case 'address.zipCode':
+        return value.trim().length < 3 ? 'ZIP code must be at least 3 characters' : '';
+      case 'address.country':
+        return value.trim().length < 2 ? 'Country must be at least 2 characters' : '';
+      case 'emergencyContact.name':
+        return value.trim().length < 2 ? 'Emergency contact name must be at least 2 characters' : '';
+      case 'emergencyContact.phone':
+        const emergencyPhoneRegex = /^[+0][\d]{7,14}$/;
+        return value && !emergencyPhoneRegex.test(value) ? 'Emergency contact phone must start with + or 0 and have 8-15 digits total' : '';
+      case 'emergencyContact.relationship':
+        return value.trim().length < 2 ? 'Relationship must be at least 2 characters' : '';
+      default:
+        return '';
+    }
+  };
+
   const handleInputChange = (field: string, value: string) => {
+    // Clear error when user starts typing
+    if (field.includes('.')) {
+      const [parent, child] = field.split('.');
+      setFormErrors(prev => ({
+        ...prev,
+        [parent]: {
+          ...(prev[parent as keyof typeof prev] as any),
+          [child]: ''
+        }
+      }));
+    } else {
+      setFormErrors(prev => ({
+        ...prev,
+        [field]: ''
+      }));
+    }
+
+    // Update form data
     if (field.includes('.')) {
       const [parent, child] = field.split('.');
       setFormData(prev => ({
@@ -140,10 +186,51 @@ export default function ProfilePage() {
     }
   };
 
+  const validateForm = (): boolean => {
+    const newErrors = {
+      firstName: validateField('firstName', formData.firstName),
+      lastName: validateField('lastName', formData.lastName),
+      phone: validateField('phone', formData.phone),
+      address: {
+        street: validateField('address.street', formData.address.street),
+        city: validateField('address.city', formData.address.city),
+        state: validateField('address.state', formData.address.state),
+        zipCode: validateField('address.zipCode', formData.address.zipCode),
+        country: validateField('address.country', formData.address.country)
+      },
+      emergencyContact: {
+        name: validateField('emergencyContact.name', formData.emergencyContact.name),
+        phone: validateField('emergencyContact.phone', formData.emergencyContact.phone),
+        relationship: validateField('emergencyContact.relationship', formData.emergencyContact.relationship)
+      }
+    };
+
+    setFormErrors(newErrors);
+
+    // Check if there are any errors
+    const hasErrors = Object.values(newErrors).some(error => 
+      typeof error === 'string' ? error !== '' : 
+      Object.values(error).some(subError => subError !== '')
+    );
+
+    return !hasErrors;
+  };
+
   const handleSave = async () => {
     try {
       setLoading(true);
-      console.log('Saving profile with data:', formData);
+      
+      // Validate form before saving
+      if (!validateForm()) {
+        toast({
+          title: "Validation Error",
+          description: "Please fix the errors in the form before saving.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log('Saving frontdesk profile with data:', formData);
       
       // Remove email from form data as it shouldn't be updated via profile update
       const { email, ...profileData } = formData;
@@ -152,6 +239,24 @@ export default function ProfilePage() {
       const success = await updateUser(profileData);
       if (success) {
         setIsEditing(false);
+        // Clear any existing errors
+        setFormErrors({
+          firstName: '',
+          lastName: '',
+          phone: '',
+          address: {
+            street: '',
+            city: '',
+            state: '',
+            zipCode: '',
+            country: ''
+          },
+          emergencyContact: {
+            name: '',
+            phone: '',
+            relationship: ''
+          }
+        });
       }
     } catch (error) {
       console.error('Error updating profile:', error);
@@ -313,27 +418,6 @@ export default function ProfilePage() {
     return undefined;
   };
 
-  const getRoleBadgeVariant = (role: string) => {
-    switch (role) {
-      case 'admin':
-        return 'destructive';
-      case 'manager':
-        return 'default';
-      case 'frontdesk':
-        return 'secondary';
-      case 'employee':
-        return 'secondary';
-      case 'guest':
-        return 'outline';
-      default:
-        return 'outline';
-    }
-  };
-
-  const handleBackToDashboard = () => {
-    router.push('/dashboard');
-  };
-
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -345,11 +429,11 @@ export default function ProfilePage() {
     );
   }
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated || user?.role !== 'frontdesk') {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-600">Please log in to view your profile.</p>
+          <p className="text-gray-600">Access denied. Please log in as a frontdesk user.</p>
         </div>
       </div>
     );
@@ -367,33 +451,28 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Conditional Navigation */}
-      {showBackButton ? (
-        <div className="bg-white border-b border-gray-200 px-4 py-3">
-          <div className="max-w-7xl mx-auto flex items-center">
-            <Button
-              variant="ghost"
-              onClick={handleBackToDashboard}
-              className="flex items-center space-x-2 text-hms-primary hover:text-hms-secondary"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>Back to Dashboard</span>
-            </Button>
-          </div>
-        </div>
-      ) : (
-        <Navbar />
-      )}
-      
+    <div>
       {/* Hero Section */}
       <section className="relative py-20 bg-gradient-to-br from-hms-primary to-hms-secondary text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h1 className="text-5xl font-bold mb-6">My Profile</h1>
-            <p className="text-xl text-blue-100 max-w-3xl mx-auto">
-              Manage your account information and preferences
-            </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <Button
+                variant="ghost"
+                onClick={() => router.push('/dashboard/frontdesk')}
+                className="text-white hover:bg-white/20 mb-4"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back to Dashboard
+              </Button>
+              <h1 className="text-5xl font-bold mb-6">Frontdesk Profile</h1>
+              <p className="text-xl text-blue-100 max-w-3xl">
+                Manage your frontdesk account information and preferences
+              </p>
+            </div>
+            <div className="hidden md:block">
+              <Building className="w-32 h-32 text-white/20" />
+            </div>
           </div>
         </div>
       </section>
@@ -414,8 +493,6 @@ export default function ProfilePage() {
                         alt={`${user.firstName} ${user.lastName}`}
                         onError={(e) => {
                           console.error('Avatar image failed to load:', e);
-                          console.log('User profileImage:', user.profileImage);
-                          console.log('Full image URL:', getProfileImageUrl());
                         }}
                         onLoad={() => {
                           console.log('Avatar image loaded successfully');
@@ -439,8 +516,9 @@ export default function ProfilePage() {
                   <CardTitle className="text-2xl mt-4">
                     {user.firstName} {user.lastName}
                   </CardTitle>
-                  <Badge variant={getRoleBadgeVariant(user.role)} className="mt-2">
-                    {user.role?.charAt(0).toUpperCase() + user.role?.slice(1)}
+                  <Badge variant="secondary" className="mt-2">
+                    <UserCheck className="w-3 h-3 mr-1" />
+                    Frontdesk Staff
                   </Badge>
                   <p className="text-gray-600 mt-2">{user.email}</p>
                 </CardHeader>
@@ -511,8 +589,17 @@ export default function ProfilePage() {
                         value={formData.firstName}
                         onChange={(e) => handleInputChange('firstName', e.target.value)}
                         disabled={!isEditing}
-                        className="mt-1"
+                        className={`mt-1 transition-all duration-200 ${
+                          formErrors.firstName ? 'animate-shake border-red-500 focus:border-red-500' : 
+                          'border-gray-300 focus:border-hms-primary'
+                        }`}
                       />
+                      {formErrors.firstName && (
+                        <p className="text-sm text-red-600 animate-fade-in flex items-center gap-1 mt-1">
+                          <span>⚠️</span>
+                          {formErrors.firstName}
+                        </p>
+                      )}
                     </div>
                     <div>
                       <Label htmlFor="lastName">Last Name</Label>
@@ -521,8 +608,17 @@ export default function ProfilePage() {
                         value={formData.lastName}
                         onChange={(e) => handleInputChange('lastName', e.target.value)}
                         disabled={!isEditing}
-                        className="mt-1"
+                        className={`mt-1 transition-all duration-200 ${
+                          formErrors.lastName ? 'animate-shake border-red-500 focus:border-red-500' : 
+                          'border-gray-300 focus:border-hms-primary'
+                        }`}
                       />
+                      {formErrors.lastName && (
+                        <p className="text-sm text-red-600 animate-fade-in flex items-center gap-1 mt-1">
+                          <span>⚠️</span>
+                          {formErrors.lastName}
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -536,7 +632,6 @@ export default function ProfilePage() {
                         disabled={true}
                         className="mt-1 bg-gray-50 text-gray-600"
                       />
-                      
                     </div>
                     <div>
                       <Label htmlFor="phone">Phone</Label>
@@ -545,8 +640,17 @@ export default function ProfilePage() {
                         value={formData.phone}
                         onChange={(e) => handleInputChange('phone', e.target.value)}
                         disabled={!isEditing}
-                        className="mt-1"
+                        className={`mt-1 transition-all duration-200 ${
+                          formErrors.phone ? 'animate-shake border-red-500 focus:border-red-500' : 
+                          'border-gray-300 focus:border-hms-primary'
+                        }`}
                       />
+                      {formErrors.phone && (
+                        <p className="text-sm text-red-600 animate-fade-in flex items-center gap-1 mt-1">
+                          <span>⚠️</span>
+                          {formErrors.phone}
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -558,7 +662,7 @@ export default function ProfilePage() {
                       value={formData.dateOfBirth}
                       onChange={(e) => handleInputChange('dateOfBirth', e.target.value)}
                       disabled={!isEditing}
-                      className="mt-1"
+                      className="mt-1 transition-all duration-200"
                     />
                   </div>
 
@@ -576,7 +680,7 @@ export default function ProfilePage() {
                           value={formData.address.street}
                           onChange={(e) => handleInputChange('address.street', e.target.value)}
                           disabled={!isEditing}
-                          className="mt-1"
+                          className="mt-1 transition-all duration-200"
                         />
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -587,7 +691,7 @@ export default function ProfilePage() {
                             value={formData.address.city}
                             onChange={(e) => handleInputChange('address.city', e.target.value)}
                             disabled={!isEditing}
-                            className="mt-1"
+                            className="mt-1 transition-all duration-200"
                           />
                         </div>
                         <div>
@@ -597,7 +701,7 @@ export default function ProfilePage() {
                             value={formData.address.state}
                             onChange={(e) => handleInputChange('address.state', e.target.value)}
                             disabled={!isEditing}
-                            className="mt-1"
+                            className="mt-1 transition-all duration-200"
                           />
                         </div>
                         <div>
@@ -607,7 +711,7 @@ export default function ProfilePage() {
                             value={formData.address.zipCode}
                             onChange={(e) => handleInputChange('address.zipCode', e.target.value)}
                             disabled={!isEditing}
-                            className="mt-1"
+                            className="mt-1 transition-all duration-200"
                           />
                         </div>
                       </div>
@@ -618,7 +722,7 @@ export default function ProfilePage() {
                           value={formData.address.country}
                           onChange={(e) => handleInputChange('address.country', e.target.value)}
                           disabled={!isEditing}
-                          className="mt-1"
+                          className="mt-1 transition-all duration-200"
                         />
                       </div>
                     </div>
@@ -638,7 +742,7 @@ export default function ProfilePage() {
                           value={formData.emergencyContact.name}
                           onChange={(e) => handleInputChange('emergencyContact.name', e.target.value)}
                           disabled={!isEditing}
-                          className="mt-1"
+                          className="mt-1 transition-all duration-200"
                         />
                       </div>
                       <div>
@@ -648,7 +752,7 @@ export default function ProfilePage() {
                           value={formData.emergencyContact.phone}
                           onChange={(e) => handleInputChange('emergencyContact.phone', e.target.value)}
                           disabled={!isEditing}
-                          className="mt-1"
+                          className="mt-1 transition-all duration-200"
                         />
                       </div>
                     </div>
@@ -659,26 +763,26 @@ export default function ProfilePage() {
                         value={formData.emergencyContact.relationship}
                         onChange={(e) => handleInputChange('emergencyContact.relationship', e.target.value)}
                         disabled={!isEditing}
-                        className="mt-1"
+                        className="mt-1 transition-all duration-200"
                       />
                     </div>
                   </div>
 
                   {/* Change Password Section */}
-                  <div key="change-password-section" className="border-t pt-6">
+                  <div className="border-t pt-6">
                     <h3 className="text-lg font-semibold mb-4 flex items-center space-x-2">
                       <Lock className="w-5 h-5" />
                       <span>Change Password</span>
                     </h3>
                     <div className="space-y-4">
-                      <div key="current-password-field">
+                      <div>
                         <Label htmlFor="currentPassword">Current Password</Label>
                         <Input
                           id="currentPassword"
                           type="password"
                           value={passwordData.currentPassword}
                           onChange={(e) => handlePasswordChange('currentPassword', e.target.value)}
-                          className={`mt-1 ${
+                          className={`mt-1 transition-all duration-200 ${
                             passwordErrors.currentPassword ? 'animate-shake border-red-500 focus:border-red-500' : 
                             'border-gray-300 focus:border-hms-primary'
                           }`}
@@ -691,14 +795,14 @@ export default function ProfilePage() {
                           </p>
                         )}
                       </div>
-                      <div key="new-password-field">
+                      <div>
                         <Label htmlFor="newPassword">New Password</Label>
                         <Input
                           id="newPassword"
                           type="password"
                           value={passwordData.newPassword}
                           onChange={(e) => handlePasswordChange('newPassword', e.target.value)}
-                          className={`mt-1 ${
+                          className={`mt-1 transition-all duration-200 ${
                             passwordErrors.newPassword ? 'animate-shake border-red-500 focus:border-red-500' : 
                             'border-gray-300 focus:border-hms-primary'
                           }`}
@@ -711,14 +815,14 @@ export default function ProfilePage() {
                           </p>
                         )}
                       </div>
-                      <div key="confirm-password-field">
+                      <div>
                         <Label htmlFor="confirmPassword">Confirm New Password</Label>
                         <Input
                           id="confirmPassword"
                           type="password"
                           value={passwordData.confirmPassword}
                           onChange={(e) => handlePasswordChange('confirmPassword', e.target.value)}
-                          className={`mt-1 ${
+                          className={`mt-1 transition-all duration-200 ${
                             passwordErrors.confirmPassword ? 'animate-shake border-red-500 focus:border-red-500' : 
                             'border-gray-300 focus:border-hms-primary'
                           }`}
@@ -732,10 +836,9 @@ export default function ProfilePage() {
                         )}
                       </div>
                       <Button
-                        key="change-password-button"
                         onClick={handleChangePassword}
                         disabled={passwordLoading || !passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword}
-                        className="bg-hms-primary hover:bg-hms-primary/90"
+                        className="bg-hms-primary hover:bg-hms-primary/90 transition-all duration-200"
                       >
                         {passwordLoading ? (
                           <>
@@ -753,22 +856,21 @@ export default function ProfilePage() {
                   </div>
 
                   {/* Save Button */}
-                  <div key="save-buttons-container" className="pt-6 border-t">
+                  <div className="pt-6 border-t">
                     {isEditing ? (
                       <div className="flex justify-end space-x-4">
                         <Button
-                          key="cancel-button"
                           variant="outline"
                           onClick={() => setIsEditing(false)}
                           disabled={loading}
+                          className="transition-all duration-200"
                         >
                           Cancel
                         </Button>
                         <Button
-                          key="save-button"
                           onClick={handleSave}
                           disabled={loading}
-                          className="bg-hms-primary hover:bg-hms-primary/90"
+                          className="bg-hms-primary hover:bg-hms-primary/90 transition-all duration-200"
                         >
                           {loading ? (
                             <>
@@ -791,9 +893,6 @@ export default function ProfilePage() {
           </div>
         </div>
       </section>
-
-      {/* Conditional Footer - only show for guest users */}
-      {!showBackButton && <Footer />}
     </div>
   );
 }

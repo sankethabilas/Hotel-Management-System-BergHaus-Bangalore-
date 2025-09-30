@@ -46,6 +46,7 @@ const protect = async (req, res, next) => {
 
       // Add user info to request
       req.user = {
+        id: user._id,
         userId: user._id,
         email: user.email,
         role: user.role
@@ -100,6 +101,7 @@ const optionalAuth = async (req, res, next) => {
         
         if (user && user.isActive) {
           req.user = {
+            id: user._id,
             userId: user._id,
             email: user.email,
             role: user.role

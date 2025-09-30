@@ -1,38 +1,38 @@
 const pdfService = require('../services/pdfService');
-const Reservation = require('../models/Reservation');
+const Booking = require('../models/Booking');
 const Room = require('../models/Room');
 const User = require('../models/User');
 
 // @desc    Generate and download booking confirmation PDF
-// @route   GET /api/pdf/booking/:reservationId
+// @route   GET /api/pdf/booking/:bookingId
 // @access  Private
 const downloadBookingConfirmation = async (req, res) => {
   try {
-    const { reservationId } = req.params;
+    const { bookingId } = req.params;
     const userId = req.user.userId || req.user.id;
 
-    console.log('Generating PDF for reservation:', reservationId);
+    console.log('Generating PDF for booking:', bookingId);
     console.log('User ID:', userId);
 
-    // Find the reservation
-    const reservation = await Reservation.findById(reservationId);
-    if (!reservation) {
+    // Find the booking
+    const booking = await Booking.findById(bookingId);
+    if (!booking) {
       return res.status(404).json({
         success: false,
-        message: 'Reservation not found'
+        message: 'Booking not found'
       });
     }
 
-    // Check if user owns this reservation (for security)
-    if (reservation.guestId.toString() !== userId.toString()) {
+    // Check if user owns this booking (for security)
+    if (booking.guestId.toString() !== userId.toString()) {
       return res.status(403).json({
         success: false,
-        message: 'Access denied. This reservation does not belong to you.'
+        message: 'Access denied. This booking does not belong to you.'
       });
     }
 
     // Get room details
-    const room = await Room.findById(reservation.roomId);
+    const room = await Room.findById(booking.roomId);
     if (!room) {
       return res.status(404).json({
         success: false,
@@ -41,7 +41,7 @@ const downloadBookingConfirmation = async (req, res) => {
     }
 
     // Get user details
-    const user = await User.findById(reservation.guestId);
+    const user = await User.findById(booking.guestId);
     if (!user) {
       return res.status(404).json({
         success: false,
@@ -51,7 +51,7 @@ const downloadBookingConfirmation = async (req, res) => {
 
     // Prepare booking data for PDF
     const bookingData = {
-      bookingReference: `HMS-${reservation._id.toString().slice(-6).toUpperCase()}`,
+      bookingReference: booking.bookingReference,
       guestDetails: {
         firstName: user.firstName,
         lastName: user.lastName,
@@ -60,8 +60,8 @@ const downloadBookingConfirmation = async (req, res) => {
         country: user.address?.country || 'Not specified',
         idType: user.idDetails?.idType,
         idNumber: user.idDetails?.idNumber,
-        arrivalTime: reservation.arrivalTime || null,
-        specialRequests: reservation.specialRequests
+        arrivalTime: booking.specialRequests || null,
+        specialRequests: booking.specialRequests
       },
       roomDetails: {
         roomNumber: room.roomNumber,
@@ -70,12 +70,12 @@ const downloadBookingConfirmation = async (req, res) => {
         pricePerNight: room.pricePerNight,
         amenities: room.amenities
       },
-      checkIn: reservation.checkIn,
-      checkOut: reservation.checkOut,
-      totalAmount: reservation.totalPrice,
-      status: reservation.status,
-      paymentStatus: reservation.paymentStatus,
-      createdAt: reservation.createdAt
+      checkIn: booking.checkInDate,
+      checkOut: booking.checkOutDate,
+      totalAmount: booking.totalAmount,
+      status: booking.status,
+      paymentStatus: booking.paymentStatus,
+      createdAt: booking.createdAt
     };
 
     console.log('Generating PDF with data:', bookingData);

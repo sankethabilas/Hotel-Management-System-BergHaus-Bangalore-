@@ -27,8 +27,10 @@ const api: AxiosInstance = axios.create({
 api.interceptors.request.use(
   (config) => {
     const token = Cookies.get('token');
+    console.log('API Request interceptor - Token:', token ? 'Present' : 'Missing');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      console.log('Added Authorization header:', config.headers.Authorization);
     }
     return config;
   },
@@ -40,10 +42,13 @@ api.interceptors.request.use(
 // Response interceptor to handle errors
 api.interceptors.response.use(
   (response) => {
+    console.log('API Response interceptor - Success:', response.status, response.config.url);
     return response;
   },
   (error) => {
+    console.log('API Response interceptor - Error:', error.response?.status, error.config?.url, error.message);
     if (error.response?.status === 401) {
+      console.log('401 Unauthorized - removing token and redirecting');
       // Token expired or invalid
       Cookies.remove('token');
       if (typeof window !== 'undefined') {
@@ -253,9 +258,34 @@ export const bookingAPI = {
     bookings: any[];
     total: number;
   }>> => {
+    console.log('Making API call to /booking/user/bookings');
     const response: AxiosResponse<ApiResponse<any>> = await api.get('/booking/user/bookings');
+    console.log('API response received:', response.data);
     return response.data;
   },
+
+  // Cancel a booking
+  cancelBooking: async (bookingId: string): Promise<ApiResponse<{
+    reservation: {
+      id: string;
+      status: string;
+      bookingReference: string;
+    };
+  }>> => {
+    const response: AxiosResponse<ApiResponse<any>> = await api.post(`/booking/${bookingId}/cancel`);
+    return response.data;
+  },
+
+  // Update arrival time
+  updateArrivalTime: async (bookingId: string, arrivalTime: string): Promise<ApiResponse<{
+    booking: any;
+  }>> => {
+    const response: AxiosResponse<ApiResponse<any>> = await api.put(`/booking/${bookingId}/arrival-time`, {
+      arrivalTime
+    });
+    return response.data;
+  },
+
 };
 
 // Utility functions

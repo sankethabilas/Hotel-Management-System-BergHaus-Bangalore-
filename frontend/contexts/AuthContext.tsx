@@ -99,7 +99,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
         
         // Small delay for better UX
         setTimeout(() => {
-          router.push('/');
+          // Role-based redirect - only redirect if logging in from auth pages
+          if (window.location.pathname.includes('/auth/')) {
+            if (result.user?.role === 'frontdesk' || result.user?.role === 'admin' || result.user?.role === 'manager') {
+              router.push('/dashboard');
+            } else {
+              router.push('/');
+            }
+          }
+          // If logging in from other pages, don't redirect (let users stay where they are)
         }, 1000);
         return true;
       } else {
