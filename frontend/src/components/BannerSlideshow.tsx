@@ -38,7 +38,7 @@ const BannerSlideshow: React.FC = () => {
     if (banners.length > 1 && !isPaused) {
       const interval = setInterval(() => {
         setCurrentSlide((prev) => (prev + 1) % banners.length);
-      }, 5000); // Change slide every 5 seconds
+      }, 5000);
 
       return () => clearInterval(interval);
     }
@@ -132,7 +132,6 @@ const BannerSlideshow: React.FC = () => {
     );
   }
 
-  // Ensure currentSlide is within bounds
   const safeCurrentSlide = Math.min(currentSlide, Math.max(0, banners.length - 1));
   const currentBanner = banners[safeCurrentSlide];
 

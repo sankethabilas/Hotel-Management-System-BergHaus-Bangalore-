@@ -1,85 +1,110 @@
-# BergHaus Food & Beverage Management System
+# BergHaus Hotel Management System - Food & Beverage Module
 
-A comprehensive hotel management system focusing on food and beverage operations.
+A comprehensive food and beverage management system for the BergHaus Hotel, built with modern web technologies.
 
-## Project Structure
+## Features
 
-### Frontend (Next.js)
-- **frontend/**: Next.js application with TypeScript and Tailwind CSS
-- **pages/**: Route-based pages for different user roles
-- **components/**: Reusable UI components
-- **hooks/**: Custom React hooks for state management
-- **utils/**: Utility functions and API helpers
+### Admin Dashboard
+- **Menu Management**: Create, update, and delete menu items with categories
+- **Order Management**: Track and update order statuses
+- **Banner Management**: Create and manage promotional banners
+- **Promotion Management**: Set up discounts, seasonal offers, and time-based promotions
+- **Reports & Analytics**: Generate sales reports, waste analysis, and ingredient forecasts
 
-### Backend (Express.js)
-- **backend/**: Express.js API server
-- **routes/**: API endpoint definitions
-- **models/**: MongoDB schemas with Mongoose
-- **middleware/**: Authentication and validation middleware
-- **controllers/**: Business logic handlers
+### Guest Features
+- **Menu Browsing**: View categorized menu items with meal-time suggestions
+- **Order Customization**: Customize orders with dietary restrictions and preferences
+- **Order Tracking**: View order history and cancel pending orders
+- **Promotional Offers**: View active promotions and discounts
+
+### Technical Features
+- **Real-time Updates**: Live order status updates
+- **Image Management**: Upload and manage menu item and banner images
+- **Responsive Design**: Mobile-friendly interface
+- **Authentication**: Secure admin login system
 
 ## Tech Stack
 
 - **Frontend**: Next.js 14, TypeScript, Tailwind CSS
 - **Backend**: Express.js, Node.js
-- **Database**: MongoDB with Mongoose ODM
-- **Authentication**: JWT with bcrypt
-- **API**: RESTful APIs with JSON
-- **Deployment**: Vercel (frontend), Render/Heroku (backend), MongoDB Atlas
+- **Database**: MongoDB with Mongoose
+- **Authentication**: JWT tokens
+- **Image Upload**: Multer
 
-## Features
-
-### Guest Features
-- Browse menu with images and descriptions
-- Place orders from rooms
-- Customize orders (dietary requests, portions)
-- Track order status in real-time
-- View order history
-- Provide feedback
-
-### Kitchen Staff Features
-- View real-time orders
-- Update order status
-- Manage menu items
-- Handle in-room dining requests
-- Generate sales reports
-- Track food waste
-
-### Admin Features
-- Dynamic pricing management
-- Menu categorization
-- Promotions and offers
-- Comprehensive reporting
-- Inventory integration
-
-## Getting Started
-
-### Prerequisites
-- Node.js 18+
-- MongoDB Atlas account
-- Git
-
-### Installation
+## Installation
 
 1. Clone the repository
-2. Install frontend dependencies: `cd client && npm install`
-3. Install backend dependencies: `cd server && npm install`
-4. Set up environment variables
-5. Run development servers
+2. Install dependencies:
+   ```bash
+   npm run install-all
+   ```
 
-## Development Guidelines
+3. Start the development servers:
+   ```bash
+   npm run dev
+   ```
 
-- Use TypeScript for type safety
-- Follow REST API conventions
-- Implement proper error handling
-- Use environment variables
-- Follow component-based architecture
-- Ensure responsive design
-- Write clean, documented code
+4. Access the application:
+   - Frontend: http://localhost:3000
+   - Backend API: http://localhost:5001
 
-## Student Information
+## Usage
 
-- **Student**: Jayavi T.P.W.N (IT23682382)
-- **Course**: Information Technology Project (IT2080) - 2025
-- **Group**: ITP25_B2_W235
-- **Module**: Food & Beverage Management
+### Admin Access
+- Login: http://localhost:3000/login
+- Default credentials: admin / admin123
+
+### Guest Access
+- Menu: http://localhost:3000/guest/menu
+- Orders: http://localhost:3000/guest/orders
+
+## Project Structure
+
+```
+berghaus/
+├── frontend/          # Next.js application
+├── backend/           # Express.js API server
+└── package.json       # Root package configuration
+```
+
+## API Endpoints
+
+### Authentication
+- `POST /api/admin/login` - Admin login
+- `GET /api/admin/profile` - Get admin profile
+
+### Menu Management
+- `GET /api/menu` - Get all menu items
+- `POST /api/admin/menu` - Create menu item
+- `PUT /api/admin/menu/:id` - Update menu item
+- `DELETE /api/admin/menu/:id` - Delete menu item
+
+### Order Management
+- `GET /api/orders` - Get all orders
+- `POST /api/orders` - Create new order
+- `PUT /api/orders/:id/status` - Update order status
+
+### Reports
+- `GET /api/reports/daily-sales` - Daily sales report
+- `GET /api/reports/food-waste` - Food waste analysis
+- `GET /api/reports/ingredient-forecast` - Ingredient usage forecast
+
+## Development
+
+### Running Tests
+```bash
+npm run test
+```
+
+### Building for Production
+```bash
+npm run build
+```
+
+## Author
+
+Jayavi T.P.W.N - IT23682382
+
+## License
+
+MIT

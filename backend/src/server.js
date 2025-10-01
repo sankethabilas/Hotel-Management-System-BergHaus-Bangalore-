@@ -5,7 +5,6 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
-// Import models
 const Admin = require('./models/Admin');
 const MenuItem = require('./models/MenuItem');
 const Order = require('./models/Order');
@@ -15,9 +14,8 @@ const Promotion = require('./models/Promotion');
 const app = express();
 const PORT = 5001;
 
-// MongoDB connection
 let isMongoConnected = false;
-let tempAdmins = []; // Temporary in-memory storage for testing
+let tempAdmins = [];
 
 const connectDB = async () => {
   try {
@@ -29,16 +27,14 @@ const connectDB = async () => {
     };
     
     await mongoose.connect(mongoURI, opts);
-    console.log('✅ MongoDB Connected:', mongoose.connection.host);
+    console.log('MongoDB Connected:', mongoose.connection.host);
     isMongoConnected = true;
   } catch (error) {
-    console.error('❌ MongoDB connection error:', error);
-    console.log('📝 Server will continue with in-memory storage for testing');
+    console.error('MongoDB connection error:', error);
+    console.log('Server will continue with in-memory storage for testing');
     isMongoConnected = false;
   }
 };
-
-// Admin model is imported at the top
 
 // Menu Schema
 const menuSchema = new mongoose.Schema({
@@ -124,14 +120,10 @@ const menuSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// MenuItem model is imported at the top
 
-// Order model is imported at the top
 
-// In-memory menu items for testing
 let tempMenuItems = [];
 
-// Connect to database (async, non-blocking)
 connectDB().catch(error => {
   console.error('Database connection failed:', error);
   console.log('Continuing with in-memory storage...');
@@ -140,7 +132,6 @@ connectDB().catch(error => {
 app.use(cors());
 app.use(express.json());
 
-// Serve static files from uploads directory
 app.use('/uploads', express.static('uploads'));
 
 // Import upload middleware
@@ -156,7 +147,6 @@ app.post('/api/upload', upload.single('image'), (req, res) => {
       });
     }
 
-    // Return the image path
     const imagePath = `/uploads/${req.file.filename}`;
     
     res.json({
@@ -456,7 +446,6 @@ app.get('/api/admin/profile', async (req, res) => {
         });
       }
 
-      // Return admin without password
       const { password, ...adminData } = admin;
       res.json({
         success: true,
@@ -472,7 +461,6 @@ app.get('/api/admin/profile', async (req, res) => {
   }
 });
 
-// Debug endpoint to check in-memory admins
 app.get('/api/debug/admins', (req, res) => {
   res.json({
     success: true,
@@ -489,10 +477,8 @@ app.get('/api/debug/admins', (req, res) => {
   });
 });
 
-// Debug endpoint to manually create test admin
 app.get('/api/debug/create-admin', async (req, res) => {
   try {
-    // Check if admin already exists
     const existingAdmin = tempAdmins.find(admin => admin.email === 'abcd@gmail.com');
     if (existingAdmin) {
       return res.json({
@@ -570,7 +556,6 @@ const authenticate = async (req, res, next) => {
 
 // MENU API ENDPOINTS
 
-// Get all menu items with optional filtering
 app.get('/api/menu', async (req, res) => {
   try {
     const { category, isAvailable, search, sort } = req.query;
@@ -2126,9 +2111,9 @@ app.get('/api/reports/ingredient-forecast', authenticate, async (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log('🚀 BergHaus F&B Server running on port ' + PORT);
-  console.log('📋 Health check: http://localhost:' + PORT + '/health');
-  console.log('🧪 API test: http://localhost:' + PORT + '/api/test');
-  console.log('👤 Admin register: POST http://localhost:' + PORT + '/api/admin/register');
-  console.log('🔐 Admin login: POST http://localhost:' + PORT + '/api/admin/login');
+  console.log('BergHaus F&B Server running on port ' + PORT);
+  console.log('Health check: http://localhost:' + PORT + '/health');
+  console.log('API test: http://localhost:' + PORT + '/api/test');
+  console.log('Admin register: POST http://localhost:' + PORT + '/api/admin/register');
+  console.log('Admin login: POST http://localhost:' + PORT + '/api/admin/login');
 });
