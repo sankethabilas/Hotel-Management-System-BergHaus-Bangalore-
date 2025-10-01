@@ -1,35 +1,23 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
-import Layout from "@/components/Layout";
+import '@/styles/globals.css'
+import { CartProvider } from '@/contexts/CartContext'
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-export const metadata: Metadata = {
-  title: "Staff Management System",
-  description: "Complete staff management solution with CRUD operations",
-};
+export const metadata = {
+  title: 'BergHaus Hotel Management System',
+  description: 'Food & Beverage Management Module',
+}
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: {
+  children: React.ReactNode
+}) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <Layout>{children}</Layout>
+      <body>
+        <CartProvider>
+          {children}
+        </CartProvider>
       </body>
     </html>
-  );
+  )
 }

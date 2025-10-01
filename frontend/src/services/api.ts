@@ -1,101 +1,232 @@
-import { Staff, StaffFormData, ApiResponse } from '@/types/staff';
+// API Configuration - Express.js Backend
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api'
 
-const API_BASE_URL = 'http://localhost:5000/staff';
+// API Service Class
+class ApiService {
+  private baseUrl: string
+  private token: string | null = null
 
-class StaffAPI {
-  private async request<T>(
-    endpoint: string,
-    options: RequestInit = {}
-  ): Promise<T> {
-    const url = `${API_BASE_URL}${endpoint}`;
-    
-    const config: RequestInit = {
-      headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
-      // Add timeout to prevent hanging requests
-      signal: AbortSignal.timeout(10000), // 10 second timeout
-      ...options,
-    };
-
-    try {
-      const response = await fetch(url, config);
-      
-      if (!response.ok) {
-        let errorData;
-        try {
-          errorData = await response.json();
-        } catch {
-          errorData = { message: `HTTP error! status: ${response.status}` };
-        }
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-      }
-
-      // Handle empty responses
-      const text = await response.text();
-      if (!text) {
-        return {} as T;
-      }
-      
-      try {
-        return JSON.parse(text);
-      } catch (parseError) {
-        console.error('JSON parse error:', parseError, 'Response text:', text);
-        throw new Error('Invalid JSON response from server');
-      }
-    } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
-        throw new Error('Request timeout - server took too long to respond');
-      }
-      console.error('API request failed:', error);
-      throw error;
+  constructor() {
+    this.baseUrl = API_BASE_URL
+    // Try to get token from localStorage on client side
+    if (typeof window !== 'undefined') {
+      this.token = localStorage.getItem('auth_token')
     }
   }
 
-  // Get all staff
-  async getAllStaff(): Promise<Staff[]> {
-    const response = await this.request<ApiResponse<Staff[]>>('/');
-    return response.staff || [];
+  // Set authentication token
+  setToken(token: string) {
+    this.token = token
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('auth_token', token)
+    }
   }
 
-  // Get staff by ID
-  async getStaffById(id: string): Promise<Staff> {
-    const response = await this.request<ApiResponse<Staff>>(`/${id}`);
-    return response.staff!;
+  // Clear authentication token
+  clearToken() {
+    this.token = null
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('auth_token')
+    }
   }
 
-  // Create new staff
-  async createStaff(staffData: StaffFormData): Promise<Staff> {
-    const response = await this.request<ApiResponse<Staff>>('/', {
+  // Generic fetch wrapper with error handling
+  private async fetchWithAuth(endpoint: string, options: RequestInit = {}) {
+    const url = `${this.baseUrl}${endpoint}`
+    console.log(`🌐 API: Making request to ${url}`);
+    console.log(`🌐 API: Request body:`, options.body);
+    
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      ...(options.headers as Record<string, string>),
+    }
+
+    // Add authorization header if token exists
+    if (this.token) {
+      headers['Authorization'] = `Bearer ${this.token}`
+    }
+
+    try {
+      const response = await fetch(url, {
+        ...options,
+        headers,
+      })
+
+      const data = await response.json()
+      console.log(`🌐 API: Response from ${endpoint}:`, {
+        status: response.status,
+        ok: response.ok,
+        data
+      });
+
+      if (!response.ok) {
+        throw new Error(data.message || `HTTP error! status: ${response.status}`)
+      }
+
+      return data
+    } catch (error) {
+      console.error(`🔥 API Error - ${endpoint}:`, error)
+      throw error
+    }
+  }
+
+  // Auth API methods
+  async login(credentials: { username: string; password: string }) {
+    const response = await this.fetchWithAuth('/admin/login', {
       method: 'POST',
-      body: JSON.stringify(staffData),
-    });
-    return response.staff!;
+      body: JSON.stringify(credentials),
+    })
+
+    if (response.success && response.data?.token) {
+      this.setToken(response.data.token)
+    }
+
+    return response
   }
 
-  // Update staff
-  async updateStaff(id: string, staffData: StaffFormData): Promise<Staff> {
-    const response = await this.request<ApiResponse<Staff>>(`/${id}`, {
+  async setupAdmin(adminData: {
+    username: string
+    password: string
+    email: string
+    fullName: string
+  }) {
+    const response = await this.fetchWithAuth('/admin/register', {
+      method: 'POST',
+      body: JSON.stringify(adminData),
+    })
+
+    if (response.success && response.data?.token) {
+      this.setToken(response.data.token)
+    }
+
+    return response
+  }
+
+  async getProfile() {
+    return this.fetchWithAuth('/admin/profile')
+  }
+
+  async logout() {
+    this.clearToken()
+    // Note: Server doesn't need logout call since JWT is stateless
+    return { success: true }
+  }
+
+  // Menu API methods
+  async getMenuItems(params?: {
+    category?: string
+    isAvailable?: boolean
+    search?: string
+    sort?: string
+  }) {
+    const searchParams = new URLSearchParams()
+    
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          searchParams.append(key, String(value))
+        }
+      })
+    }
+
+    const queryString = searchParams.toString()
+    const endpoint = `/menu${queryString ? `?${queryString}` : ''}`
+    
+    return this.fetchWithAuth(endpoint)
+  }
+
+  async getMenuItemById(id: string) {
+    return this.fetchWithAuth(`/menu/${id}`)
+  }
+
+  async createMenuItem(menuItem: {
+    name: string
+    description: string
+    price: number
+    category: string
+    preparationTime: number
+    isVegetarian?: boolean
+    isVegan?: boolean
+    isGlutenFree?: boolean
+    spiceLevel?: string
+    ingredients?: string[]
+    allergens?: string[]
+    tags?: string[]
+    calories?: number
+    isPopular?: boolean
+    discount?: number
+  }) {
+    return this.fetchWithAuth('/menu', {
+      method: 'POST',
+      body: JSON.stringify(menuItem),
+    })
+  }
+
+  async updateMenuItem(id: string, menuItem: Partial<any>) {
+    return this.fetchWithAuth(`/menu/${id}`, {
       method: 'PUT',
-      body: JSON.stringify(staffData),
-    });
-    return response.staff!;
+      body: JSON.stringify(menuItem),
+    })
   }
 
-  // Delete staff
-  async deleteStaff(id: string): Promise<Staff> {
-    const response = await this.request<ApiResponse<Staff>>(`/${id}`, {
+  async deleteMenuItem(id: string) {
+    return this.fetchWithAuth(`/menu/${id}`, {
       method: 'DELETE',
-    });
-    return response.staff!;
+    })
   }
 
-  // Get staff by employee ID (for employee login)
-  async getStaffByEmployeeId(employeeId: string): Promise<Staff> {
-    const response = await this.request<ApiResponse<Staff>>(`/employee/${employeeId}`);
-    return response.staff!;
+  async toggleMenuItemAvailability(id: string) {
+    return this.fetchWithAuth(`/menu/${id}/toggle-availability`, {
+      method: 'PATCH',
+    })
   }
 }
 
-export const staffAPI = new StaffAPI();
+// Create and export singleton instance
+const apiService = new ApiService()
+export default apiService
+
+// Export types for TypeScript
+export interface ApiResponse<T = any> {
+  success: boolean
+  message?: string
+  data?: T
+  count?: number
+  token?: string
+  admin?: any
+}
+
+export interface MenuItem {
+  _id: string
+  name: string
+  description: string
+  price: number
+  category: 'starters' | 'mains' | 'desserts' | 'beverages' | 'specials'
+  isAvailable: boolean
+  image?: string
+  ingredients: string[]
+  allergens: string[]
+  isVegetarian: boolean
+  isVegan: boolean
+  isGlutenFree: boolean
+  spiceLevel: 'none' | 'mild' | 'medium' | 'hot' | 'very-hot'
+  preparationTime: number
+  calories?: number
+  isPopular: boolean
+  discount?: number
+  tags: string[]
+  createdAt: string
+  updatedAt: string
+}
+
+export interface AdminUser {
+  _id: string
+  username: string
+  email: string
+  fullName: string
+  role: 'admin' | 'manager' | 'kitchen'
+  isActive: boolean
+  lastLogin?: string
+  createdAt: string
+  updatedAt: string
+}
