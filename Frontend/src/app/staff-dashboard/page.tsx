@@ -411,66 +411,72 @@ export default function StaffDashboard() {
                   <div className="space-y-3">
                     
                     {/* QR Code Attendance */}
-                    <button className="w-full bg-blue-600 text-white rounded-lg p-4 hover:bg-blue-700 transition-colors">
-                      <div className="flex items-center space-x-3">
-                        <div className="p-2 bg-blue-500 rounded-lg">
-                          <QrCodeIcon className="h-5 w-5" />
+                    <a href="http://localhost:3000/scan" className="block w-full">
+                      <button className="w-full bg-blue-600 text-white rounded-lg p-4 hover:bg-blue-700 transition-colors">
+                        <div className="flex items-center space-x-3">
+                          <div className="p-2 bg-blue-500 rounded-lg">
+                            <QrCodeIcon className="h-5 w-5" />
+                          </div>
+                          <div className="text-left">
+                            <h3 className="font-semibold">Mark Attendance</h3>
+                            <p className="text-blue-100 text-sm">Scan QR to check in/out</p>
+                          </div>
                         </div>
-                        <div className="text-left">
-                          <h3 className="font-semibold">Mark Attendance</h3>
-                          <p className="text-blue-100 text-sm">Scan QR to check in/out</p>
-                        </div>
-                      </div>
-                    </button>
+                      </button>
+                    </a>
 
                     {/* Leave Request */}
-                    <button className="w-full bg-green-600 text-white rounded-lg p-4 hover:bg-green-700 transition-colors">
-                      <div className="flex items-center space-x-3">
-                        <div className="p-2 bg-green-500 rounded-lg">
-                          <CalendarIcon className="h-5 w-5" />
+                    <a href="http://localhost:3000/leave/request" className="block w-full">
+                      <button className="w-full bg-green-600 text-white rounded-lg p-4 hover:bg-green-700 transition-colors">
+                        <div className="flex items-center space-x-3">
+                          <div className="p-2 bg-green-500 rounded-lg">
+                            <CalendarIcon className="h-5 w-5" />
+                          </div>
+                          <div className="text-left">
+                            <h3 className="font-semibold">Request Leave</h3>
+                            <p className="text-green-100 text-sm">Submit leave application</p>
+                          </div>
                         </div>
-                        <div className="text-left">
-                          <h3 className="font-semibold">Request Leave</h3>
-                          <p className="text-green-100 text-sm">Submit leave application</p>
-                        </div>
-                      </div>
-                    </button>
+                      </button>
+                    </a>
 
                     {/* Payment History */}
-                    <button className="w-full bg-yellow-600 text-white rounded-lg p-4 hover:bg-yellow-700 transition-colors">
-                      <div className="flex items-center space-x-3">
-                        <div className="p-2 bg-yellow-500 rounded-lg">
-                          <CurrencyDollarIcon className="h-5 w-5" />
+                    <a href="http://localhost:3000/payment-history" className="block w-full">
+                      <button className="w-full bg-yellow-600 text-white rounded-lg p-4 hover:bg-yellow-700 transition-colors">
+                        <div className="flex items-center space-x-3">
+                          <div className="p-2 bg-yellow-500 rounded-lg">
+                            <CurrencyDollarIcon className="h-5 w-5" />
+                          </div>
+                          <div className="text-left">
+                            <h3 className="font-semibold">Payment History</h3>
+                            <p className="text-yellow-100 text-sm">View salary details</p>
+                          </div>
                         </div>
-                        <div className="text-left">
-                          <h3 className="font-semibold">Payment History</h3>
-                          <p className="text-yellow-100 text-sm">View salary details</p>
-                        </div>
-                      </div>
-                    </button>
+                      </button>
+                    </a>
 
-                    {/* Department Dashboard */}
-                    <button className="w-full bg-purple-600 text-white rounded-lg p-4 hover:bg-purple-700 transition-colors">
+                    {/* Department Dashboard - No Link */}
+                    <button className="w-full bg-gray-400 text-white rounded-lg p-4 cursor-not-allowed opacity-70">
                       <div className="flex items-center space-x-3">
-                        <div className="p-2 bg-purple-500 rounded-lg">
+                        <div className="p-2 bg-gray-500 rounded-lg">
                           <ChartBarIcon className="h-5 w-5" />
                         </div>
                         <div className="text-left">
                           <h3 className="font-semibold">Department Dashboard</h3>
-                          <p className="text-purple-100 text-sm">View department metrics</p>
+                          <p className="text-gray-200 text-sm">Coming soon...</p>
                         </div>
                       </div>
                     </button>
 
-                    {/* Request Inventory */}
-                    <button className="w-full bg-orange-600 text-white rounded-lg p-4 hover:bg-orange-700 transition-colors">
+                    {/* Request Inventory - No Link */}
+                    <button className="w-full bg-gray-400 text-white rounded-lg p-4 cursor-not-allowed opacity-70">
                       <div className="flex items-center space-x-3">
-                        <div className="p-2 bg-orange-500 rounded-lg">
+                        <div className="p-2 bg-gray-500 rounded-lg">
                           <ClipboardListIcon className="h-5 w-5" />
                         </div>
                         <div className="text-left">
                           <h3 className="font-semibold">Request Inventory</h3>
-                          <p className="text-orange-100 text-sm">Request supplies & equipment</p>
+                          <p className="text-gray-200 text-sm">Coming soon...</p>
                         </div>
                       </div>
                     </button>
