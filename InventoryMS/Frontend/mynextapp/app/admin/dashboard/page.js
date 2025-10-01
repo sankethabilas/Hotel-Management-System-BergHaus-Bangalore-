@@ -173,10 +173,20 @@ export default function AdminDashboardPage() {
   }, [items]);
 
   return (
-    <div>
+    <div className="min-h-screen bg-gray-50">
       <Navbar active="dashboard" />
-      <div className="max-w-7xl mx-auto p-6">
-        {/* Top cards (4) */}
+      <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+        {/* Page Header */}
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
+            Dashboard Overview
+          </h1>
+          <p className="text-sm sm:text-base text-gray-600">
+            Monitor your inventory, suppliers, and staff requests in real-time
+          </p>
+        </div>
+
+        {/* Stats Cards */}
         <StatCardsRow
           totalProducts={totalProducts}
           stocksBelowFive={stocksBelowFive}
@@ -184,72 +194,102 @@ export default function AdminDashboardPage() {
           staffRequests={staffRequests}
         />
 
-        {/* Money + other cards (4) */}
+        {/* Money Cards */}
         <MoneyCardsRow
           currentMoneyAvailable={currentMoneyAvailable}
           totalInventoryValue={totalInventoryValue}
           daysLeftToMonthEnd={daysLeftToMonthEnd}
         />
 
-        {/* Bar chart with category filter */}
-        <div className="mt-6 bg-white rounded shadow p-4">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold">Item Levels (by Quantity)</h2>
-            <div className="flex items-center space-x-2">
-              <label className="text-sm">Category:</label>
-              <select
-                value={barFilterCategory}
-                onChange={(e) => setBarFilterCategory(e.target.value)}
-                className="border p-1 rounded"
-              >
-                <option value="All">All</option>
-                <option value="Kitchen">Kitchen</option>
-                <option value="Housekeeping">Housekeeping</option>
-                <option value="Maintenance">Maintenance</option>
-              </select>
+        {/* Charts Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          {/* Bar chart with category filter */}
+          <div className="lg:col-span-2 bg-white rounded-lg shadow-md p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 space-y-2 sm:space-y-0">
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Item Levels (by Quantity)</h2>
+              <div className="flex items-center space-x-2">
+                <label className="text-sm font-medium text-gray-700">Category:</label>
+                <select
+                  value={barFilterCategory}
+                  onChange={(e) => setBarFilterCategory(e.target.value)}
+                  className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="All">All</option>
+                  <option value="Kitchen">Kitchen</option>
+                  <option value="Housekeeping">Housekeeping</option>
+                  <option value="Maintenance">Maintenance</option>
+                </select>
+              </div>
+            </div>
+            <div className="overflow-x-auto">
+              <BarChartComponent items={barDataItems} />
             </div>
           </div>
 
-          <BarChartComponent items={barDataItems} />
-        </div>
+          {/* Pie chart */}
+          <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4">Category Distribution</h2>
+            <div className="flex justify-center">
+              <PieChartComponent data={pieData} />
+            </div>
+          </div>
 
-        {/* Pie chart */}
-        <div className="mt-6 bg-white rounded shadow p-4">
-          <h2 className="font-semibold mb-4">Category Distribution (by Quantity)</h2>
-          <PieChartComponent data={pieData} />
-        </div>
-
-        {/* Supplier chart */}
-        <div className="mt-6 bg-white rounded shadow p-4">
-          <h2 className="font-semibold mb-4">Suppliers: Distinct Items & Total Quantity</h2>
-          <SupplierChartComponent stats={supplierStats} />
+          {/* Supplier chart */}
+          <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4">Supplier Analytics</h2>
+            <div className="overflow-x-auto">
+              <SupplierChartComponent stats={supplierStats} />
+            </div>
+          </div>
         </div>
       
-      {/* Report Download Buttons */}
-        <div className="mt-6 flex space-x-4">
-          <button
-            onClick={downloadInventoryReport}
-            className="bg-green-600 text-white px-4 rounded py-2"
-          >
-            Download Inventory Report
-          </button>
-          <button
-            onClick={downloadStaffRequestsReport}
-            className="bg-purple-600 text-white px-4 rounded py-2"
-          >
-            Download Staff Requests Report
-          </button>
+        {/* Report Download Section */}
+        <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 mb-6">
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4">📊 Generate Reports</h2>
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+            <button
+              onClick={downloadInventoryReport}
+              className="flex-1 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium transition-all duration-200 flex items-center justify-center space-x-2"
+            >
+              <span>📋</span>
+              <span>Download Inventory Report</span>
+            </button>
+            <button
+              onClick={downloadStaffRequestsReport}
+              className="flex-1 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-lg font-medium transition-all duration-200 flex items-center justify-center space-x-2"
+            >
+              <span>👥</span>
+              <span>Download Staff Requests Report</span>
+            </button>
+          </div>
         </div>
-      </div>
-      {/* Temporary part. Example existing content */}
-      <div className="space-y-4">
-        {/*  New Button for Staff Requests */}
-        <button
-          onClick={() => router.push("/staffRequests")}
-          className="bg-blue-600 text-white px-4 py-2 rounded"
-        >
-          Go to Staff Requests
-        </button>
+        {/* Quick Actions Section */}
+        <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4">⚡ Quick Actions</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <button
+              onClick={() => router.push("/staffRequests")}
+              className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-4 sm:px-6 py-3 sm:py-4 rounded-lg font-medium transition-all duration-200 flex items-center justify-center space-x-2"
+            >
+              <span>👥</span>
+              <span>Manage Staff Requests</span>
+            </button>
+            <button
+              onClick={() => router.push("/")}
+              className="bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white px-4 sm:px-6 py-3 sm:py-4 rounded-lg font-medium transition-all duration-200 flex items-center justify-center space-x-2"
+            >
+              <span>📦</span>
+              <span>View Inventory</span>
+            </button>
+            <button
+              onClick={() => router.push("/alerts")}
+              className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-4 sm:px-6 py-3 sm:py-4 rounded-lg font-medium transition-all duration-200 flex items-center justify-center space-x-2"
+            >
+              <span>🚨</span>
+              <span>Check Alerts</span>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
