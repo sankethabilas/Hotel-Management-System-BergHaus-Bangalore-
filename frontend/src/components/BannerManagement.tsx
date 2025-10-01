@@ -30,6 +30,7 @@ const BannerManagement: React.FC = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingBanner, setEditingBanner] = useState<Banner | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -132,6 +133,9 @@ const BannerManagement: React.FC = () => {
     setError('');
     setSuccess('');
     
+    // Prevent multiple submissions
+    if (isSubmitting) return;
+    
     // Validate required fields
     if (!formData.title.trim()) {
       setError('Title is required');
@@ -146,6 +150,7 @@ const BannerManagement: React.FC = () => {
       return;
     }
     
+    setIsSubmitting(true);
     try {
       const token = localStorage.getItem('adminToken');
       if (!token) {
@@ -189,6 +194,8 @@ const BannerManagement: React.FC = () => {
       console.error('Error saving banner:', error);
       setError(error.message || 'Failed to save banner');
       setTimeout(() => setError(''), 3000);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -451,13 +458,13 @@ const BannerManagement: React.FC = () => {
               </button>
               <button
                 type="submit"
-                disabled={uploadingImage}
+                disabled={uploadingImage || isSubmitting}
                 className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
               >
-                {uploadingImage && (
+                {(uploadingImage || isSubmitting) && (
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                 )}
-                {uploadingImage ? 'Uploading...' : (editingBanner ? 'Update Banner' : 'Create Banner')}
+                {uploadingImage ? 'Uploading...' : isSubmitting ? 'Saving...' : (editingBanner ? 'Update Banner' : 'Create Banner')}
               </button>
             </div>
           </form>

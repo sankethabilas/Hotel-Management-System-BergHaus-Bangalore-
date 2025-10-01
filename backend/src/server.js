@@ -143,6 +143,37 @@ app.use(express.json());
 // Serve static files from uploads directory
 app.use('/uploads', express.static('uploads'));
 
+// Import upload middleware
+const upload = require('./middleware/upload');
+
+// Image upload endpoint
+app.post('/api/upload', upload.single('image'), (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'No image file provided'
+      });
+    }
+
+    // Return the image path
+    const imagePath = `/uploads/${req.file.filename}`;
+    
+    res.json({
+      success: true,
+      message: 'Image uploaded successfully',
+      imagePath: imagePath,
+      filename: req.file.filename
+    });
+  } catch (error) {
+    console.error('Upload error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to upload image'
+    });
+  }
+});
+
 // Debug middleware
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
@@ -1203,6 +1234,46 @@ app.get('/api/banners', async (req, res) => {
   }
 });
 
+// Create new menu item (admin only)
+app.post('/api/admin/menu', authenticate, async (req, res) => {
+  try {
+    const menuItemData = req.body;
+    
+    if (isMongoConnected) {
+      const newMenuItem = new MenuItem(menuItemData);
+      await newMenuItem.save();
+      
+      res.status(201).json({
+        success: true,
+        message: 'Menu item created successfully',
+        data: newMenuItem
+      });
+    } else {
+      const newMenuItem = {
+        _id: Date.now().toString(),
+        id: Date.now().toString(),
+        ...menuItemData,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
+      inMemoryMenuItems.push(newMenuItem);
+      
+      res.status(201).json({
+        success: true,
+        message: 'Menu item created successfully (in-memory)',
+        data: newMenuItem
+      });
+    }
+  } catch (error) {
+    console.error('Create menu item error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create menu item'
+    });
+  }
+});
+
 // Get all menu items (admin only)
 app.get('/api/admin/menu', authenticate, async (req, res) => {
   try {
@@ -1227,6 +1298,50 @@ app.get('/api/admin/menu', authenticate, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to retrieve menu items',
+      error: error.message
+    });
+  }
+});
+
+// Create new banner (admin only)
+app.post('/api/admin/banners', authenticate, async (req, res) => {
+  try {
+    const bannerData = {
+      ...req.body,
+      createdBy: req.user.id // Add the authenticated user's ID
+    };
+    
+    if (isMongoConnected) {
+      const newBanner = new Banner(bannerData);
+      await newBanner.save();
+      
+      res.status(201).json({
+        success: true,
+        message: 'Banner created successfully',
+        data: newBanner
+      });
+    } else {
+      const newBanner = {
+        _id: Date.now().toString(),
+        id: Date.now().toString(),
+        ...bannerData,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
+      inMemoryBanners.push(newBanner);
+      
+      res.status(201).json({
+        success: true,
+        message: 'Banner created successfully (in-memory)',
+        data: newBanner
+      });
+    }
+  } catch (error) {
+    console.error('Create banner error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to create banner',
       error: error.message
     });
   }

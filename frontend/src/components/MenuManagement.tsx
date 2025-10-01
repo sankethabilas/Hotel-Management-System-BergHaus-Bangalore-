@@ -34,6 +34,7 @@ const MenuManagement: React.FC = () => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingItem, setEditingItem] = useState<MenuItem | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -164,8 +165,18 @@ const MenuManagement: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Prevent multiple submissions
+    if (isSubmitting) return;
+    
+    setIsSubmitting(true);
     try {
       const token = localStorage.getItem('adminToken');
+      
+      if (!token) {
+        setError('Authentication required. Please log in again.');
+        return;
+      }
       
       const submitData = {
         ...formData,
@@ -207,6 +218,8 @@ const MenuManagement: React.FC = () => {
     } catch (error: any) {
       console.error('Error saving menu item:', error);
       setError(error.message || 'Failed to save menu item');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -490,9 +503,13 @@ const MenuManagement: React.FC = () => {
               </button>
               <button
                 type="submit"
-                className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                disabled={uploadingImage || isSubmitting}
+                className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
               >
-                {editingItem ? 'Update' : 'Create'} Item
+                {(uploadingImage || isSubmitting) && (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                )}
+                {uploadingImage ? 'Uploading...' : isSubmitting ? 'Saving...' : (editingItem ? 'Update' : 'Create') + ' Item'}
               </button>
             </div>
           </form>

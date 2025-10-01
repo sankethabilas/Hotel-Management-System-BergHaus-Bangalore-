@@ -5,14 +5,14 @@ A comprehensive hotel management system focusing on food and beverage operations
 ## Project Structure
 
 ### Frontend (Next.js)
-- **client/**: Next.js application with TypeScript and Tailwind CSS
+- **frontend/**: Next.js application with TypeScript and Tailwind CSS
 - **pages/**: Route-based pages for different user roles
 - **components/**: Reusable UI components
 - **hooks/**: Custom React hooks for state management
 - **utils/**: Utility functions and API helpers
 
 ### Backend (Express.js)
-- **server/**: Express.js API server
+- **backend/**: Express.js API server
 - **routes/**: API endpoint definitions
 - **models/**: MongoDB schemas with Mongoose
 - **middleware/**: Authentication and validation middleware

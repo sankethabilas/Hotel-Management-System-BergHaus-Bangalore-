@@ -61,11 +61,15 @@ const BannerSlideshow: React.FC = () => {
   };
 
   const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % banners.length);
+    if (banners.length > 0) {
+      setCurrentSlide((prev) => (prev + 1) % banners.length);
+    }
   };
 
   const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + banners.length) % banners.length);
+    if (banners.length > 0) {
+      setCurrentSlide((prev) => (prev - 1 + banners.length) % banners.length);
+    }
   };
 
   const goToSlide = (index: number) => {
@@ -128,7 +132,23 @@ const BannerSlideshow: React.FC = () => {
     );
   }
 
-  const currentBanner = banners[currentSlide];
+  // Ensure currentSlide is within bounds
+  const safeCurrentSlide = Math.min(currentSlide, Math.max(0, banners.length - 1));
+  const currentBanner = banners[safeCurrentSlide];
+
+  // Safety check for currentBanner
+  if (!currentBanner || banners.length === 0) {
+    return (
+      <section className="relative overflow-hidden h-96 md:h-[500px] bg-gradient-to-r from-blue-600 to-blue-800">
+        <div className="w-full h-full flex items-center justify-center px-6">
+          <div className="text-white text-center">
+            <h1 className="text-4xl font-bold mb-4">No banners available</h1>
+            <p className="text-xl">Please check back later</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section 
@@ -138,13 +158,17 @@ const BannerSlideshow: React.FC = () => {
     >
       {/* Background Image - Clean, no overlays */}
       <div className="absolute inset-0">
-        <Image
-          src={`http://localhost:5001${currentBanner.image}`}
-          alt={currentBanner.title}
-          fill
-          className="object-cover transition-all duration-1000 ease-in-out"
-          priority
-        />
+        {currentBanner.image ? (
+          <Image
+            src={`http://localhost:5001${currentBanner.image}`}
+            alt={currentBanner.title || 'Banner image'}
+            fill
+            className="object-cover transition-all duration-1000 ease-in-out"
+            priority
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-r from-blue-600 to-blue-800"></div>
+        )}
         {/* Light overlay only for text readability */}
         <div className="absolute inset-0 bg-black opacity-20"></div>
       </div>
@@ -154,26 +178,26 @@ const BannerSlideshow: React.FC = () => {
         <div className="max-w-3xl text-white">
           {/* Type Badge */}
           <div className="inline-flex items-center bg-white bg-opacity-20 backdrop-blur-sm rounded-full px-4 py-2 mb-4">
-            <span className="text-2xl mr-2">{getTypeIcon(currentBanner.type)}</span>
-            <span className="font-medium capitalize">{currentBanner.type}</span>
+            <span className="text-2xl mr-2">{getTypeIcon(currentBanner.type || 'feature')}</span>
+            <span className="font-medium capitalize">{currentBanner.type || 'feature'}</span>
           </div>
 
           {/* Title with Animation */}
           <h1 className="text-4xl md:text-6xl font-bold mb-4 leading-tight animate-fade-in-up">
-            {currentBanner.title}
+            {currentBanner.title || 'Welcome to BergHaus'}
           </h1>
 
           {/* Description */}
           <p className="text-xl md:text-2xl mb-8 text-gray-100 animate-fade-in-up animation-delay-200">
-            {currentBanner.description}
+            {currentBanner.description || 'Experience exceptional dining with our premium food & beverage service'}
           </p>
 
           {/* CTA Button */}
           <Link
-            href={currentBanner.buttonLink}
+            href={currentBanner.buttonLink || '/guest/menu'}
             className="bg-white text-gray-900 hover:bg-gray-100 font-semibold px-8 py-4 rounded-lg transition-all duration-300 inline-flex items-center transform hover:scale-105 animate-fade-in-up animation-delay-400"
           >
-            {currentBanner.buttonText}
+            {currentBanner.buttonText || 'Learn More'}
             <svg className="ml-2 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
@@ -211,7 +235,7 @@ const BannerSlideshow: React.FC = () => {
               key={index}
               onClick={() => goToSlide(index)}
               className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                index === currentSlide 
+                index === safeCurrentSlide 
                   ? 'bg-white scale-125' 
                   : 'bg-white bg-opacity-50 hover:bg-opacity-75'
               }`}
@@ -223,7 +247,7 @@ const BannerSlideshow: React.FC = () => {
       {/* Slide Counter */}
       {banners.length > 1 && (
         <div className="absolute top-6 right-6 bg-black bg-opacity-30 backdrop-blur-sm text-white px-3 py-1 rounded-full text-sm">
-          {currentSlide + 1} / {banners.length}
+          {safeCurrentSlide + 1} / {banners.length}
         </div>
       )}
 
