@@ -9,7 +9,7 @@ const {
   updatePaymentStatus,
   getPaymentStats,
   deletePayment
-} = require('../Controlers/paymentControler');
+} = require('../controllers/paymentController');
 
 // Get all payments with filters
 router.get('/', getAllPayments);

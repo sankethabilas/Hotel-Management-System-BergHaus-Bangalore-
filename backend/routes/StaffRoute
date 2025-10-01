@@ -2,9 +2,9 @@ const express = require("express");
 const router = express.Router();
 
 //insert model
-const staff = require("../Model/StaffModel");
+const staff = require("../models/StaffModel");
 //insert staff controller
-const StaffControler = require("../Controlers/StaffControler");
+const StaffControler = require("../controllers/StaffController");
 
 router.get("/", StaffControler.getAllStaff);
 router.post("/", StaffControler.addStaff);

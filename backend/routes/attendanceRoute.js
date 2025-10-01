@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Attendance = require('../Model/attendanceModel');
+const Attendance = require('../models/attendanceModel');
 
 // Simple test route
 router.get('/test', (req, res) => {

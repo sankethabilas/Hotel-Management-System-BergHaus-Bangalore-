@@ -1,10 +1,10 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-const router = require("./Route/StaffRoute");
-const leaveRoutes = require("./Route/leaveRoute");
-const attendanceRoutes = require("./Route/attendanceRoute");
-const paymentRoutes = require("./Route/paymentRoute");
+const router = require("./routes/StaffRoute");
+const leaveRoutes = require("./routes/leaveRoute");
+const attendanceRoutes = require("./routes/attendanceRoute");
+const paymentRoutes = require("./routes/paymentRoute");
 
 const app = express();
 

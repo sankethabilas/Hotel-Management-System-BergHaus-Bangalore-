@@ -40,7 +40,7 @@ app.use('/uploads', express.static('uploads'));
 // Connect to Database
 connectDB();
 
-// Routes
+// Routes - Hotel Booking System
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/users', require('./routes/users'));
 app.use('/api/reservations', require('./routes/reservations'));
@@ -50,11 +50,18 @@ app.use('/api/booking', require('./routes/booking'));
 app.use('/api/bookings', require('./routes/bookingRoutes'));
 app.use('/api/pdf', require('./routes/pdf'));
 
+// Routes - Staff Management System
+app.use('/api/staff', require('./routes/StaffRoute'));
+app.use('/api/leave', require('./routes/leaveRoute'));
+app.use('/api/payments', require('./routes/paymentRoute'));
+app.use('/api/attendance', require('./routes/attendanceRoute'));
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'OK', 
-    message: 'HMS Backend is running',
+    message: 'Unified HMS Backend is running - Hotel Booking + Staff Management',
+    systems: ['Hotel Booking', 'Staff Management', 'Reservations', 'Payments'],
     timestamp: new Date().toISOString()
   });
 });
@@ -79,6 +86,8 @@ app.use('*', (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`🚀 Unified HMS Server running on port ${PORT}`);
+  console.log(`🏨 Hotel Booking System: http://localhost:${PORT}/api/health`);
+  console.log(`👥 Staff Management System: http://localhost:${PORT}/api/staff`);
   console.log(`📊 Health check: http://localhost:${PORT}/api/health`);
 });
