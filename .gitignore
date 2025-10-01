@@ -1,11 +1,16 @@
 # Dependencies
 node_modules/
-*/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 
 # Production builds
-.next/
-dist/
-build/
+/client/dist/
+/client/build/
+/client/.next/
+/client/out/
+/server/dist/
 
 # Environment variables
 .env
@@ -14,16 +19,28 @@ build/
 .env.test.local
 .env.production.local
 
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
 # Logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-lerna-debug.log*
-logs
+logs/
 *.log
 
 # Runtime data
-pids
+pids/
 *.pid
 *.seed
 *.pid.lock
@@ -31,9 +48,6 @@ pids
 # Coverage directory used by tools like istanbul
 coverage/
 *.lcov
-
-# nyc test coverage
-.nyc_output
 
 # Dependency directories
 jspm_packages/
@@ -71,11 +85,6 @@ jspm_packages/
 
 # Nuxt.js build / generate output
 .nuxt
-dist
-
-# Gatsby files
-.cache/
-public
 
 # Storybook build outputs
 .out
@@ -86,25 +95,22 @@ tmp/
 temp/
 
 # Editor directories and files
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# OS generated files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
 
 # Database
 *.db
 *.sqlite
-*.sqlite3
 
 # Uploads
 uploads/
+public/uploads/
+
+# Test coverage
+coverage/
+
+# Documentation
+docs/build/
