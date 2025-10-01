@@ -1,4 +1,4 @@
-const Leave = require("../Model/leaveModel");
+const Leave = require("../models/leaveModel");
 
 // Get all leave requests
 const getAllLeaves = async (req, res) => {

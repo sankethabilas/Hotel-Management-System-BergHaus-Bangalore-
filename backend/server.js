@@ -53,8 +53,8 @@ app.use('/api/pdf', require('./routes/pdf'));
 // Routes - Staff Management System
 app.use('/api/staff', require('./routes/StaffRoute'));
 app.use('/api/leave', require('./routes/leaveRoute'));
-app.use('/api/payments', require('./routes/paymentRoute'));
-app.use('/api/attendance', require('./routes/attendanceRoute'));
+app.use('/api/payments', require('./routes/paymentRoute.js'));
+app.use('/api/attendance', require('./routes/attendanceRoute.js'));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -76,11 +76,11 @@ app.use((err, req, res, next) => {
   });
 });
 
-// 404 handler
-app.use('*', (req, res) => {
+// 404 handler - catch all unmatched routes
+app.use((req, res) => {
   res.status(404).json({
     success: false,
-    message: 'Route not found'
+    message: `Route ${req.originalUrl} not found`
   });
 });
 
