@@ -1,0 +1,20 @@
+const express = require("express");
+const router = express.Router();
+
+//insert model
+const staff = require("../models/StaffModel");
+//insert staff controller
+const StaffController = require("../controllers/StaffController");
+
+router.get("/", StaffController.getAllStaff);
+router.post("/", StaffController.addStaff);
+router.post("/login", StaffController.loginStaff);
+router.get("/employee/:employeeId", StaffController.getByEmployeeId);
+router.get("/:id", StaffController.getById);
+router.put("/:id", StaffController.updateStaff);
+router.delete("/:id", StaffController.deleteStaff);
+
+
+//export
+module.exports = router;
+ 
