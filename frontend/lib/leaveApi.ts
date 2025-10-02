@@ -1,8 +1,19 @@
 import { Leave, LeaveFormData, ApiResponse } from '@/types/leave';
 
-const API_BASE_URL = 'http://localhost:5000/api/leaves';
+const API_BASE_URL = '/api/leaves';
 
 class LeaveAPI {
+  private getAuthHeaders(): Record<string, string> {
+    // Check if we're in a browser environment
+    if (typeof window === 'undefined') {
+      return {};
+    }
+    
+    // Try both token storage keys (staff and regular user)
+    const token = localStorage.getItem('token') || localStorage.getItem('staffToken');
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  }
+
   private async request<T>(
     endpoint: string,
     options: RequestInit = {}
@@ -12,6 +23,7 @@ class LeaveAPI {
     const config: RequestInit = {
       headers: {
         'Content-Type': 'application/json',
+        ...this.getAuthHeaders(),
         ...options.headers,
       },
       // Add timeout to prevent hanging requests
@@ -53,9 +65,14 @@ class LeaveAPI {
     }
   }
 
-  // Get all leave requests
+  // Get all leave requests (admin only)
   async getAllLeaves(): Promise<ApiResponse<Leave[]>> {
     return this.request<ApiResponse<Leave[]>>('');
+  }
+
+  // Get my leave requests (staff)
+  async getMyLeaves(): Promise<ApiResponse<Leave[]>> {
+    return this.request<ApiResponse<Leave[]>>('/my-requests');
   }
 
   // Get leave requests by staff ID
@@ -85,11 +102,23 @@ class LeaveAPI {
   }
 
   // Update leave status (for HR approval/rejection)
-  async updateLeaveStatus(id: string, status: 'approved' | 'rejected'): Promise<ApiResponse<Leave>> {
-    return this.request<ApiResponse<Leave>>(`/${id}`, {
+  async updateLeaveStatus(id: string, status: 'approved' | 'rejected', adminComments?: string): Promise<ApiResponse<Leave>> {
+    return this.request<ApiResponse<Leave>>(`/${id}/status`, {
       method: 'PUT',
-      body: JSON.stringify({ status }),
+      body: JSON.stringify({ status, adminComments }),
     });
+  }
+
+  // Cancel leave request (staff can cancel their own pending requests)
+  async cancelLeave(id: string): Promise<ApiResponse<Leave>> {
+    return this.request<ApiResponse<Leave>>(`/${id}/cancel`, {
+      method: 'PUT',
+    });
+  }
+
+  // Get leave statistics (admin only)
+  async getLeaveStatistics(): Promise<ApiResponse<any>> {
+    return this.request<ApiResponse<any>>('/statistics');
   }
 
   // Delete leave request

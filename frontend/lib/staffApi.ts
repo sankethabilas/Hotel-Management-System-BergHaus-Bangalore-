@@ -1,8 +1,19 @@
 import { Staff, StaffFormData, ApiResponse } from '@/types/staff';
 
-const API_BASE_URL = 'http://localhost:5000/api/staff';
+const API_BASE_URL = '/api/staff';
 
 class StaffAPI {
+  private getAuthHeaders(): Record<string, string> {
+    // Check if we're in a browser environment
+    if (typeof window === 'undefined') {
+      return {};
+    }
+    
+    // Try both token storage keys (staff and regular user)
+    const token = localStorage.getItem('token') || localStorage.getItem('staffToken');
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  }
+
   private async request<T>(
     endpoint: string,
     options: RequestInit = {}
@@ -12,6 +23,7 @@ class StaffAPI {
     const config: RequestInit = {
       headers: {
         'Content-Type': 'application/json',
+        ...this.getAuthHeaders(),
         ...options.headers,
       },
       // Add timeout to prevent hanging requests

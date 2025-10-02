@@ -1,42 +1,77 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { LeaveFormData, LEAVE_TYPE_CONFIG } from '@/types/leave';
-import { Staff } from '@/types/staff';
+import { useState } from 'react';
 import { leaveAPI } from '@/lib/leaveApi';
-import { staffAPI } from '@/lib/api';
+
+interface LeaveFormData {
+  leaveType: 'sick' | 'annual' | 'casual' | 'emergency' | 'maternity' | 'paternity' | 'unpaid' | 'other';
+  startDate: string;
+  endDate: string;
+  reason: string;
+  emergencyContact?: string;
+}
 
 interface LeaveRequestFormProps {
   onSuccess?: () => void;
   onCancel?: () => void;
 }
 
+// Leave type configuration
+const LEAVE_TYPE_CONFIG = {
+  sick: {
+    color: 'bg-red-50 text-red-700 border-red-200',
+    label: 'Sick Leave',
+    icon: '🏥'
+  },
+  casual: {
+    color: 'bg-blue-50 text-blue-700 border-blue-200',
+    label: 'Casual Leave',
+    icon: '🏖️'
+  },
+  annual: {
+    color: 'bg-green-50 text-green-700 border-green-200',
+    label: 'Annual Leave',
+    icon: '🌴'
+  },
+  emergency: {
+    color: 'bg-orange-50 text-orange-700 border-orange-200',
+    label: 'Emergency Leave',
+    icon: '🚨'
+  },
+  maternity: {
+    color: 'bg-pink-50 text-pink-700 border-pink-200',
+    label: 'Maternity Leave',
+    icon: '👶'
+  },
+  paternity: {
+    color: 'bg-purple-50 text-purple-700 border-purple-200',
+    label: 'Paternity Leave',
+    icon: '👨‍👶'
+  },
+  unpaid: {
+    color: 'bg-gray-50 text-gray-700 border-gray-200',
+    label: 'Unpaid Leave',
+    icon: '💼'
+  },
+  other: {
+    color: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+    label: 'Other Leave',
+    icon: '📋'
+  }
+} as const;
+
 export default function LeaveRequestForm({ onSuccess, onCancel }: LeaveRequestFormProps) {
   const [formData, setFormData] = useState<LeaveFormData>({
-    staffId: '',
     leaveType: 'casual',
     startDate: '',
     endDate: '',
-    reason: ''
+    reason: '',
+    emergencyContact: ''
   });
 
-  const [staff, setStaff] = useState<Staff[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>('');
   const [success, setSuccess] = useState<string>('');
-
-  // Fetch all staff for dropdown
-  useEffect(() => {
-    const fetchStaff = async () => {
-      try {
-        const response = await staffAPI.getAllStaff();
-        setStaff(response || []);
-      } catch (error) {
-        console.error('Failed to fetch staff:', error);
-      }
-    };
-    fetchStaff();
-  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -69,6 +104,11 @@ export default function LeaveRequestForm({ onSuccess, onCancel }: LeaveRequestFo
       return;
     }
 
+    if (!formData.reason.trim()) {
+      setError('Please provide a reason for the leave');
+      return;
+    }
+
     setLoading(true);
     setError('');
     setSuccess('');
@@ -79,17 +119,20 @@ export default function LeaveRequestForm({ onSuccess, onCancel }: LeaveRequestFo
       
       // Reset form
       setFormData({
-        staffId: '',
         leaveType: 'casual',
         startDate: '',
         endDate: '',
-        reason: ''
+        reason: '',
+        emergencyContact: ''
       });
 
-      if (onSuccess) {
-        setTimeout(() => onSuccess(), 1500);
-      }
+      // Call success callback after a short delay
+      setTimeout(() => {
+        onSuccess?.();
+      }, 1500);
+
     } catch (error) {
+      console.error('Leave request error:', error);
       setError(error instanceof Error ? error.message : 'Failed to submit leave request');
     } finally {
       setLoading(false);
@@ -127,28 +170,6 @@ export default function LeaveRequestForm({ onSuccess, onCancel }: LeaveRequestFo
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Staff Selection */}
-        <div>
-          <label htmlFor="staffId" className="block text-sm font-medium text-gray-700 mb-2">
-            Select Staff Member *
-          </label>
-          <select
-            id="staffId"
-            name="staffId"
-            value={formData.staffId}
-            onChange={handleChange}
-            required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="">Choose a staff member...</option>
-            {staff.map((member) => (
-              <option key={member._id} value={member._id}>
-                {member.employeeId} - {member.fullName} ({member.department})
-              </option>
-            ))}
-          </select>
-        </div>
-
         {/* Leave Type */}
         <div>
           <label htmlFor="leaveType" className="block text-sm font-medium text-gray-700 mb-2">
@@ -183,6 +204,7 @@ export default function LeaveRequestForm({ onSuccess, onCancel }: LeaveRequestFo
               value={formData.startDate}
               onChange={handleChange}
               required
+              min={new Date().toISOString().split('T')[0]}
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
@@ -198,6 +220,7 @@ export default function LeaveRequestForm({ onSuccess, onCancel }: LeaveRequestFo
               value={formData.endDate}
               onChange={handleChange}
               required
+              min={formData.startDate || new Date().toISOString().split('T')[0]}
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
@@ -215,26 +238,46 @@ export default function LeaveRequestForm({ onSuccess, onCancel }: LeaveRequestFo
         {/* Reason */}
         <div>
           <label htmlFor="reason" className="block text-sm font-medium text-gray-700 mb-2">
-            Reason for Leave
+            Reason for Leave *
           </label>
           <textarea
             id="reason"
             name="reason"
             value={formData.reason}
             onChange={handleChange}
-            rows={3}
-            placeholder="Please provide a brief reason for your leave request..."
+            rows={4}
+            required
+            placeholder="Please provide a detailed reason for your leave request..."
             className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           />
         </div>
 
+        {/* Emergency Contact */}
+        <div>
+          <label htmlFor="emergencyContact" className="block text-sm font-medium text-gray-700 mb-2">
+            Emergency Contact (Optional)
+          </label>
+          <input
+            type="tel"
+            id="emergencyContact"
+            name="emergencyContact"
+            value={formData.emergencyContact}
+            onChange={handleChange}
+            placeholder="Phone number for emergency contact"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+          />
+          <p className="mt-1 text-sm text-gray-500">
+            If not provided, your registered phone number will be used
+          </p>
+        </div>
+
         {/* Action Buttons */}
-        <div className="flex justify-end space-x-4">
+        <div className="flex justify-end space-x-4 pt-4">
           {onCancel && (
             <button
               type="button"
               onClick={onCancel}
-              className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              className="px-6 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
             >
               Cancel
             </button>
@@ -242,9 +285,19 @@ export default function LeaveRequestForm({ onSuccess, onCancel }: LeaveRequestFo
           <button
             type="submit"
             disabled={loading}
-            className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-6 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
-            {loading ? 'Submitting...' : 'Submit Request'}
+            {loading ? (
+              <span className="flex items-center">
+                <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Submitting...
+              </span>
+            ) : (
+              'Submit Request'
+            )}
           </button>
         </div>
       </form>

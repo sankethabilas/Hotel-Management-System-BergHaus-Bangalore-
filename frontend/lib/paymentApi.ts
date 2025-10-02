@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const API_BASE_URL = '/api/payments';
 
 export interface Payment {
   _id: string;
@@ -74,23 +74,58 @@ export interface CreatePaymentData {
 }
 
 class PaymentAPI {
-  private async request(url: string, options: RequestInit = {}): Promise<any> {
-    try {
-      const response = await fetch(`${API_BASE_URL}${url}`, {
-        headers: {
-          'Content-Type': 'application/json',
-          ...options.headers,
-        },
-        ...options,
-      });
+  private getAuthHeaders(): Record<string, string> {
+    // Check if we're in a browser environment
+    if (typeof window === 'undefined') {
+      return {};
+    }
+    
+    // Try both token storage keys (staff and regular user)
+    const token = localStorage.getItem('token') || localStorage.getItem('staffToken');
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  }
 
+  private async request(url: string, options: RequestInit = {}): Promise<any> {
+    const config: RequestInit = {
+      headers: {
+        'Content-Type': 'application/json',
+        ...this.getAuthHeaders(),
+        ...options.headers,
+      },
+      // Add timeout to prevent hanging requests
+      signal: AbortSignal.timeout(10000), // 10 second timeout
+      ...options,
+    };
+
+    try {
+      const response = await fetch(`${API_BASE_URL}${url}`, config);
+      
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch {
+          errorData = { message: `HTTP error! status: ${response.status}` };
+        }
         throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
 
-      return await response.json();
+      // Handle empty responses
+      const text = await response.text();
+      if (!text) {
+        return {};
+      }
+      
+      try {
+        return JSON.parse(text);
+      } catch (parseError) {
+        console.error('JSON parse error:', parseError, 'Response text:', text);
+        throw new Error('Invalid JSON response from server');
+      }
     } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error('Request timeout - server took too long to respond');
+      }
       console.error('API request failed:', error);
       throw error;
     }
@@ -121,7 +156,7 @@ class PaymentAPI {
     if (params?.page) queryParams.append('page', params.page.toString());
     if (params?.limit) queryParams.append('limit', params.limit.toString());
 
-    const url = `/api/payments${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    const url = `${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     return this.request(url);
   }
 
@@ -130,7 +165,7 @@ class PaymentAPI {
     success: boolean;
     payment: Payment;
   }> {
-    return this.request(`/api/payments/${id}`);
+    return this.request(`/${id}`);
   }
 
   // Get payments by staff ID
@@ -146,7 +181,7 @@ class PaymentAPI {
     if (params?.year) queryParams.append('year', params.year.toString());
     if (params?.limit) queryParams.append('limit', params.limit.toString());
 
-    const url = `/api/payments/staff/${staffId}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    const url = `/staff/${staffId}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     return this.request(url);
   }
 
@@ -156,7 +191,7 @@ class PaymentAPI {
     message: string;
     payment: Payment;
   }> {
-    return this.request('/api/payments', {
+    return this.request('', {
       method: 'POST',
       body: JSON.stringify(paymentData),
     });
@@ -168,7 +203,7 @@ class PaymentAPI {
     message: string;
     payment: Payment;
   }> {
-    return this.request(`/api/payments/${id}`, {
+    return this.request(`/${id}`, {
       method: 'PUT',
       body: JSON.stringify(updateData),
     });
@@ -180,7 +215,7 @@ class PaymentAPI {
     message: string;
     payment: Payment;
   }> {
-    return this.request(`/api/payments/${id}/status`, {
+    return this.request(`/${id}/status`, {
       method: 'PATCH',
       body: JSON.stringify({ status, remarks }),
     });
@@ -207,7 +242,7 @@ class PaymentAPI {
       minPayment: number;
     };
   }> {
-    const url = `/api/payments/stats${year ? `?year=${year}` : ''}`;
+    const url = `/stats${year ? `?year=${year}` : ''}`;
     return this.request(url);
   }
 
@@ -216,7 +251,7 @@ class PaymentAPI {
     success: boolean;
     message: string;
   }> {
-    return this.request(`/api/payments/${id}`, {
+    return this.request(`/${id}`, {
       method: 'DELETE',
     });
   }

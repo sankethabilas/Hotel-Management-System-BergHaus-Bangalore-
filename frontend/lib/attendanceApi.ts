@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const API_BASE_URL = '/api/attendance';
 
 export interface AttendanceRecord {
   _id: string;
@@ -79,7 +79,7 @@ class AttendanceAPI {
     message: string;
     expiresIn: string;
   }> {
-    return this.request('/api/attendance/qr/generate');
+    return this.request('/qr/generate');
   }
 
   // Mark attendance via QR code scan
@@ -90,7 +90,7 @@ class AttendanceAPI {
     status?: string;
     workingHours?: number;
   }> {
-    return this.request(`/api/attendance/scan/${qrId}`, {
+    return this.request(`/scan/${qrId}`, {
       method: 'POST',
       body: JSON.stringify({ staffId, action }),
     });
@@ -117,13 +117,13 @@ class AttendanceAPI {
     if (params?.page) queryParams.append('page', params.page.toString());
     if (params?.limit) queryParams.append('limit', params.limit.toString());
 
-    const url = `/api/attendance${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    const url = `${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     return this.request(url);
   }
 
   // Get today's attendance
   async getTodayAttendance(): Promise<TodayAttendanceResponse> {
-    return this.request('/api/attendance/today');
+    return this.request('/today');
   }
 
   // Get attendance statistics
@@ -135,7 +135,7 @@ class AttendanceAPI {
     if (params?.startDate) queryParams.append('startDate', params.startDate);
     if (params?.endDate) queryParams.append('endDate', params.endDate);
 
-    const url = `/api/attendance/stats${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    const url = `/stats${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     return this.request(url);
   }
 
@@ -151,7 +151,7 @@ class AttendanceAPI {
     if (params?.startDate) queryParams.append('startDate', params.startDate);
     if (params?.endDate) queryParams.append('endDate', params.endDate);
 
-    const url = `/api/attendance/staff/${staffId}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    const url = `/staff/${staffId}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     return this.request(url);
   }
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { paymentAPI, Payment } from '@/services/paymentApi';
+import { paymentAPI, Payment } from '@/lib/paymentApi';
 
 interface StaffPaymentHistoryProps {
   staffId: string;
