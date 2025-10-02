@@ -34,7 +34,7 @@ export default function AttendanceScanner({ qrId }: AttendanceScannerProps) {
 
   const fetchStaff = async () => {
     try {
-      const staffData = await staffAPI.getAllStaff();
+      const staffData = await staffAPI.getActiveStaff();
       setStaff(staffData.filter((s: Staff) => s.isActive));
     } catch (error) {
       console.error('Failed to fetch staff:', error);

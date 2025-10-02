@@ -14,6 +14,7 @@ const { protect, authorize } = require('../middleware/auth');
 
 // Public routes
 router.post('/login', staffLogin);
+router.get('/active', getAllStaff); // Public endpoint for attendance scanner
 
 // Protected routes - Admin only
 router.use(protect);

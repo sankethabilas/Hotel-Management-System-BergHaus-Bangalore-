@@ -1,6 +1,6 @@
 import { Staff, StaffFormData, ApiResponse } from '@/types/staff';
 
-const API_BASE_URL = 'http://localhost:5000/staff';
+const API_BASE_URL = 'http://localhost:5000/api/staff';
 
 class StaffAPI {
   private async request<T>(
@@ -53,9 +53,15 @@ class StaffAPI {
     }
   }
 
-  // Get all staff
+  // Get all staff (admin only)
   async getAllStaff(): Promise<Staff[]> {
     const response = await this.request<ApiResponse<Staff[]>>('/');
+    return response.staff || [];
+  }
+
+  // Get active staff (public - for attendance scanner)
+  async getActiveStaff(): Promise<Staff[]> {
+    const response = await this.request<ApiResponse<Staff[]>>('/active');
     return response.staff || [];
   }
 
