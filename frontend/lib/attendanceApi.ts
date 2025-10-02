@@ -117,7 +117,7 @@ class AttendanceAPI {
     if (params?.page) queryParams.append('page', params.page.toString());
     if (params?.limit) queryParams.append('limit', params.limit.toString());
 
-    const url = `/api/attendance/all${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    const url = `/api/attendance${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     return this.request(url);
   }
 

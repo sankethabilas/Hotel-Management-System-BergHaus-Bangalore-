@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import QRCode from 'qrcode';
 
 interface QRCodeDisplayProps {
   onQRGenerated?: (qrId: string) => void;
@@ -20,30 +19,18 @@ export default function QRCodeDisplay({ onQRGenerated }: QRCodeDisplayProps) {
       setLoading(true);
       setError(null);
       
-      // Generate unique QR ID
-      const qrId = 'qr-' + Date.now().toString(36) + Math.random().toString(36).substr(2);
+      // Call backend API to generate QR code
+      const response = await fetch('http://localhost:5000/api/attendance/qr/generate');
+      const data = await response.json();
       
-      // Create scan URL for employees
-      const scanUrl = `http://localhost:3000/scan?qrId=${qrId}`;
-      
-      // Generate QR code image
-      const qrCodeImage = await QRCode.toDataURL(scanUrl, {
-        errorCorrectionLevel: 'M',
-        type: 'image/png',
-        quality: 0.92,
-        margin: 1,
-        width: 256,
-        color: {
-          dark: '#006bb8', // Your primary blue color
-          light: '#FFFFFF'
-        }
-      });
-      
-      // Simulate successful QR generation
-      setQrCode(qrCodeImage);
-      setQrId(qrId);
-      setLastGenerated(new Date());
-      onQRGenerated?.(qrId);
+      if (data.success) {
+        setQrCode(data.qrCode);
+        setQrId(data.qrId);
+        setLastGenerated(new Date());
+        onQRGenerated?.(data.qrId);
+      } else {
+        setError(data.message || 'Failed to generate QR code');
+      }
       
     } catch (error) {
       setError(error instanceof Error ? error.message : 'An error occurred');
@@ -76,9 +63,9 @@ export default function QRCodeDisplay({ onQRGenerated }: QRCodeDisplayProps) {
   };
 
   return (
-    <div className="admin-card p-6 text-center">
+    <div className="bg-white rounded-lg shadow-md p-6 text-center">
       <div className="mb-4">
-        <h2 className="text-xl font-semibold mb-2" style={{ color: '#006bb8' }}>
+        <h2 className="text-xl font-semibold mb-2 text-blue-600">
           Staff Attendance QR Code
         </h2>
         <p className="text-sm text-gray-600">
@@ -136,7 +123,6 @@ export default function QRCodeDisplay({ onQRGenerated }: QRCodeDisplayProps) {
             onClick={generateQRCode}
             disabled={loading}
             className="px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 disabled:bg-gray-400"
-            style={{ backgroundColor: '#006bb8' }}
           >
             {loading ? 'Generating...' : 'Refresh QR Code'}
           </button>

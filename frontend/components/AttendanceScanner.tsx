@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Staff } from '@/types/staff';
-import { staffAPI } from '@/lib/api';
+import { staffAPI } from '@/lib/staffApi';
 
 interface AttendanceScannerProps {
   qrId?: string;
@@ -113,9 +113,9 @@ export default function AttendanceScanner({ qrId }: AttendanceScannerProps) {
   };
 
   return (
-    <div className="max-w-md mx-auto p-6 admin-card">
+    <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-md">
       <div className="text-center mb-6">
-        <h2 className="text-xl font-semibold mb-2" style={{ color: '#006bb8' }}>
+        <h2 className="text-xl font-semibold mb-2 text-blue-600">
           Mark Attendance
         </h2>
         <p className="text-sm text-gray-600">
@@ -183,7 +183,6 @@ export default function AttendanceScanner({ qrId }: AttendanceScannerProps) {
           onClick={handleAttendanceMark}
           disabled={loading || !selectedStaff}
           className="w-full py-3 px-4 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
-          style={{ backgroundColor: loading || !selectedStaff ? '#9CA3AF' : '#006bb8' }}
         >
           {loading ? (
             <div className="flex items-center justify-center">
