@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 // Icons
 const EmailIcon = ({ className }: { className: string }) => (
@@ -26,6 +27,12 @@ const EyeIcon = ({ className }: { className: string }) => (
 const EyeOffIcon = ({ className }: { className: string }) => (
   <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L3 3m6.878 6.878L21 21" />
+  </svg>
+);
+
+const ArrowLeftIcon = ({ className }: { className: string }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
   </svg>
 );
 
@@ -189,16 +196,29 @@ export default function StaffLogin() {
           </form>
 
           {/* Footer Links */}
-          <div className="mt-6 text-center">
-            <p className="text-sm text-gray-600">
-              Don't have an account?{' '}
-              <button 
-                onClick={() => router.push('/staff-registration')}
-                className="text-blue-600 hover:text-blue-700 font-medium"
+          <div className="mt-6 space-y-3">
+            <div className="text-center">
+              <p className="text-sm text-gray-600">
+                Don't have an account?{' '}
+                <button 
+                  onClick={() => router.push('/staff-registration')}
+                  className="text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  Register here
+                </button>
+              </p>
+            </div>
+            
+            {/* Back to Guest Login */}
+            <div className="text-center">
+              <Link
+                href="/auth/signin"
+                className="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 font-medium transition-colors duration-200"
               >
-                Register here
-              </button>
-            </p>
+                <ArrowLeftIcon className="h-4 w-4 mr-1" />
+                Back to Guest Login
+              </Link>
+            </div>
           </div>
         </div>
 

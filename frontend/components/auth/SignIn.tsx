@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
-import { Eye, EyeOff, Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, ArrowRight, Loader2, Users } from 'lucide-react';
 import { validateEmail } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -285,6 +285,34 @@ export default function SignIn() {
                   Sign up here
                 </Link>
               </p>
+            </div>
+
+            {/* Staff Login Section */}
+            <div className="pt-4">
+              <div className="relative">
+                <Separator className="my-4" />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="bg-white px-3 text-sm text-gray-500 font-medium">
+                    STAFF ACCESS
+                  </span>
+                </div>
+              </div>
+              
+              <div className="text-center pt-4">
+                <p className="text-sm text-gray-600 mb-3">
+                  Are you a staff member?
+                </p>
+                <Link href="/staff-login">
+                  <Button
+                    variant="outline"
+                    className="w-full border-hms-primary text-hms-primary hover:bg-hms-primary hover:text-white transition-all duration-200 group"
+                  >
+                    <Users className="w-4 h-4 mr-2 group-hover:scale-110 transition-transform duration-200" />
+                    Staff Login
+                    <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-200" />
+                  </Button>
+                </Link>
+              </div>
             </div>
           </CardContent>
         </Card>
