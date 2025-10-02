@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { paymentAPI, CreatePaymentData } from '@/services/paymentApi';
+import { paymentAPI, CreatePaymentData } from '@/lib/paymentApi';
 
 export default function PaymentDemoPage() {
   const [demoResult, setDemoResult] = useState<string | null>(null);

@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { paymentAPI, Payment, CreatePaymentData } from '@/services/paymentApi';
-import { staffAPI } from '@/services/api';
+import { paymentAPI, Payment, CreatePaymentData } from '@/lib/paymentApi';
+import { staffAPI } from '@/lib/api';
 import { Staff } from '@/types/staff';
 
 export default function AdminPaymentsPage() {

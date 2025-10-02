@@ -1,316 +1,101 @@
-import axios, { AxiosInstance, AxiosResponse } from 'axios';
-import Cookies from 'js-cookie';
-import { 
-  AuthResponse, 
-  ApiResponse, 
-  PaginatedResponse, 
-  User, 
-  LoginCredentials, 
-  RegisterData, 
-  UpdateUserData, 
-  ChangePasswordData,
-  UserQueryParams 
-} from '@/types';
+import { Staff, StaffFormData, ApiResponse } from '@/types/staff';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = 'http://localhost:5000/staff';
 
-// Create axios instance
-const api: AxiosInstance = axios.create({
-  baseURL: API_URL,
-  timeout: 10000,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-// Request interceptor to add auth token
-api.interceptors.request.use(
-  (config) => {
-    const token = Cookies.get('token');
-    console.log('API Request interceptor - Token:', token ? 'Present' : 'Missing');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-      console.log('Added Authorization header:', config.headers.Authorization);
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
-
-// Response interceptor to handle errors
-api.interceptors.response.use(
-  (response) => {
-    console.log('API Response interceptor - Success:', response.status, response.config.url);
-    return response;
-  },
-  (error) => {
-    console.log('API Response interceptor - Error:', error.response?.status, error.config?.url, error.message);
-    if (error.response?.status === 401) {
-      console.log('401 Unauthorized - removing token and redirecting');
-      // Token expired or invalid
-      Cookies.remove('token');
-      if (typeof window !== 'undefined') {
-        window.location.href = '/login';
-      }
-    }
-    return Promise.reject(error);
-  }
-);
-
-// Auth API functions
-export const authAPI = {
-  // Register user
-  register: async (userData: RegisterData): Promise<AuthResponse> => {
-    const response: AxiosResponse<AuthResponse> = await api.post('/auth/register', userData);
-    return response.data;
-  },
-
-  // Login user
-  login: async (credentials: LoginCredentials): Promise<AuthResponse> => {
-    const response: AxiosResponse<AuthResponse> = await api.post('/auth/login', credentials);
-    return response.data;
-  },
-
-  // Get current user profile
-  getMe: async (): Promise<ApiResponse<{ user: User }>> => {
-    const response: AxiosResponse<ApiResponse<{ user: User }>> = await api.get('/auth/me');
-    return response.data;
-  },
-
-  // Update profile
-  updateProfile: async (profileData: UpdateUserData): Promise<AuthResponse> => {
-    const response: AxiosResponse<AuthResponse> = await api.put('/auth/profile', profileData);
-    return response.data;
-  },
-
-  // Change password
-  changePassword: async (passwordData: ChangePasswordData): Promise<ApiResponse> => {
-    const response: AxiosResponse<ApiResponse> = await api.put('/auth/change-password', passwordData);
-    return response.data;
-  },
-};
-
-// Users API functions
-export const usersAPI = {
-  // Get all users (admin only)
-  getAllUsers: async (params: UserQueryParams = {}): Promise<PaginatedResponse<User>> => {
-    const response: AxiosResponse<PaginatedResponse<User>> = await api.get('/users', { params });
-    return response.data;
-  },
-
-  // Get user by ID
-  getUserById: async (userId: string): Promise<ApiResponse<{ user: User }>> => {
-    const response: AxiosResponse<ApiResponse<{ user: User }>> = await api.get(`/users/${userId}`);
-    return response.data;
-  },
-
-  // Update user
-  updateUser: async (userId: string, userData: UpdateUserData): Promise<ApiResponse<{ user: User }>> => {
-    const response: AxiosResponse<ApiResponse<{ user: User }>> = await api.put(`/users/${userId}`, userData);
-    return response.data;
-  },
-
-  // Delete user (admin only)
-  deleteUser: async (userId: string): Promise<ApiResponse> => {
-    const response: AxiosResponse<ApiResponse> = await api.delete(`/users/${userId}`);
-    return response.data;
-  },
-
-  // Deactivate user (admin only)
-  deactivateUser: async (userId: string): Promise<ApiResponse<{ user: User }>> => {
-    const response: AxiosResponse<ApiResponse<{ user: User }>> = await api.put(`/users/${userId}/deactivate`);
-    return response.data;
-  },
-
-  // Activate user (admin only)
-  activateUser: async (userId: string): Promise<ApiResponse<{ user: User }>> => {
-    const response: AxiosResponse<ApiResponse<{ user: User }>> = await api.put(`/users/${userId}/activate`);
-    return response.data;
-  },
-
-  // Upload profile picture
-  uploadProfilePicture: async (userId: string, file: File): Promise<ApiResponse<{ user: User }>> => {
-    const formData = new FormData();
-    formData.append('profileImage', file);
+class StaffAPI {
+  private async request<T>(
+    endpoint: string,
+    options: RequestInit = {}
+  ): Promise<T> {
+    const url = `${API_BASE_URL}${endpoint}`;
     
-    const response: AxiosResponse<ApiResponse<{ user: User }>> = await api.post(`/users/${userId}/upload`, formData, {
+    const config: RequestInit = {
       headers: {
-        'Content-Type': 'multipart/form-data',
+        'Content-Type': 'application/json',
+        ...options.headers,
       },
-    });
-    
-    return response.data;
-  },
-};
-
-// Availability API functions
-export const availabilityAPI = {
-  // Check room availability
-  checkAvailability: async (params: {
-    checkIn: string;
-    checkOut: string;
-    roomType?: string;
-    adults?: number;
-    children?: number;
-  }): Promise<ApiResponse<{
-    checkIn: string;
-    checkOut: string;
-    nights: number;
-    totalGuests: number;
-    availableRooms: any[];
-    roomsByType: Record<string, any[]>;
-    totalAvailable: number;
-  }>> => {
-    const response: AxiosResponse<ApiResponse<any>> = await api.get('/availability', { params });
-    return response.data;
-  },
-
-  // Get availability calendar data
-  getAvailabilityCalendar: async (params: {
-    roomType?: string;
-    month?: number;
-    year?: number;
-  }): Promise<ApiResponse<{
-    month: number;
-    year: number;
-    calendarData: Record<string, any>;
-    rooms: any[];
-  }>> => {
-    const response: AxiosResponse<ApiResponse<any>> = await api.get('/availability/calendar', { params });
-    return response.data;
-  },
-
-  // Book a room
-  bookRoom: async (bookingData: {
-    roomId: string;
-    checkIn: string;
-    checkOut: string;
-    guestCount: {
-      adults: number;
-      children: number;
+      // Add timeout to prevent hanging requests
+      signal: AbortSignal.timeout(10000), // 10 second timeout
+      ...options,
     };
-    specialRequests?: string;
-  }): Promise<ApiResponse<{
-    reservation: any;
-    pricing: {
-      nights: number;
-      pricePerNight: number;
-      subtotal: number;
-      tax: number;
-      total: number;
-    };
-  }>> => {
-    const response: AxiosResponse<ApiResponse<any>> = await api.post('/availability/book', bookingData);
-    return response.data;
-  },
-};
 
-// Booking API functions
-export const bookingAPI = {
-  // Create a new booking
-  createBooking: async (bookingData: {
-    roomId: string;
-    checkIn: string;
-    checkOut: string;
-    adults: number;
-    children: number;
-    guestDetails: {
-      firstName: string;
-      lastName: string;
-      email: string;
-      phone: string;
-      country: string;
-      idType: string;
-      idNumber: string;
-      arrivalTime?: string;
-      specialRequests?: string;
-    };
-    specialRequests?: string;
-  }): Promise<ApiResponse<{
-    reservation: {
-      id: string;
-      bookingReference: string;
-      checkIn: string;
-      checkOut: string;
-      roomNumber: string;
-      roomType: string;
-      totalAmount: number;
-      status: string;
-      guestDetails: any;
-    };
-  }>> => {
-    const response: AxiosResponse<ApiResponse<any>> = await api.post('/booking/create', bookingData);
-    return response.data;
-  },
+    try {
+      const response = await fetch(url, config);
+      
+      if (!response.ok) {
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch {
+          errorData = { message: `HTTP error! status: ${response.status}` };
+        }
+        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+      }
 
-  // Get booking details
-  getBooking: async (bookingId: string): Promise<ApiResponse<{
-    reservation: any;
-  }>> => {
-    const response: AxiosResponse<ApiResponse<any>> = await api.get(`/booking/${bookingId}`);
-    return response.data;
-  },
-
-  // Get user's bookings
-  getUserBookings: async (): Promise<ApiResponse<{
-    bookings: any[];
-    total: number;
-  }>> => {
-    console.log('Making API call to /booking/user/bookings');
-    const response: AxiosResponse<ApiResponse<any>> = await api.get('/booking/user/bookings');
-    console.log('API response received:', response.data);
-    return response.data;
-  },
-
-  // Cancel a booking
-  cancelBooking: async (bookingId: string): Promise<ApiResponse<{
-    reservation: {
-      id: string;
-      status: string;
-      bookingReference: string;
-    };
-  }>> => {
-    const response: AxiosResponse<ApiResponse<any>> = await api.post(`/booking/${bookingId}/cancel`);
-    return response.data;
-  },
-
-  // Update arrival time
-  updateArrivalTime: async (bookingId: string, arrivalTime: string): Promise<ApiResponse<{
-    booking: any;
-  }>> => {
-    const response: AxiosResponse<ApiResponse<any>> = await api.put(`/booking/${bookingId}/arrival-time`, {
-      arrivalTime
-    });
-    return response.data;
-  },
-
-};
-
-// Utility functions
-export const setAuthToken = (token: string | null): void => {
-  if (token) {
-    Cookies.set('token', token, { 
-      expires: 7, // 7 days
-      path: '/',
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax'
-    });
-    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-  } else {
-    Cookies.remove('token', { path: '/' });
-    delete api.defaults.headers.common['Authorization'];
+      // Handle empty responses
+      const text = await response.text();
+      if (!text) {
+        return {} as T;
+      }
+      
+      try {
+        return JSON.parse(text);
+      } catch (parseError) {
+        console.error('JSON parse error:', parseError, 'Response text:', text);
+        throw new Error('Invalid JSON response from server');
+      }
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new Error('Request timeout - server took too long to respond');
+      }
+      console.error('API request failed:', error);
+      throw error;
+    }
   }
-};
 
-export const removeAuthToken = (): void => {
-  Cookies.remove('token', { path: '/' });
-  delete api.defaults.headers.common['Authorization'];
-};
+  // Get all staff
+  async getAllStaff(): Promise<Staff[]> {
+    const response = await this.request<ApiResponse<Staff[]>>('/');
+    return response.staff || [];
+  }
 
-export const getAuthToken = (): string | undefined => {
-  return Cookies.get('token');
-};
+  // Get staff by ID
+  async getStaffById(id: string): Promise<Staff> {
+    const response = await this.request<ApiResponse<Staff>>(`/${id}`);
+    return response.staff!;
+  }
 
-export default api;
+  // Create new staff
+  async createStaff(staffData: StaffFormData): Promise<Staff> {
+    const response = await this.request<ApiResponse<Staff>>('/', {
+      method: 'POST',
+      body: JSON.stringify(staffData),
+    });
+    return response.staff!;
+  }
+
+  // Update staff
+  async updateStaff(id: string, staffData: StaffFormData): Promise<Staff> {
+    const response = await this.request<ApiResponse<Staff>>(`/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(staffData),
+    });
+    return response.staff!;
+  }
+
+  // Delete staff
+  async deleteStaff(id: string): Promise<Staff> {
+    const response = await this.request<ApiResponse<Staff>>(`/${id}`, {
+      method: 'DELETE',
+    });
+    return response.staff!;
+  }
+
+  // Get staff by employee ID (for employee login)
+  async getStaffByEmployeeId(employeeId: string): Promise<Staff> {
+    const response = await this.request<ApiResponse<Staff>>(`/employee/${employeeId}`);
+    return response.staff!;
+  }
+}
+
+export const staffAPI = new StaffAPI();

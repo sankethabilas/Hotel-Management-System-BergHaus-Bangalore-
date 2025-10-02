@@ -1,5 +1,5 @@
-const Payment = require('../models/paymentModel');
-const Staff = require('../models/StaffModel');
+const Payment = require('../models/Payment');
+const Staff = require('../models/Staff');
 
 // Get all payments with filters
 const getAllPayments = async (req, res) => {

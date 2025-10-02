@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { staffAPI } from '@/services/api';
-import { leaveAPI } from '@/services/leaveApi';
+import { staffAPI } from '@/lib/api';
+import { leaveAPI } from '@/lib/leaveApi';
 import { Staff } from '@/types/staff';
 import { Leave } from '@/types/leave';
 

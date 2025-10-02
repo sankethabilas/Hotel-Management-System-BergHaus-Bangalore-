@@ -1,5 +1,5 @@
-const Attendance = require('../models/attendanceModel');
-const Staff = require('../models/StaffModel');
+const Attendance = require('../models/Attendance');
+const Staff = require('../models/Staff');
 const crypto = require('crypto');
 const QRCode = require('qrcode');
 

@@ -57,10 +57,10 @@ app.use('/api/frontdesk', require('./routes/frontdesk'));
 app.use('/api/bills', require('./routes/bills'));
 
 // Routes - Staff Management System
-app.use('/api/staff', require('./routes/StaffRoute'));
-app.use('/api/leave', require('./routes/leaveRoute'));
-app.use('/api/payments', require('./routes/paymentRoute.js'));
-app.use('/api/attendance', require('./routes/attendanceRoute.js'));
+app.use('/api/staff', require('./routes/staff'));
+app.use('/api/leaves', require('./routes/leaves'));
+app.use('/api/payments', require('./routes/payments'));
+app.use('/api/attendance', require('./routes/attendance'));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

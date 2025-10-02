@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import QRCodeDisplay from '@/components/QRCodeDisplay';
-import { attendanceAPI, AttendanceRecord, TodayAttendanceResponse } from '@/services/attendanceApi';
+import { attendanceAPI, AttendanceRecord, TodayAttendanceResponse } from '@/lib/attendanceApi';
 
 export default function AdminAttendancePage() {
   const [todayAttendance, setTodayAttendance] = useState<TodayAttendanceResponse | null>(null);
