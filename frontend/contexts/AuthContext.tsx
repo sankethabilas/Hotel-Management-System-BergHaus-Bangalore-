@@ -103,7 +103,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
           if (window.location.pathname.includes('/auth/')) {
             if (result.user?.role === 'frontdesk') {
               router.push('/frontdesk/dashboard');
-            } else if (result.user?.role === 'admin' || result.user?.role === 'manager') {
+            } else if (result.user?.role === 'admin') {
+              router.push('/admin');
+            } else if (result.user?.role === 'manager') {
               router.push('/dashboard');
             } else {
               router.push('/');
