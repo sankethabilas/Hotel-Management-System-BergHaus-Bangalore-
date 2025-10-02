@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { paymentAPI, Payment, CreatePaymentData } from '@/lib/paymentApi';
-import { staffAPI } from '@/lib/api';
+import { staffAPI } from '@/lib/staffApi';
 import { Staff } from '@/types/staff';
 
 export default function AdminPaymentsPage() {

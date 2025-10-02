@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Staff } from '@/types/staff';
-import { staffAPI } from '@/services/api';
+import { staffAPI } from '@/lib/api';
 
 interface AttendanceScannerProps {
   qrId?: string;

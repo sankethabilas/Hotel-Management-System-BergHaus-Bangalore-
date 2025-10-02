@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Staff, StaffFormData } from '@/types/staff';
-import { staffAPI } from '@/services/api';
+import { staffAPI } from '@/lib/staffApi';
 
 interface StaffFormProps {
   staffId?: string;

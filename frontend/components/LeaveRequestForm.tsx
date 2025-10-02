@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import { LeaveFormData, LEAVE_TYPE_CONFIG } from '@/types/leave';
 import { Staff } from '@/types/staff';
-import { leaveAPI } from '@/services/leaveApi';
-import { staffAPI } from '@/services/api';
+import { leaveAPI } from '@/lib/leaveApi';
+import { staffAPI } from '@/lib/api';
 
 interface LeaveRequestFormProps {
   onSuccess?: () => void;

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Staff } from '@/types/staff';
-import { staffAPI } from '@/services/api';
+import { staffAPI } from '@/lib/staffApi';
 
 export default function StaffList({ basePathPrefix = '' }: { basePathPrefix?: string }) {
   const [staff, setStaff] = useState<Staff[]>([]);
