@@ -5,6 +5,7 @@ const User = require('../models/User');
 const protect = async (req, res, next) => {
   try {
     let token;
+    let user = null;
 
     // Check for token in headers
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
@@ -16,7 +17,19 @@ const protect = async (req, res, next) => {
       token = req.cookies.token;
     }
 
-    if (!token) {
+    // Check for session cookie (Google OAuth)
+    if (!token && req.cookies && req.cookies['hms-session']) {
+      try {
+        const sessionData = JSON.parse(decodeURIComponent(req.cookies['hms-session']));
+        if (sessionData.isAuthenticated && sessionData.user) {
+          user = sessionData.user;
+        }
+      } catch (error) {
+        console.log('Error parsing session cookie:', error.message);
+      }
+    }
+
+    if (!token && !user) {
       return res.status(401).json({
         success: false,
         message: 'Access denied. No token provided.'
@@ -24,17 +37,29 @@ const protect = async (req, res, next) => {
     }
 
     try {
-      // Verify token
-      const decoded = verifyToken(token);
-      
-      // Get user from token
-      const user = await User.findById(decoded.userId).select('-password');
-      
-      if (!user) {
-        return res.status(401).json({
-          success: false,
-          message: 'Token is valid but user no longer exists'
-        });
+      if (token) {
+        // Verify JWT token
+        const decoded = verifyToken(token);
+        
+        // Get user from token
+        user = await User.findById(decoded.userId).select('-password');
+        
+        if (!user) {
+          return res.status(401).json({
+            success: false,
+            message: 'Token is valid but user no longer exists'
+          });
+        }
+      } else if (user) {
+        // User from session cookie, verify they still exist and are active
+        const dbUser = await User.findById(user._id || user.id).select('-password');
+        if (!dbUser) {
+          return res.status(401).json({
+            success: false,
+            message: 'User no longer exists'
+          });
+        }
+        user = dbUser;
       }
 
       if (!user.isActive) {
@@ -54,9 +79,10 @@ const protect = async (req, res, next) => {
 
       next();
     } catch (error) {
+      console.error('Auth verification error:', error);
       return res.status(401).json({
         success: false,
-        message: 'Invalid token'
+        message: 'Invalid token or session'
       });
     }
   } catch (error) {
@@ -136,9 +162,49 @@ const checkOwnership = (resourceUserIdField = 'userId') => {
   };
 };
 
+// Frontdesk specific middleware
+const requireFrontdesk = (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({
+      success: false,
+      message: 'Authentication required'
+    });
+  }
+
+  if (req.user.role !== 'frontdesk') {
+    return res.status(403).json({
+      success: false,
+      message: 'Access denied. Frontdesk role required.'
+    });
+  }
+
+  next();
+};
+
+// Admin or frontdesk access
+const requireAdminOrFrontdesk = (req, res, next) => {
+  if (!req.user) {
+    return res.status(401).json({
+      success: false,
+      message: 'Authentication required'
+    });
+  }
+
+  if (!['admin', 'frontdesk', 'manager'].includes(req.user.role)) {
+    return res.status(403).json({
+      success: false,
+      message: 'Access denied. Admin, manager, or frontdesk role required.'
+    });
+  }
+
+  next();
+};
+
 module.exports = {
   protect,
   authorize,
   optionalAuth,
-  checkOwnership
+  checkOwnership,
+  requireFrontdesk,
+  requireAdminOrFrontdesk
 };

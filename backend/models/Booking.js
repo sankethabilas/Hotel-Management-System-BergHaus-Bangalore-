@@ -88,6 +88,32 @@ const bookingSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  customCharges: [{
+    description: {
+      type: String,
+      required: true,
+      trim: true
+    },
+    quantity: {
+      type: Number,
+      required: true,
+      min: [1, 'Quantity must be at least 1']
+    },
+    unitPrice: {
+      type: Number,
+      required: true,
+      min: [0, 'Unit price cannot be negative']
+    },
+    category: {
+      type: String,
+      enum: ['food', 'minibar', 'laundry', 'damage', 'late_checkout', 'other'],
+      default: 'other'
+    },
+    addedAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
 
   // Payment Information
   paymentMethod: {

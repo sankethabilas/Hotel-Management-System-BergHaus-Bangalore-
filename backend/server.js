@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const cookieParser = require('cookie-parser');
 const connectDB = require('./config/database');
 require('dotenv').config();
 
@@ -34,6 +35,9 @@ app.use(limiter);
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
+// Cookie parsing middleware
+app.use(cookieParser());
+
 // Serve static files (uploaded images)
 app.use('/uploads', express.static('uploads'));
 
@@ -49,6 +53,8 @@ app.use('/api/availability', require('./routes/availability'));
 app.use('/api/booking', require('./routes/booking'));
 app.use('/api/bookings', require('./routes/bookingRoutes'));
 app.use('/api/pdf', require('./routes/pdf'));
+app.use('/api/frontdesk', require('./routes/frontdesk'));
+app.use('/api/bills', require('./routes/bills'));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

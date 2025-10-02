@@ -59,10 +59,18 @@ class ReservationService {
     const numberOfNights = Math.ceil((checkOutDate - checkInDate) / (1000 * 60 * 60 * 24));
     const totalPrice = numberOfNights * room.pricePerNight;
     
-    // Create reservation
+    // Create reservation with proper room assignment
     const reservation = new Reservation({
       guestId,
-      roomId,
+      roomId, // Legacy field for backward compatibility
+      rooms: [{
+        roomId: room._id,
+        roomNumber: room.roomNumber,
+        roomType: room.type || room.roomType
+      }],
+      checkInDate: checkInDate,
+      checkOutDate: checkOutDate,
+      // Legacy fields for backward compatibility
       checkIn: checkInDate,
       checkOut: checkOutDate,
       totalPrice,

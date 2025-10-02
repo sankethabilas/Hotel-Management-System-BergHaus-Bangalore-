@@ -317,10 +317,18 @@ const bookRoom = async (req, res) => {
     const tax = totalPrice * 0.1;
     const finalPrice = totalPrice + tax;
 
-    // Create reservation
+    // Create reservation with proper room assignment
     const reservation = new Reservation({
       guestId: userId,
-      roomId: roomId,
+      roomId: roomId, // Legacy field for backward compatibility
+      rooms: [{
+        roomId: room._id,
+        roomNumber: room.roomNumber,
+        roomType: room.type || room.roomType
+      }],
+      checkInDate: checkInDate,
+      checkOutDate: checkOutDate,
+      // Legacy fields for backward compatibility
       checkIn: checkInDate,
       checkOut: checkOutDate,
       totalPrice: finalPrice,

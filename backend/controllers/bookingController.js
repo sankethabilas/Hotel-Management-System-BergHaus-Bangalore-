@@ -281,6 +281,43 @@ const createBooking = async (req, res) => {
 
     await session.commitTransaction();
 
+    // Create corresponding reservation for frontdesk operations
+    try {
+      const Reservation = require('../models/Reservation');
+      
+      const reservation = new Reservation({
+        guestId: guest._id,
+        guestName,
+        guestEmail,
+        guestPhone,
+        rooms: [{
+          roomId: room._id,
+          roomNumber: room.roomNumber,
+          roomType: room.roomType || room.type
+        }],
+        roomId: room._id, // Legacy field
+        checkInDate: checkIn,
+        checkOutDate: checkOut,
+        checkIn: checkIn, // Legacy field
+        checkOut: checkOut, // Legacy field
+        totalPrice: totalAmount,
+        status: 'confirmed', // Auto-confirm bookings from website
+        paymentStatus: 'unpaid',
+        guestCount: {
+          adults: numberOfGuests || 1,
+          children: 0
+        },
+        specialRequests,
+        source: 'website'
+      });
+
+      await reservation.save();
+      console.log(`✅ Created reservation ${reservation.reservationId} for booking ${booking.bookingReference}`);
+    } catch (reservationError) {
+      console.error('Failed to create reservation for booking:', reservationError);
+      // Don't fail the booking if reservation creation fails
+    }
+
     // Send confirmation email
     try {
       await emailService.sendBookingConfirmation(booking);
@@ -555,8 +592,6 @@ const getAllBookings = async (req, res) => {
     sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
 
     const bookings = await Booking.find(filter)
-      .populate('roomId', 'roomNumber roomType')
-      .populate('guestId', 'firstName lastName email')
       .sort(sort)
       .limit(limit * 1)
       .skip((page - 1) * limit);
@@ -587,6 +622,292 @@ const getAllBookings = async (req, res) => {
   }
 };
 
+// @desc    Add custom charges to booking
+// @route   POST /api/bookings/:id/charges
+// @access  Private (Staff/Admin)
+const addCustomCharges = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { charges } = req.body;
+
+    console.log('Adding custom charges:', { id, charges });
+
+    // Validate input
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid booking ID'
+      });
+    }
+
+    if (!charges || !Array.isArray(charges) || charges.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid charges data'
+      });
+    }
+
+    // Validate each charge
+    for (const charge of charges) {
+      if (!charge.description || !charge.quantity || !charge.unitPrice) {
+        return res.status(400).json({
+          success: false,
+          message: 'Each charge must have description, quantity, and unitPrice'
+        });
+      }
+      if (charge.quantity <= 0 || charge.unitPrice < 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid quantity or price values'
+        });
+      }
+    }
+
+    const booking = await Booking.findById(id);
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found'
+      });
+    }
+
+    console.log('Found booking:', booking.bookingReference);
+
+    // Initialize customCharges if it doesn't exist
+    if (!booking.customCharges) {
+      booking.customCharges = [];
+    }
+    
+    // Add new charges
+    booking.customCharges.push(...charges);
+    
+    // Recalculate total amount safely
+    const roomCharges = (booking.roomPrice || 0) * (booking.totalNights || 1);
+    const taxAmount = booking.taxAmount || 0;
+    const customChargesTotal = booking.customCharges.reduce((total, charge) => {
+      return total + ((charge.quantity || 0) * (charge.unitPrice || 0));
+    }, 0);
+    
+    booking.totalAmount = roomCharges + taxAmount + customChargesTotal;
+    
+    console.log('Calculated totals:', {
+      roomCharges,
+      taxAmount,
+      customChargesTotal,
+      newTotal: booking.totalAmount
+    });
+    
+    await booking.save();
+
+    res.json({
+      success: true,
+      message: 'Custom charges added successfully',
+      data: {
+        booking,
+        newTotal: booking.totalAmount
+      }
+    });
+
+  } catch (error) {
+    console.error('Add custom charges error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Generate bill for booking
+// @route   GET /api/bookings/:id/bill
+// @access  Private (Staff/Admin)
+const generateBill = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { format = 'json' } = req.query; // 'json' or 'pdf'
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid booking ID'
+      });
+    }
+
+    const booking = await Booking.findById(id);
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found'
+      });
+    }
+
+    // Calculate bill details safely
+    const roomCharges = (booking.roomPrice || 0) * (booking.totalNights || 1);
+    const customChargesTotal = booking.customCharges ? booking.customCharges.reduce((total, charge) => {
+      return total + ((charge.quantity || 0) * (charge.unitPrice || 0));
+    }, 0) : 0;
+    
+    const subtotal = roomCharges + customChargesTotal;
+    const tax = booking.taxAmount || 0;
+    const total = subtotal + tax;
+
+    const billData = {
+      billId: `BILL-${booking.bookingReference}`,
+      bookingReference: booking.bookingReference,
+      guestName: booking.guestName,
+      guestEmail: booking.guestEmail,
+      roomNumber: booking.roomNumber,
+      roomType: booking.roomType,
+      checkInDate: booking.checkInDate,
+      checkOutDate: booking.checkOutDate,
+      totalNights: booking.totalNights || 1,
+      items: [
+        {
+          description: `Room Charges (${booking.totalNights || 1} nights)`,
+          quantity: booking.totalNights || 1,
+          unitPrice: booking.roomPrice || 0,
+          total: roomCharges
+        },
+        ...(booking.customCharges || []).map(charge => ({
+          description: charge.description,
+          quantity: charge.quantity,
+          unitPrice: charge.unitPrice,
+          total: (charge.quantity || 0) * (charge.unitPrice || 0)
+        }))
+      ],
+      subtotal,
+      tax,
+      total,
+      paymentStatus: booking.paymentStatus,
+      createdAt: new Date()
+    };
+
+    if (format === 'pdf') {
+      // Generate PDF
+      const pdfService = require('../services/pdfService');
+      const pdfBuffer = await pdfService.generateBillPDF(billData);
+      
+      // Ensure proper headers for PDF download
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="bill-${booking.bookingReference}.pdf"`);
+      res.setHeader('Content-Length', pdfBuffer.length);
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+      
+      // Send the buffer
+      res.end(pdfBuffer);
+    } else {
+      // Return JSON data
+      res.json({
+        success: true,
+        message: 'Bill generated successfully',
+        data: {
+          bill: billData
+        }
+      });
+    }
+
+  } catch (error) {
+    console.error('Generate bill error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: error.message
+    });
+  }
+};
+
+
+// @desc    Send bill via email
+// @route   POST /api/bookings/:id/bill/email
+// @access  Private (Staff/Admin)
+const sendBillEmail = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid booking ID'
+      });
+    }
+
+    const booking = await Booking.findById(id);
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: 'Booking not found'
+      });
+    }
+
+    // Calculate bill details safely
+    const roomCharges = (booking.roomPrice || 0) * (booking.totalNights || 1);
+    const customChargesTotal = booking.customCharges ? booking.customCharges.reduce((total, charge) => {
+      return total + ((charge.quantity || 0) * (charge.unitPrice || 0));
+    }, 0) : 0;
+    
+    const subtotal = roomCharges + customChargesTotal;
+    const tax = booking.taxAmount || 0;
+    const total = subtotal + tax;
+
+    const billData = {
+      billId: `BILL-${booking.bookingReference}`,
+      bookingReference: booking.bookingReference,
+      guestName: booking.guestName,
+      guestEmail: booking.guestEmail,
+      roomNumber: booking.roomNumber,
+      roomType: booking.roomType,
+      checkInDate: booking.checkInDate,
+      checkOutDate: booking.checkOutDate,
+      totalNights: booking.totalNights || 1,
+      items: [
+        {
+          description: `Room Charges (${booking.totalNights || 1} nights)`,
+          quantity: booking.totalNights || 1,
+          unitPrice: booking.roomPrice || 0,
+          total: roomCharges
+        },
+        ...(booking.customCharges || []).map(charge => ({
+          description: charge.description,
+          quantity: charge.quantity,
+          unitPrice: charge.unitPrice,
+          total: (charge.quantity || 0) * (charge.unitPrice || 0)
+        }))
+      ],
+      subtotal,
+      tax,
+      total,
+      paymentStatus: booking.paymentStatus,
+      createdAt: new Date()
+    };
+
+    // Generate PDF
+    const pdfService = require('../services/pdfService');
+    const pdfBuffer = await pdfService.generateBillPDF(billData);
+    
+    // Send email with PDF attachment
+    const emailService = require('../services/emailService');
+    await emailService.sendBillEmail(billData, pdfBuffer);
+
+    res.json({
+      success: true,
+      message: 'Bill sent via email successfully',
+      data: {
+        billId: billData.billId,
+        sentTo: billData.guestEmail
+      }
+    });
+
+  } catch (error) {
+    console.error('Send bill email error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: error.message
+    });
+  }
+};
 
 module.exports = {
   searchAvailableRooms,
@@ -596,5 +917,8 @@ module.exports = {
   cancelBooking,
   updateArrivalTime,
   updateBookingStatus,
-  getAllBookings
+  getAllBookings,
+  addCustomCharges,
+  generateBill,
+  sendBillEmail
 };

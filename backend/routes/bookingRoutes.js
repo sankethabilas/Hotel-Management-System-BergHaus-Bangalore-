@@ -8,7 +8,10 @@ const {
   cancelBooking,
   updateArrivalTime,
   updateBookingStatus,
-  getAllBookings
+  getAllBookings,
+  addCustomCharges,
+  generateBill,
+  sendBillEmail
 } = require('../controllers/bookingController');
 const { protect, optionalAuth } = require('../middleware/auth');
 
@@ -100,5 +103,8 @@ router.put('/:id/arrival-time', protect, arrivalTimeValidation, updateArrivalTim
 // Admin/Staff routes
 router.get('/', protect, getAllBookings);
 router.put('/:id/status', protect, statusValidation, updateBookingStatus);
+router.post('/:id/charges', protect, addCustomCharges);
+router.get('/:id/bill', protect, generateBill);
+router.post('/:id/bill/email', protect, sendBillEmail);
 
 module.exports = router;
