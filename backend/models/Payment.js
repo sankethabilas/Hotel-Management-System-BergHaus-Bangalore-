@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const paymentSchema = new mongoose.Schema({
   staffId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'StaffModel',
+    ref: 'Staff',
     required: true
   },
   employeeId: {

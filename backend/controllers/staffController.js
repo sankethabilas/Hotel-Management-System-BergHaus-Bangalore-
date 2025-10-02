@@ -331,6 +331,38 @@ const getStaffDashboard = async (req, res) => {
   }
 };
 
+// Get staff by employee ID
+const getStaffByEmployeeId = async (req, res) => {
+  try {
+    const { employeeId } = req.params;
+
+    const staff = await Staff.findOne({ employeeId, isActive: true });
+
+    if (!staff) {
+      return res.status(404).json({
+        success: false,
+        message: 'Staff member not found'
+      });
+    }
+
+    // Remove password from response
+    const staffResponse = staff.toObject();
+    delete staffResponse.password;
+
+    res.json({
+      success: true,
+      staff: staffResponse
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch staff member',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   createStaff,
   getAllStaff,
@@ -338,5 +370,6 @@ module.exports = {
   updateStaff,
   deleteStaff,
   staffLogin,
-  getStaffDashboard
+  getStaffDashboard,
+  getStaffByEmployeeId
 };

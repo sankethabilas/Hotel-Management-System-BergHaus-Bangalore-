@@ -30,7 +30,4 @@ const staffSchema = new mongoose.Schema({
 
 );
 
-module.exports = mongoose.model(
-    "StaffModel", //file name
-    staffSchema //function name
-)
+module.exports = mongoose.model('Staff', staffSchema);
