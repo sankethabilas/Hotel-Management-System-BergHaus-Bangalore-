@@ -51,23 +51,59 @@ export default function AdminDashboardPage() {
   //  Generate Inventory Report
   const downloadInventoryReport = () => {
     const doc = new jsPDF();
-    doc.text("Inventory Items Report", 14, 15);
-
-    const tableData = items.map((item) => [
-      item.itemName,
-      item.category,
-      item.quantity,
-      `LKR ${item.price}`,
-      item.supplierName || "N/A",
-    ]);
-
-    autoTable(doc, {
-      head: [["Item Name", "Category", "Quantity", "Price", "Supplier"]],
-      body: tableData,
-      startY: 25,
+    
+    // Get current month and year
+    const currentDate = new Date();
+    const monthNames = ["January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"];
+    const currentMonth = monthNames[currentDate.getMonth()];
+    const currentYear = currentDate.getFullYear();
+    
+    // Report header with month
+    doc.setFontSize(16);
+    doc.text(`Inventory Report - ${currentMonth} ${currentYear}`, 14, 15);
+    
+    // Calculate totals
+    let totalInventoryValue = 0;
+    let totalConsumedValue = 0;
+    
+    const tableData = items.map((item) => {
+      const quantity = item.quantity || 0;
+      const allocated = item.allocated || 0;
+      const damaged = item.damaged || 0;
+      const price = item.price || 0;
+      const availableStock = quantity - allocated - damaged;
+      
+      totalInventoryValue += quantity * price;
+      totalConsumedValue += (allocated + damaged) * price;
+      
+      return [
+        item.name || item.itemName || "N/A", // Fix item name issue
+        item.category || "N/A",
+        quantity,
+        allocated,
+        damaged,
+        availableStock,
+        `LKR ${price.toFixed(2)}`,
+        `LKR ${(quantity * price).toFixed(2)}`,
+        item.supplierName || "N/A",
+      ];
     });
 
-    doc.save("inventory_report.pdf");
+    autoTable(doc, {
+      head: [["Item Name", "Category", "Total Qty", "Allocated", "Damaged", "Available", "Unit Price", "Total Value", "Supplier"]],
+      body: tableData,
+      startY: 30,
+    });
+    
+    // Add summary at the end
+    const finalY = doc.lastAutoTable.finalY + 10;
+    doc.setFontSize(12);
+    doc.text(`Total Inventory Value: LKR ${totalInventoryValue.toFixed(2)}`, 14, finalY);
+    doc.text(`Total Consumed Items Value: LKR ${totalConsumedValue.toFixed(2)}`, 14, finalY + 7);
+    doc.text(`Net Available Value: LKR ${(totalInventoryValue - totalConsumedValue).toFixed(2)}`, 14, finalY + 14);
+
+    doc.save(`inventory_report_${currentMonth}_${currentYear}.pdf`);
   };
 
   //  Generate Staff Requests Report
@@ -109,7 +145,10 @@ export default function AdminDashboardPage() {
 
   // Derived stats
   const totalProducts = items.length;
-  const stocksBelowFive = items.filter(i => i.quantity <= 5).length;
+  const stocksBelowFive = items.filter(i => {
+    const availableStock = (i.quantity || 0) - ((i.allocated || 0) + (i.damaged || 0));
+    return availableStock <= 5;
+  }).length;
 
   // total suppliers (distinct supplierName, ignoring empty)
   const totalSuppliers = useMemo(() => {
