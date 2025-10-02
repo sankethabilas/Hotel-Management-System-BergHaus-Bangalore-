@@ -36,9 +36,15 @@ const ArrowLeftIcon = ({ className }: { className: string }) => (
   </svg>
 );
 
+const IdCardIcon = ({ className }: { className: string }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" />
+  </svg>
+);
+
 export default function StaffLogin() {
   const [formData, setFormData] = useState({
-    email: '',
+    employeeId: '',
     password: ''
   });
   const [showPassword, setShowPassword] = useState(false);
@@ -60,10 +66,10 @@ export default function StaffLogin() {
     setLoading(true);
     setError('');
 
-    console.log('Attempting login with:', { email: formData.email, password: formData.password });
+    console.log('Attempting login with:', { employeeId: formData.employeeId, password: formData.password });
 
     try {
-      const response = await fetch('http://localhost:5000/staff/login', {
+      const response = await fetch('http://localhost:5000/api/staff/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -123,23 +129,23 @@ export default function StaffLogin() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Email Field */}
+            {/* Employee ID Field */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email Address
+              <label htmlFor="employeeId" className="block text-sm font-medium text-gray-700 mb-2">
+                Employee ID
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <EmailIcon className="h-5 w-5 text-gray-400" />
+                  <IdCardIcon className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
+                  type="text"
+                  id="employeeId"
+                  name="employeeId"
+                  value={formData.employeeId}
                   onChange={handleInputChange}
                   className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  placeholder="Enter your email"
+                  placeholder="Enter your Employee ID (e.g., EMP0001)"
                   required
                 />
               </div>
