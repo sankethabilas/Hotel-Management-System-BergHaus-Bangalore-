@@ -7,13 +7,13 @@ import ClientOnly from '@/components/ClientOnly'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'HMS - Hotel Management System',
-  description: 'Experience luxury hospitality with our comprehensive Hotel Management System. Seamless booking, exceptional service, and unforgettable memories await.',
+  title: 'Berghaus Bungalow - Hotel Management System',
+  description: 'Experience luxury hospitality at Berghaus Bungalow. Seamless booking, exceptional service, and unforgettable memories await.',
   keywords: 'hotel, management, booking, hospitality, luxury, reservation',
   authors: [{ name: 'HMS Team' }],
   openGraph: {
-    title: 'HMS - Hotel Management System',
-    description: 'Experience luxury hospitality with our comprehensive Hotel Management System.',
+    title: 'Berghaus Bungalow - Hotel Management System',
+    description: 'Experience luxury hospitality at Berghaus Bungalow.',
     type: 'website',
     locale: 'en_US',
   },

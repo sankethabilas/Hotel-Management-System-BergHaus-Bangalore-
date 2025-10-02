@@ -78,7 +78,14 @@ export default function ReservationsPage() {
   }
 
   if (!isAuthenticated) {
-    return null; // Will redirect to login
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="flex items-center space-x-2">
+          <Loader2 className="w-6 h-6 animate-spin text-hms-primary" />
+          <span className="text-gray-600">Redirecting to sign in...</span>
+        </div>
+      </div>
+    );
   }
 
   return (

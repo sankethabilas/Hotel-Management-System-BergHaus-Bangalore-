@@ -101,7 +101,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setTimeout(() => {
           // Role-based redirect - only redirect if logging in from auth pages
           if (window.location.pathname.includes('/auth/')) {
-            if (result.user?.role === 'frontdesk' || result.user?.role === 'admin' || result.user?.role === 'manager') {
+            if (result.user?.role === 'frontdesk') {
+              router.push('/frontdesk/dashboard');
+            } else if (result.user?.role === 'admin' || result.user?.role === 'manager') {
               router.push('/dashboard');
             } else {
               router.push('/');

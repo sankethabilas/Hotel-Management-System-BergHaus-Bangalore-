@@ -46,7 +46,7 @@ export default function BookingConfirmationPDF({ bookingData }: BookingConfirmat
         marginBottom: '30px'
       }}>
         <h1 style={{ margin: '0 0 10px 0', fontSize: '28px', fontWeight: '300' }}>
-          🏨 HMS Hotel Management System
+          🏨 Berghaus Bungalow
         </h1>
         <p style={{ margin: '0', fontSize: '16px', opacity: '0.9' }}>
           Booking Confirmation
@@ -273,8 +273,8 @@ export default function BookingConfirmationPDF({ bookingData }: BookingConfirmat
           <div style={{ textAlign: 'left' }}>
             <strong style={{ color: '#495057' }}>Contact Details:</strong><br/>
             Phone: +94 11 234 5678<br/>
-            Email: info@hmshotel.com<br/>
-            Website: www.hmshotel.com
+            Email: info@berghausbungalow.com<br/>
+            Website: www.berghausbungalow.com
           </div>
         </div>
         <p style={{ marginTop: '20px', fontSize: '12px', color: '#6c757d' }}>

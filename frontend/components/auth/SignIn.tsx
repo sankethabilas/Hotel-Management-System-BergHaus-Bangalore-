@@ -91,6 +91,11 @@ export default function SignIn() {
       if (success) {
         // AuthContext handles the redirect and toast notification
         // No need to do anything here
+      } else {
+        // Invalid credentials - reload the page after a short delay
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000); // 2 second delay to show the error message first
       }
     } catch (error) {
       toast({
@@ -98,6 +103,10 @@ export default function SignIn() {
         description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
+      // Also reload on unexpected errors
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
     } finally {
       setLoading(false);
     }

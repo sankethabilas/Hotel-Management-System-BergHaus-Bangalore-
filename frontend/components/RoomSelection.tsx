@@ -68,6 +68,10 @@ const RoomSelection: React.FC<RoomSelectionProps> = ({
   };
 
   const getRoomTypeColor = (roomType: string) => {
+    if (!roomType || typeof roomType !== 'string') {
+      return 'bg-gray-100 text-gray-800';
+    }
+    
     switch (roomType.toLowerCase()) {
       case 'standard':
         return 'bg-blue-100 text-blue-800';
@@ -118,14 +122,20 @@ const RoomSelection: React.FC<RoomSelectionProps> = ({
 
       {/* Room Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {rooms.map((room) => (
+        {rooms.map((room) => {
+          // Safety check for room data
+          if (!room || !room._id || !room.roomNumber) {
+            return null;
+          }
+          
+          return (
           <Card key={room._id} className="relative">
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between">
                 <div>
                   <CardTitle className="text-lg">Room {room.roomNumber}</CardTitle>
                   <Badge className={`mt-1 ${getRoomTypeColor(room.roomType)}`}>
-                    {room.roomType.charAt(0).toUpperCase() + room.roomType.slice(1)}
+                    {room.roomType ? room.roomType.charAt(0).toUpperCase() + room.roomType.slice(1) : 'Unknown'}
                   </Badge>
                 </div>
                 <div className="text-right">
@@ -194,7 +204,8 @@ const RoomSelection: React.FC<RoomSelectionProps> = ({
               </div>
             </CardContent>
           </Card>
-        ))}
+          );
+        })}
       </div>
 
       {/* Selection Summary and Proceed Button */}

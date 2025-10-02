@@ -98,12 +98,22 @@ export default function Navbar({ className }: NavbarProps) {
             >
               Contact
             </Link>
-            <Link 
-              href="/reservations" 
-              className="text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary transition-colors duration-200 font-medium"
-            >
-              Reservations
-            </Link>
+            {isAuthenticated ? (
+              <Link 
+                href="/reservations" 
+                className="text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary transition-colors duration-200 font-medium"
+              >
+                Reservations
+              </Link>
+            ) : (
+              <Link 
+                href="/auth/signin" 
+                className="text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary transition-colors duration-200 font-medium"
+                title="Sign in to view reservations"
+              >
+                Reservations
+              </Link>
+            )}
             <Link 
               href="/booking" 
               className="bg-hms-primary hover:bg-hms-primary/90 text-white px-4 py-2 rounded-md transition-all duration-200 hover:scale-105 font-medium"
@@ -220,13 +230,24 @@ export default function Navbar({ className }: NavbarProps) {
               >
                 Contact
               </Link>
-              <Link
-                href="/reservations"
-                className="block px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary hover:bg-gray-50 dark:hover:bg-gray-600 rounded-md transition-colors duration-200"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Reservations
-              </Link>
+              {isAuthenticated ? (
+                <Link
+                  href="/reservations"
+                  className="block px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary hover:bg-gray-50 dark:hover:bg-gray-600 rounded-md transition-colors duration-200"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Reservations
+                </Link>
+              ) : (
+                <Link
+                  href="/auth/signin"
+                  className="block px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary hover:bg-gray-50 dark:hover:bg-gray-600 rounded-md transition-colors duration-200"
+                  onClick={() => setIsMenuOpen(false)}
+                  title="Sign in to view reservations"
+                >
+                  Reservations
+                </Link>
+              )}
               <Link
                 href="/booking"
                 className="block px-3 py-2 bg-hms-primary hover:bg-hms-primary/90 text-white rounded-md transition-colors duration-200 text-center font-medium"

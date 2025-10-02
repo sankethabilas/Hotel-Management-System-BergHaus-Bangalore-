@@ -161,7 +161,7 @@ export default function BookingSuccessPage() {
         <div className="container mx-auto px-4 max-w-4xl">
         {/* Print Header */}
         <div className="print-only text-center mb-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">🏨 HMS Hotel Management System</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">🏨 Berghaus Bungalow</h1>
           <h2 className="text-xl text-gray-700">Booking Confirmation</h2>
           <div className="border-b border-gray-300 my-4"></div>
         </div>
@@ -189,7 +189,7 @@ export default function BookingSuccessPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-2">HMS Hotel</h3>
+                  <h3 className="font-semibold text-gray-900 mb-2">Berghaus Bungalow</h3>
                   <div className="flex items-center text-gray-600 mb-2">
                     <MapPin className="w-4 h-4 mr-2" />
                     <span>Colombo, Sri Lanka</span>
@@ -224,7 +224,7 @@ export default function BookingSuccessPage() {
                     </div>
                     <div className="flex items-center">
                       <Mail className="w-4 h-4 mr-2 text-gray-500" />
-                      <span className="text-sm">info@hmshotel.com</span>
+                      <span className="text-sm">info@berghausbungalow.com</span>
                     </div>
                   </div>
                 </div>
@@ -292,8 +292,8 @@ export default function BookingSuccessPage() {
             <a href="tel:+94112345678" className="text-hms-primary hover:underline">
               Call us: +94 11 234 5678
             </a>
-            <a href="mailto:info@hmshotel.com" className="text-hms-primary hover:underline">
-              Email us: info@hmshotel.com
+            <a href="mailto:info@berghausbungalow.com" className="text-hms-primary hover:underline">
+              Email us: info@berghausbungalow.com
             </a>
           </div>
         </div>

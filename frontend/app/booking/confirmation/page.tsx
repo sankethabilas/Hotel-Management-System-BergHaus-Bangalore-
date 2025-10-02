@@ -225,7 +225,7 @@ export default function BookingConfirmationPage() {
     </head>
     <body>
         <div class="header">
-            <h1>🏨 HMS Hotel Management System</h1>
+            <h1>🏨 Berghaus Bungalow</h1>
             <h2>Booking Receipt</h2>
             <p>Reference: <strong>${booking.bookingReference}</strong></p>
         </div>
@@ -306,9 +306,9 @@ export default function BookingConfirmationPage() {
         ` : ''}
 
         <div class="footer">
-            <p>Thank you for choosing HMS Hotel Management System!</p>
+            <p>Thank you for choosing Berghaus Bungalow!</p>
             <p>Booking Date: ${new Date(booking.bookingDate).toLocaleDateString()}</p>
-            <p>For any queries, please contact us at info@hmshotel.com</p>
+            <p>For any queries, please contact us at info@berghausbungalow.com</p>
         </div>
     </body>
     </html>
