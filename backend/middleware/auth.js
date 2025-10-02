@@ -1,5 +1,6 @@
 const { verifyToken } = require('../config/jwt');
 const User = require('../models/User');
+const Staff = require('../models/Staff');
 
 // Protect routes - verify JWT token
 const protect = async (req, res, next) => {
@@ -41,14 +42,31 @@ const protect = async (req, res, next) => {
         // Verify JWT token
         const decoded = verifyToken(token);
         
-        // Get user from token
-        user = await User.findById(decoded.userId).select('-password');
-        
-        if (!user) {
-          return res.status(401).json({
-            success: false,
-            message: 'Token is valid but user no longer exists'
-          });
+        // Check if this is a staff token (has role: 'staff') or user token
+        if (decoded.role === 'staff') {
+          // Get staff from token using the staff ID
+          user = await Staff.findById(decoded.id).select('-password');
+          
+          if (!user) {
+            return res.status(401).json({
+              success: false,
+              message: 'Token is valid but staff member no longer exists'
+            });
+          }
+          
+          // Set staff-specific properties
+          user.role = 'staff';
+          user.employeeId = decoded.employeeId;
+        } else {
+          // Get regular user from token
+          user = await User.findById(decoded.userId).select('-password');
+          
+          if (!user) {
+            return res.status(401).json({
+              success: false,
+              message: 'Token is valid but user no longer exists'
+            });
+          }
         }
       } else if (user) {
         // User from session cookie, verify they still exist and are active
@@ -74,7 +92,13 @@ const protect = async (req, res, next) => {
         id: user._id,
         userId: user._id,
         email: user.email,
-        role: user.role
+        role: user.role,
+        // Add staff-specific fields if this is a staff member
+        ...(user.role === 'staff' && {
+          employeeId: user.employeeId,
+          fullName: user.fullName,
+          department: user.department
+        })
       };
 
       next();

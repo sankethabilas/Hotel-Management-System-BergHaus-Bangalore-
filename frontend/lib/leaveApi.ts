@@ -1,6 +1,6 @@
 import { Leave, LeaveFormData, ApiResponse } from '@/types/leave';
 
-const API_BASE_URL = 'http://localhost:5000/leave';
+const API_BASE_URL = 'http://localhost:5000/api/leaves';
 
 class LeaveAPI {
   private async request<T>(
