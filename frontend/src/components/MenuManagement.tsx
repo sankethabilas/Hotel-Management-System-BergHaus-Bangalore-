@@ -224,6 +224,15 @@ const MenuManagement: React.FC = () => {
   };
 
   const handleEdit = (item: MenuItem) => {
+    // If already editing this item, cancel edit
+    if (editingItem && editingItem._id === item._id) {
+      setEditingItem(null);
+      setShowAddForm(false);
+      resetForm();
+      return;
+    }
+    
+    // Start editing this item
     setFormData({
       name: item.name,
       description: item.description,
@@ -234,17 +243,17 @@ const MenuManagement: React.FC = () => {
       availableHoursEnd: (item as any).availableHours?.end || '23:59',
       image: item.image || '',
       isAvailable: item.isAvailable,
-      ingredients: item.ingredients.join(', '),
-      allergens: item.allergens.join(', '),
+      ingredients: item.ingredients?.join(', ') || '',
+      allergens: item.allergens?.join(', ') || '',
       isVegetarian: item.isVegetarian,
       isVegan: item.isVegan,
       isGlutenFree: item.isGlutenFree,
       spiceLevel: item.spiceLevel,
-      preparationTime: item.preparationTime.toString(),
+      preparationTime: item.preparationTime?.toString() || '',
       calories: item.calories?.toString() || '',
       isPopular: item.isPopular,
       discount: item.discount,
-      tags: item.tags.join(', ')
+      tags: item.tags?.join(', ') || ''
     });
     setEditingItem(item);
     setShowAddForm(true);
@@ -334,8 +343,8 @@ const MenuManagement: React.FC = () => {
         </button>
       </div>
 
-      {/* Add/Edit Form */}
-      {showAddForm && (
+      {/* Add New Item Form - Only for new items */}
+      {showAddForm && !editingItem && (
         <div className="bg-white p-6 rounded-lg shadow-md">
           <h3 className="text-lg font-semibold mb-4">
             {editingItem ? 'Edit Menu Item' : 'Add New Menu Item'}
@@ -537,58 +546,193 @@ const MenuManagement: React.FC = () => {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {menuItems.map((item) => (
-                  <tr key={item._id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        {item.image && (
-                          <img 
-                            src={`http://localhost:5001${item.image}`} 
-                            alt={item.name}
-                            className="w-12 h-12 object-cover rounded-md mr-4"
-                          />
-                        )}
-                        <div>
-                          <div className="text-sm font-medium text-gray-900">{item.name}</div>
-                          <div className="text-sm text-gray-500">{item.description}</div>
+                  <React.Fragment key={item._id}>
+                    <tr className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          {item.image && (
+                            <img 
+                              src={`http://localhost:5001${item.image}`} 
+                              alt={item.name}
+                              className="w-12 h-12 object-cover rounded-md mr-4"
+                            />
+                          )}
+                          <div>
+                            <div className="text-sm font-medium text-gray-900">{item.name}</div>
+                            <div className="text-sm text-gray-500">{item.description}</div>
+                          </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 capitalize">
-                      {item.category}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      Rs. {item.price}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        item.isAvailable 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-red-100 text-red-800'
-                      }`}>
-                        {item.isAvailable ? 'Available' : 'Unavailable'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                      <button
-                        onClick={() => handleEdit(item)}
-                        className="text-indigo-600 hover:text-indigo-900"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleToggleAvailability(item._id)}
-                        className="text-blue-600 hover:text-blue-900"
-                      >
-                        Toggle
-                      </button>
-                      <button
-                        onClick={() => handleDelete(item._id)}
-                        className="text-red-600 hover:text-red-900"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 capitalize">
+                        {item.category}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        Rs. {item.price}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          item.isAvailable 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-red-100 text-red-800'
+                        }`}>
+                          {item.isAvailable ? 'Available' : 'Unavailable'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                        <button
+                          onClick={() => handleEdit(item)}
+                          className="text-indigo-600 hover:text-indigo-900"
+                        >
+                          {editingItem && editingItem._id === item._id ? 'Cancel' : 'Edit'}
+                        </button>
+                        {(!editingItem || editingItem._id !== item._id) && (
+                          <>
+                            <button
+                              onClick={() => handleToggleAvailability(item._id)}
+                              className="text-blue-600 hover:text-blue-900"
+                            >
+                              Toggle
+                            </button>
+                            <button
+                              onClick={() => handleDelete(item._id)}
+                              className="text-red-600 hover:text-red-900"
+                            >
+                              Delete
+                            </button>
+                          </>
+                        )}
+                      </td>
+                    </tr>
+                    {editingItem && editingItem._id === item._id && (
+                      <tr>
+                        <td colSpan={5} className="px-6 py-4 bg-gray-50">
+                          <div className="bg-white p-4 rounded-lg shadow-sm border">
+                            <h4 className="text-lg font-semibold mb-4 text-gray-900">Edit Menu Item</h4>
+                            <form onSubmit={handleSubmit} className="space-y-4">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                                  <input
+                                    type="text"
+                                    name="name"
+                                    value={formData.name}
+                                    onChange={handleInputChange}
+                                    required
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
+                                  />
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-1">Price *</label>
+                                  <input
+                                    type="number"
+                                    name="price"
+                                    value={formData.price}
+                                    onChange={handleInputChange}
+                                    step="0.01"
+                                    min="0"
+                                    required
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
+                                  />
+                                </div>
+                              </div>
+                              
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+                                <textarea
+                                  name="description"
+                                  value={formData.description}
+                                  onChange={handleInputChange}
+                                  rows={3}
+                                  required
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
+                                />
+                              </div>
+                              
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>
+                                  <select
+                                    name="category"
+                                    value={formData.category}
+                                    onChange={handleInputChange}
+                                    required
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
+                                  >
+                                    <option value="breakfast">Breakfast</option>
+                                    <option value="lunch">Lunch</option>
+                                    <option value="dinner">Dinner</option>
+                                    <option value="beverages">Beverages</option>
+                                    <option value="desserts">Desserts</option>
+                                    <option value="snacks">Snacks</option>
+                                    <option value="appetizers">Appetizers</option>
+                                    <option value="specials">Specials</option>
+                                  </select>
+                                </div>
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-1">Preparation Time (minutes)</label>
+                                  <input
+                                    type="number"
+                                    name="preparationTime"
+                                    value={formData.preparationTime}
+                                    onChange={handleInputChange}
+                                    min="0"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
+                                  />
+                                </div>
+                              </div>
+                              
+                              <div className="flex items-center space-x-4">
+                                <label className="flex items-center">
+                                  <input
+                                    type="checkbox"
+                                    name="isAvailable"
+                                    checked={formData.isAvailable}
+                                    onChange={handleInputChange}
+                                    className="mr-2"
+                                  />
+                                  Available
+                                </label>
+                                <label className="flex items-center">
+                                  <input
+                                    type="checkbox"
+                                    name="isPopular"
+                                    checked={formData.isPopular}
+                                    onChange={handleInputChange}
+                                    className="mr-2"
+                                  />
+                                  Popular
+                                </label>
+                              </div>
+                              
+                              <div className="flex space-x-4">
+                                <button
+                                  type="submit"
+                                  disabled={isSubmitting}
+                                  className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                                >
+                                  {isSubmitting && (
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                                  )}
+                                  {isSubmitting ? 'Saving...' : 'Save Changes'}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setEditingItem(null);
+                                    setShowAddForm(false);
+                                    resetForm();
+                                  }}
+                                  className="px-6 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </form>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
                 ))}
               </tbody>
             </table>

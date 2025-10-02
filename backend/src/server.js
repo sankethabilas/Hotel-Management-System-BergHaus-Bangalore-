@@ -3,6 +3,7 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const path = require('path');
 require('dotenv').config();
 
 const Admin = require('./models/Admin');
@@ -16,14 +17,22 @@ const PORT = 5001;
 
 let isMongoConnected = false;
 let tempAdmins = [];
+let tempMenuItems = [];
+let tempBanners = [];
+let tempPromotions = [];
+let tempOrders = [];
 
 const connectDB = async () => {
   try {
     const mongoURI = 'mongodb+srv://jayavi:123jayavi123@cluster0.6vyj3nr.mongodb.net/hms_database';
     const opts = {
-      serverSelectionTimeoutMS: 10000,
-      socketTimeoutMS: 10000,
-      connectTimeoutMS: 10000,
+      serverSelectionTimeoutMS: 30000,
+      socketTimeoutMS: 45000,
+      connectTimeoutMS: 30000,
+      maxPoolSize: 10,
+      minPoolSize: 5,
+      maxIdleTimeMS: 30000,
+      heartbeatFrequencyMS: 10000,
     };
     
     await mongoose.connect(mongoURI, opts);
@@ -35,6 +44,22 @@ const connectDB = async () => {
     isMongoConnected = false;
   }
 };
+
+// Handle MongoDB connection events
+mongoose.connection.on('error', (err) => {
+  console.error('MongoDB connection error:', err);
+  isMongoConnected = false;
+});
+
+mongoose.connection.on('disconnected', () => {
+  console.log('MongoDB disconnected');
+  isMongoConnected = false;
+});
+
+mongoose.connection.on('reconnected', () => {
+  console.log('MongoDB reconnected');
+  isMongoConnected = true;
+});
 
 // Menu Schema
 const menuSchema = new mongoose.Schema({
@@ -120,10 +145,6 @@ const menuSchema = new mongoose.Schema({
   timestamps: true
 });
 
-
-
-let tempMenuItems = [];
-
 connectDB().catch(error => {
   console.error('Database connection failed:', error);
   console.log('Continuing with in-memory storage...');
@@ -132,7 +153,7 @@ connectDB().catch(error => {
 app.use(cors());
 app.use(express.json());
 
-app.use('/uploads', express.static('uploads'));
+app.use('/uploads', express.static(path.join(__dirname, '../../uploads')));
 
 // Import upload middleware
 const upload = require('./middleware/upload');
@@ -1225,7 +1246,10 @@ app.post('/api/admin/menu', authenticate, async (req, res) => {
     const menuItemData = req.body;
     
     if (isMongoConnected) {
-      const newMenuItem = new MenuItem(menuItemData);
+      const newMenuItem = new MenuItem({
+        ...menuItemData,
+        createdBy: req.user.id
+      });
       await newMenuItem.save();
       
       res.status(201).json({
@@ -1238,11 +1262,12 @@ app.post('/api/admin/menu', authenticate, async (req, res) => {
         _id: Date.now().toString(),
         id: Date.now().toString(),
         ...menuItemData,
+        createdBy: req.user.id,
         createdAt: new Date(),
         updatedAt: new Date()
       };
       
-      inMemoryMenuItems.push(newMenuItem);
+      tempMenuItems.push(newMenuItem);
       
       res.status(201).json({
         success: true,
@@ -1365,10 +1390,14 @@ app.get('/api/admin/banners', authenticate, async (req, res) => {
 app.put('/api/admin/banners/:id', authenticate, async (req, res) => {
   try {
     const { id } = req.params;
-    const updateData = req.body;
+    const updateData = { ...req.body, updatedAt: new Date() };
     
     if (isMongoConnected) {
-      const banner = await Banner.findByIdAndUpdate(id, updateData, { new: true });
+      const banner = await Banner.findByIdAndUpdate(
+        id, 
+        updateData, 
+        { new: true, runValidators: true }
+      );
       
       if (!banner) {
         return res.status(404).json({
@@ -1383,9 +1412,23 @@ app.put('/api/admin/banners/:id', authenticate, async (req, res) => {
         data: banner
       });
     } else {
-      res.status(500).json({
-        success: false,
-        message: 'Database not connected'
+      const bannerIndex = tempBanners.findIndex(banner => banner._id === id || banner.id === id);
+      if (bannerIndex === -1) {
+        return res.status(404).json({
+          success: false,
+          message: 'Banner not found'
+        });
+      }
+      
+      tempBanners[bannerIndex] = {
+        ...tempBanners[bannerIndex],
+        ...updateData
+      };
+      
+      res.json({
+        success: true,
+        message: 'Banner updated successfully (in-memory)',
+        data: tempBanners[bannerIndex]
       });
     }
   } catch (error) {
@@ -1437,10 +1480,14 @@ app.delete('/api/admin/banners/:id', authenticate, async (req, res) => {
 app.put('/api/admin/menu/:id', authenticate, async (req, res) => {
   try {
     const { id } = req.params;
-    const updateData = req.body;
+    const updateData = { ...req.body, updatedAt: new Date() };
     
     if (isMongoConnected) {
-      const menuItem = await MenuItem.findByIdAndUpdate(id, updateData, { new: true });
+      const menuItem = await MenuItem.findByIdAndUpdate(
+        id, 
+        updateData, 
+        { new: true, runValidators: true }
+      );
       
       if (!menuItem) {
         return res.status(404).json({
@@ -1455,9 +1502,23 @@ app.put('/api/admin/menu/:id', authenticate, async (req, res) => {
         data: menuItem
       });
     } else {
-      res.status(500).json({
-        success: false,
-        message: 'Database not connected'
+      const itemIndex = tempMenuItems.findIndex(item => item._id === id || item.id === id);
+      if (itemIndex === -1) {
+        return res.status(404).json({
+          success: false,
+          message: 'Menu item not found'
+        });
+      }
+      
+      tempMenuItems[itemIndex] = {
+        ...tempMenuItems[itemIndex],
+        ...updateData
+      };
+      
+      res.json({
+        success: true,
+        message: 'Menu item updated successfully (in-memory)',
+        data: tempMenuItems[itemIndex]
       });
     }
   } catch (error) {
@@ -1591,9 +1652,24 @@ app.put('/api/admin/promotions/:id', authenticate, async (req, res) => {
         data: promotion
       });
     } else {
-      res.status(500).json({
-        success: false,
-        message: 'Database not connected'
+      const promotionIndex = tempPromotions.findIndex(promo => promo._id === id || promo.id === id);
+      if (promotionIndex === -1) {
+        return res.status(404).json({
+          success: false,
+          message: 'Promotion not found'
+        });
+      }
+      
+      tempPromotions[promotionIndex] = {
+        ...tempPromotions[promotionIndex],
+        ...updateData,
+        updatedAt: new Date()
+      };
+      
+      res.json({
+        success: true,
+        message: 'Promotion updated successfully (in-memory)',
+        data: tempPromotions[promotionIndex]
       });
     }
   } catch (error) {

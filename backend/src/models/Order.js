@@ -150,8 +150,7 @@ orderSchema.pre('save', async function(next) {
   next();
 });
 
-// Index for better query performance
-orderSchema.index({ orderNumber: 1 });
+// Index for better query performance (orderNumber already has unique index)
 orderSchema.index({ status: 1, createdAt: -1 });
 orderSchema.index({ 'customerInfo.email': 1 });
 orderSchema.index({ createdAt: -1 });

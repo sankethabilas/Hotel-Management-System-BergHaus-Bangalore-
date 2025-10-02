@@ -43,7 +43,7 @@ export default function MenuPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState(getCurrentMealSuggestion())
+  const [selectedCategory, setSelectedCategory] = useState('All')
   const [selectedDietary, setSelectedDietary] = useState<string[]>([])
   const [sortBy, setSortBy] = useState('name')
   const [showFilters, setShowFilters] = useState(false)
