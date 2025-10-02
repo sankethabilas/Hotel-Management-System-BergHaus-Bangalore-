@@ -1,56 +1,53 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { SearchIcon } from 'lucide-react';
-const guests = [{
-  id: 1,
-  name: 'Robert Davis',
-  email: 'robert.davis@example.com',
-  tier: 'Platinum',
-  assigned: false
-}, {
-  id: 2,
-  name: 'Jennifer Adams',
-  email: 'jennifer.adams@example.com',
-  tier: 'Gold',
-  assigned: true
-}, {
-  id: 3,
-  name: 'Thomas Wilson',
-  email: 'thomas.wilson@example.com',
-  tier: 'Gold',
-  assigned: false
-}, {
-  id: 4,
-  name: 'Patricia Moore',
-  email: 'patricia.moore@example.com',
-  tier: 'Silver',
-  assigned: true
-}, {
-  id: 5,
-  name: 'Michael Johnson',
-  email: 'michael.johnson@example.com',
-  tier: 'Silver',
-  assigned: false
-}, {
-  id: 6,
-  name: 'Elizabeth Brown',
-  email: 'elizabeth.brown@example.com',
-  tier: 'Bronze',
-  assigned: false
-}, {
-  id: 7,
-  name: 'William Taylor',
-  email: 'william.taylor@example.com',
-  tier: 'Bronze',
-  assigned: true
-}];
+import { loyaltyService } from '../../services/loyaltyService';
+
 const OfferAssignment = ({
   offer,
   onSubmit,
   onCancel
 }) => {
+  const [guests, setGuests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedGuests, setSelectedGuests] = useState(guests.filter(guest => guest.assigned).map(guest => guest.id));
+  const [selectedGuests, setSelectedGuests] = useState([]);
   const [filter, setFilter] = useState('all'); // all, platinum, gold, silver, bronze, assigned
+
+  useEffect(() => {
+    fetchGuests();
+  }, []);
+
+  const fetchGuests = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const members = await loyaltyService.getAllMembers();
+      
+      // Transform loyalty members to guest format
+      const transformedGuests = members.map(member => ({
+        id: member.guestId,
+        _id: member._id,
+        name: member.guestName || 'Unknown',
+        email: member.email || '',
+        tier: member.tier || 'Silver',
+        assigned: member.assignedOffers?.some(offerId => String(offerId) === String(offer._id)) || false
+      }));
+      
+      setGuests(transformedGuests);
+      
+      // Set initially selected guests (those already assigned this offer)
+      const alreadyAssigned = transformedGuests
+        .filter(guest => guest.assigned)
+        .map(guest => guest.id);
+      setSelectedGuests(alreadyAssigned);
+    } catch (err) {
+      console.error('Error fetching guests:', err);
+      setError('Failed to load guests');
+    } finally {
+      setLoading(false);
+    }
+  };
   const handleSelectAll = () => {
     const filteredGuestIds = filteredGuests.map(guest => guest.id);
     if (filteredGuestIds.every(id => selectedGuests.includes(id))) {
@@ -78,18 +75,53 @@ const OfferAssignment = ({
       }
     });
   };
+  
   const filteredGuests = guests.filter(guest => {
+    if (!guest) return false;
     if (filter === 'platinum') return guest.tier === 'Platinum';
     if (filter === 'gold') return guest.tier === 'Gold';
     if (filter === 'silver') return guest.tier === 'Silver';
     if (filter === 'bronze') return guest.tier === 'Bronze';
     if (filter === 'assigned') return selectedGuests.includes(guest.id);
     return true;
-  }).filter(guest => guest.name.toLowerCase().includes(searchTerm.toLowerCase()) || guest.email.toLowerCase().includes(searchTerm.toLowerCase()));
+  }).filter(guest => {
+    const name = guest.name || '';
+    const email = guest.email || '';
+    const search = searchTerm.toLowerCase();
+    return name.toLowerCase().includes(search) || email.toLowerCase().includes(search);
+  });
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-lg shadow p-12">
+        <div className="flex justify-center items-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-navy-blue"></div>
+          <span className="ml-3 text-gray-600">Loading guests...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-white rounded-lg shadow p-12">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error}</p>
+          <button 
+            onClick={onCancel} 
+            className="bg-navy-blue hover:bg-navy-blue-dark text-white py-2 px-4 rounded-md text-sm"
+          >
+            Go Back
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return <div className="bg-white rounded-lg shadow">
       <div className="p-6 border-b border-gray-200">
         <h2 className="text-lg font-semibold text-gray-900">
-          Assign Offer: {offer.name}
+          Assign Offer: {offer?.title || offer?.name || 'Unknown Offer'}
         </h2>
         <p className="mt-1 text-sm text-gray-500">
           Select the guests to whom you want to assign this offer
@@ -175,17 +207,28 @@ const OfferAssignment = ({
             </tbody>
           </table>
         </div>
-        {filteredGuests.length === 0 && <div className="py-12 text-center">
+        {filteredGuests.length === 0 && !loading && <div className="py-12 text-center">
             <p className="text-gray-500">
-              No guests found matching your criteria.
+              {guests.length === 0 
+                ? 'No guests enrolled in loyalty program. Please enroll guests first.' 
+                : 'No guests found matching your criteria.'}
             </p>
           </div>}
         <div className="mt-6 flex justify-end space-x-3">
           <button type="button" onClick={onCancel} className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gold">
             Cancel
           </button>
-          <button type="button" onClick={onSubmit} className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-navy-blue hover:bg-navy-blue-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gold">
-            Assign to {selectedGuests.length} Guests
+          <button 
+            type="button" 
+            onClick={() => onSubmit(selectedGuests)} 
+            disabled={selectedGuests.length === 0}
+            className={`px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gold ${
+              selectedGuests.length === 0 
+                ? 'bg-gray-400 cursor-not-allowed' 
+                : 'bg-navy-blue hover:bg-navy-blue-dark'
+            }`}
+          >
+            Assign to {selectedGuests.length} Guest{selectedGuests.length !== 1 ? 's' : ''}
           </button>
         </div>
       </div>

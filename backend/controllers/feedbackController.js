@@ -1,11 +1,32 @@
-import { Feedback } from '../models/feedbackModel.js'
+import { Feedback } from '../models/feedbackModel.js';
+import { 
+  createFeedbackSubmittedNotification, 
+  createLowRatingNotification 
+} from '../services/notificationService.js';
 
 export async function createFeedback(req, res) {
-  const { guestName, email, comment, rating, date } = req.body || {}
+  const { guestId, guestName, email, comment, rating, date, category } = req.body || {}
   if (!guestName || !email || !comment || !rating) {
     return res.status(400).json({ message: 'guestName, email, comment, rating are required' })
   }
-  const created = await Feedback.create({ guestName, email, comment, rating, date })
+  const created = await Feedback.create({ 
+    guestId, // Optional - can be null for anonymous feedback
+    guestName, 
+    email, 
+    comment, 
+    rating, 
+    date,
+    category: category || 'Other'
+  })
+
+  // Create notification for new feedback
+  await createFeedbackSubmittedNotification(created);
+
+  // Create additional notification if rating is low (1-2 stars)
+  if (created.rating <= 2) {
+    await createLowRatingNotification(created);
+  }
+
   res.status(201).json(created)
 }
 
@@ -22,7 +43,10 @@ export async function addResponse(req, res) {
   }
   const updated = await Feedback.findByIdAndUpdate(
     id,
-    { managerResponse: response },
+    { 
+      managerResponse: response,
+      responseDate: new Date()
+    },
     { new: true }
   )
   if (!updated) {

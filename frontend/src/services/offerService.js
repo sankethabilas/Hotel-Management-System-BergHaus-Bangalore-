@@ -52,9 +52,9 @@ export const offerService = {
   },
 
   // Assign offer to guest
-  assignOfferToGuest: async (offerId, guestId) => {
+  assignOfferToGuest: async (guestId, offerId) => {
     try {
-      const response = await api.post(`/offers/${offerId}/assign`, { guestId });
+      const response = await api.post(`/offers/assign`, { guestId, offerId });
       return response.data;
     } catch (error) {
       throw new Error(error.response?.data?.message || 'Failed to assign offer');

@@ -5,14 +5,14 @@ const OfferForm = ({
   onCancel
 }) => {
   const [formData, setFormData] = useState({
-    name: '',
+    title: '',
     description: '',
     discountType: 'percentage',
-    discountValue: '',
+    discountValue: 0,
     validFrom: '',
-    validTo: '',
-    minStay: '',
-    maxStay: '',
+    validUntil: '',
+    minStay: 1,
+    maxStay: 30,
     applicableDays: [],
     applicableRooms: [],
     termsConditions: '',
@@ -20,22 +20,19 @@ const OfferForm = ({
   });
   useEffect(() => {
     if (offer) {
-      // Parse the offer data to match the form structure
-      const type = offer.type === 'percentage' ? 'percentage' : offer.type === 'fixed' ? 'fixed' : 'special';
-      const value = type === 'percentage' ? offer.discount.replace('%', '') : type === 'fixed' ? offer.discount.replace('$', '') : '';
       setFormData({
-        name: offer.name,
-        description: offer.description,
-        discountType: type,
-        discountValue: value,
-        validFrom: offer.validFrom,
-        validTo: offer.validTo,
-        minStay: '',
-        maxStay: '',
-        applicableDays: [],
-        applicableRooms: [],
-        termsConditions: '',
-        status: offer.status
+        title: offer.title || '',
+        description: offer.description || '',
+        discountType: offer.discountType || 'percentage',
+        discountValue: offer.discountValue || '',
+        validFrom: offer.validFrom ? new Date(offer.validFrom).toISOString().split('T')[0] : '',
+        validUntil: offer.validUntil ? new Date(offer.validUntil).toISOString().split('T')[0] : '',
+        minStay: offer.minStay || '',
+        maxStay: offer.maxStay || '',
+        applicableDays: offer.applicableDays || [],
+        applicableRooms: offer.applicableRooms || [],
+        termsConditions: offer.termsConditions || '',
+        status: offer.status || 'active'
       });
     }
   }, [offer]);
@@ -67,8 +64,37 @@ const OfferForm = ({
   };
   const handleSubmit = e => {
     e.preventDefault();
-    console.log('Offer submitted:', formData);
-    onSubmit();
+    
+    // Prepare data for submission
+    const submitData = {
+      title: formData.title,
+      description: formData.description,
+      discountType: formData.discountType,
+      validFrom: formData.validFrom,
+      validUntil: formData.validUntil,
+      status: formData.status
+    };
+
+    // Add discountValue for non-special offers
+    if (formData.discountType !== 'special') {
+      submitData.discountValue = Number(formData.discountValue);
+    }
+
+    // Add optional fields if they have values
+    if (formData.minStay) submitData.minStay = Number(formData.minStay);
+    if (formData.maxStay) submitData.maxStay = Number(formData.maxStay);
+    if (formData.applicableDays && formData.applicableDays.length > 0) {
+      submitData.applicableDays = formData.applicableDays;
+    }
+    if (formData.applicableRooms && formData.applicableRooms.length > 0) {
+      submitData.applicableRooms = formData.applicableRooms;
+    }
+    if (formData.termsConditions && formData.termsConditions.trim()) {
+      submitData.termsConditions = formData.termsConditions;
+    }
+
+    console.log('Offer submitted:', submitData);
+    onSubmit(submitData);
   };
   return <div className="bg-white rounded-lg shadow">
       <div className="p-6 border-b border-gray-200">
@@ -82,10 +108,10 @@ const OfferForm = ({
       <form onSubmit={handleSubmit} className="p-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="md:col-span-2">
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-              Offer Name
+            <label htmlFor="title" className="block text-sm font-medium text-gray-700">
+              Offer Title
             </label>
-            <input type="text" name="name" id="name" value={formData.name} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-gold focus:border-gold sm:text-sm" required />
+            <input type="text" name="title" id="title" value={formData.title} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-gold focus:border-gold sm:text-sm" required />
           </div>
           <div className="md:col-span-2">
             <label htmlFor="description" className="block text-sm font-medium text-gray-700">
@@ -124,10 +150,10 @@ const OfferForm = ({
             <input type="date" name="validFrom" id="validFrom" value={formData.validFrom} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-gold focus:border-gold sm:text-sm" required />
           </div>
           <div>
-            <label htmlFor="validTo" className="block text-sm font-medium text-gray-700">
-              Valid To
+            <label htmlFor="validUntil" className="block text-sm font-medium text-gray-700">
+              Valid Until
             </label>
-            <input type="date" name="validTo" id="validTo" value={formData.validTo} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-gold focus:border-gold sm:text-sm" required />
+            <input type="date" name="validUntil" id="validUntil" value={formData.validUntil} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-gold focus:border-gold sm:text-sm" required />
           </div>
           <div>
             <label htmlFor="minStay" className="block text-sm font-medium text-gray-700">

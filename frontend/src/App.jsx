@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Sidebar from './components/layout/Sidebar';
-import Header from './components/layout/Header';
 import ManagerDashboard from './components/dashboard/ManagerDashboard';
 import FeedbackManagement from './components/feedback/FeedbackManagement';
 import LoyaltyProgram from './components/loyalty/LoyaltyProgram';
@@ -24,7 +23,6 @@ export default function App() {
       <MobileSidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
       {/* Main content */}
       <div className="flex flex-col flex-1 overflow-hidden">
-        <Header setSidebarOpen={setSidebarOpen} />
         <main className="flex-1 overflow-y-auto p-4 md:p-6 bg-gray-50">
           <Routes>
             <Route path="/dashboard" element={<ManagerDashboard />} />

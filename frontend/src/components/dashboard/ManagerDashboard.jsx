@@ -1,50 +1,110 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { UsersIcon, StarIcon, TrendingUpIcon, CreditCardIcon } from 'lucide-react';
 import StatsCard from './StatsCard';
 import RecentFeedbackTable from './RecentFeedbackTable';
 import TopGuestsTable from './TopGuestsTable';
-const data = [{
-  month: 'Jan',
-  satisfaction: 4.2
-}, {
-  month: 'Feb',
-  satisfaction: 4.0
-}, {
-  month: 'Mar',
-  satisfaction: 4.5
-}, {
-  month: 'Apr',
-  satisfaction: 4.3
-}, {
-  month: 'May',
-  satisfaction: 4.7
-}, {
-  month: 'Jun',
-  satisfaction: 4.8
-}];
+import dashboardService from '../../services/dashboardService';
+
 const ManagerDashboard = () => {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [timeframe, setTimeframe] = useState('30d');
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, [timeframe]);
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await dashboardService.getDashboardStats(timeframe);
+      setData(response);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gold"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <p className="text-red-600">Error loading dashboard: {error}</p>
+        <button
+          onClick={fetchDashboardData}
+          className="mt-2 text-red-600 underline"
+        >
+          Try again
+        </button>
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+        <p className="text-gray-600">No dashboard data available</p>
+      </div>
+    );
+  }
+
   return <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Manager Dashboard</h1>
         <div className="flex space-x-3">
-          <select className="bg-white border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-gold focus:border-gold text-sm">
-            <option>Last 7 days</option>
-            <option>Last 30 days</option>
-            <option>Last 90 days</option>
-            <option>This year</option>
+          <select 
+            className="bg-white border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-gold focus:border-gold text-sm"
+            value={timeframe}
+            onChange={(e) => setTimeframe(e.target.value)}
+          >
+            <option value="7d">Last 7 days</option>
+            <option value="30d">Last 30 days</option>
+            <option value="90d">Last 90 days</option>
+            <option value="1y">This year</option>
           </select>
-          <button className="bg-navy-blue hover:bg-navy-blue-dark text-white py-2 px-4 rounded-md text-sm">
-            Generate Report
-          </button>
         </div>
       </div>
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatsCard title="Total Guests" value="1,248" change="+12.5%" trend="up" icon={<UsersIcon className="h-6 w-6 text-blue-500" />} />
-        <StatsCard title="Average Rating" value="4.7/5" change="+0.3" trend="up" icon={<StarIcon className="h-6 w-6 text-yellow-500" />} />
-        <StatsCard title="Loyalty Members" value="426" change="+18.2%" trend="up" icon={<TrendingUpIcon className="h-6 w-6 text-green-500" />} />
-        <StatsCard title="Active Offers" value="8" change="+2" trend="up" icon={<CreditCardIcon className="h-6 w-6 text-purple-500" />} />
+        <StatsCard 
+          title="Total Guests" 
+          value={data.stats.totalGuests.value.toLocaleString()} 
+          change={data.stats.totalGuests.change} 
+          trend={data.stats.totalGuests.trend} 
+          icon={<UsersIcon className="h-6 w-6 text-blue-500" />} 
+        />
+        <StatsCard 
+          title="Average Rating" 
+          value={`${data.stats.averageRating.value}/5`} 
+          change={data.stats.averageRating.change} 
+          trend={data.stats.averageRating.trend} 
+          icon={<StarIcon className="h-6 w-6 text-yellow-500" />} 
+        />
+        <StatsCard 
+          title="Loyalty Members" 
+          value={data.stats.loyaltyMembers.value.toLocaleString()} 
+          change={data.stats.loyaltyMembers.change} 
+          trend={data.stats.loyaltyMembers.trend} 
+          icon={<TrendingUpIcon className="h-6 w-6 text-green-500" />} 
+        />
+        <StatsCard 
+          title="Active Offers" 
+          value={data.stats.activeOffers.value.toString()} 
+          change={data.stats.activeOffers.change} 
+          trend={data.stats.activeOffers.trend} 
+          icon={<CreditCardIcon className="h-6 w-6 text-purple-500" />} 
+        />
       </div>
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -52,51 +112,51 @@ const ManagerDashboard = () => {
           <h2 className="text-lg font-semibold mb-4">
             Guest Satisfaction Trend
           </h2>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis domain={[0, 5]} />
-                <Tooltip />
-                <Bar dataKey="satisfaction" fill="#1e3a8a" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          {data.charts.satisfactionTrend.length > 0 ? (
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={data.charts.satisfactionTrend}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis domain={[0, 5]} />
+                  <Tooltip />
+                  <Bar dataKey="satisfaction" fill="#1e3a8a" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <div className="h-64 flex items-center justify-center text-gray-500">
+              <p>No satisfaction data available for this period</p>
+            </div>
+          )}
         </div>
         <div className="bg-white p-6 rounded-lg shadow">
           <h2 className="text-lg font-semibold mb-4">
             Loyalty Program Enrollment
           </h2>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={[{
-              tier: 'Bronze',
-              count: 245
-            }, {
-              tier: 'Silver',
-              count: 120
-            }, {
-              tier: 'Gold',
-              count: 48
-            }, {
-              tier: 'Platinum',
-              count: 13
-            }]}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="tier" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="count" fill="#d4af37" />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          {data.charts.loyaltyEnrollment.some(item => item.count > 0) ? (
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={data.charts.loyaltyEnrollment}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="tier" />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="count" fill="#d4af37" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <div className="h-64 flex items-center justify-center text-gray-500">
+              <p>No loyalty enrollment data available</p>
+            </div>
+          )}
         </div>
       </div>
       {/* Tables */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <RecentFeedbackTable />
-        <TopGuestsTable />
+        <RecentFeedbackTable feedbackData={data.recentFeedback} />
+        <TopGuestsTable guestsData={data.topGuests} />
       </div>
     </div>;
 };

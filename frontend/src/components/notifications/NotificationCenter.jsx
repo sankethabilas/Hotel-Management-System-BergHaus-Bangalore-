@@ -1,97 +1,224 @@
-import React, { useState } from 'react';
-import { BellIcon, CheckCircleIcon, ClockIcon, TagIcon, AlertCircleIcon, XIcon } from 'lucide-react';
-const notifications = [{
-  id: 1,
-  title: 'Upcoming Stay Reminder',
-  message: 'Robert Davis has an upcoming stay on October 15, 2023.',
-  type: 'reminder',
-  date: '2023-09-15',
-  read: false,
-  guest: 'Robert Davis'
-}, {
-  id: 2,
-  title: 'Loyalty Points Expiry',
-  message: 'Jennifer Adams has 2,500 points expiring in 30 days.',
-  type: 'expiry',
-  date: '2023-09-14',
-  read: false,
-  guest: 'Jennifer Adams'
-}, {
-  id: 3,
-  title: 'New Offer Available',
-  message: 'Winter Holiday offer is now available to assign to guests.',
-  type: 'offer',
-  date: '2023-09-13',
-  read: true,
-  guest: null
-}, {
-  id: 4,
-  title: 'Feedback Received',
-  message: 'New feedback received from Michael Brown with a 5-star rating.',
-  type: 'feedback',
-  date: '2023-09-12',
-  read: false,
-  guest: 'Michael Brown'
-}, {
-  id: 5,
-  title: 'Loyalty Tier Change',
-  message: 'Thomas Wilson has reached Gold tier status.',
-  type: 'loyalty',
-  date: '2023-09-10',
-  read: true,
-  guest: 'Thomas Wilson'
-}, {
-  id: 6,
-  title: 'Feedback Response Required',
-  message: 'Sarah Wilson left feedback 3 days ago that requires a response.',
-  type: 'alert',
-  date: '2023-09-09',
-  read: false,
-  guest: 'Sarah Wilson'
-}];
+import React, { useState, useEffect } from 'react';
+import { BellIcon, UserIcon, MessageSquareIcon, AlertCircleIcon, XIcon, Loader2 } from 'lucide-react';
+import notificationService from '../../services/notificationService';
+
 const NotificationCenter = () => {
-  const [filter, setFilter] = useState('all'); // all, unread, reminders, offers, alerts
-  const [selectedNotification, setSelectedNotification] = useState(null);
-  const filteredNotifications = notifications.filter(notification => {
-    if (filter === 'unread') return !notification.read;
-    if (filter === 'reminders') return notification.type === 'reminder';
-    if (filter === 'offers') return notification.type === 'offer';
-    if (filter === 'alerts') return notification.type === 'alert';
-    return true;
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [filter, setFilter] = useState('all'); // all, unread, guest, feedback, alert
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 5,
+    total: 0,
+    hasMore: false
   });
-  const getTypeIcon = type => {
-    switch (type) {
-      case 'reminder':
-        return <ClockIcon className="h-5 w-5 text-blue-500" />;
-      case 'expiry':
-        return <AlertCircleIcon className="h-5 w-5 text-orange-500" />;
-      case 'offer':
-        return <TagIcon className="h-5 w-5 text-green-500" />;
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  // Fetch notifications on mount and filter change
+  useEffect(() => {
+    fetchNotifications(1, true);
+  }, [filter]);
+
+  const fetchNotifications = async (page = 1, reset = false) => {
+    try {
+      if (reset) {
+        setLoading(true);
+      } else {
+        setLoadingMore(true);
+      }
+      setError(null);
+
+      const unreadOnly = filter === 'unread';
+      const response = await notificationService.getNotifications(page, pagination.limit, unreadOnly);
+      
+      // Filter by category if needed
+      let filteredData = response.notifications;
+      if (filter !== 'all' && filter !== 'unread') {
+        filteredData = response.notifications.filter(n => n.category === filter);
+      }
+
+      if (reset) {
+        setNotifications(filteredData);
+      } else {
+        setNotifications(prev => [...prev, ...filteredData]);
+      }
+
+      setPagination({
+        page: response.pagination.page,
+        limit: response.pagination.limit,
+        total: response.pagination.total,
+        hasMore: response.pagination.hasMore
+      });
+
+      setUnreadCount(response.unreadCount);
+    } catch (err) {
+      console.error('Error fetching notifications:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  };
+
+  const handleLoadMore = () => {
+    fetchNotifications(pagination.page + 1, false);
+  };
+
+  const handleMarkAsRead = async (notificationId, currentReadStatus) => {
+    try {
+      await notificationService.markAsRead(notificationId, !currentReadStatus);
+      
+      // Update local state
+      setNotifications(prev => 
+        prev.map(n => 
+          n._id === notificationId ? { ...n, isRead: !currentReadStatus } : n
+        )
+      );
+
+      // Update unread count
+      setUnreadCount(prev => currentReadStatus ? prev + 1 : prev - 1);
+    } catch (err) {
+      console.error('Error marking notification:', err);
+      alert('Failed to update notification');
+    }
+  };
+
+  const handleMarkAllAsRead = async () => {
+    try {
+      await notificationService.markAllAsRead();
+      
+      // Refresh notifications
+      fetchNotifications(1, true);
+    } catch (err) {
+      console.error('Error marking all as read:', err);
+      alert('Failed to mark all as read');
+    }
+  };
+
+  const handleDelete = async (notificationId) => {
+    if (!window.confirm('Are you sure you want to delete this notification?')) {
+      return;
+    }
+
+    try {
+      await notificationService.deleteNotification(notificationId);
+      
+      // Remove from local state
+      setNotifications(prev => prev.filter(n => n._id !== notificationId));
+      setPagination(prev => ({ ...prev, total: prev.total - 1 }));
+    } catch (err) {
+      console.error('Error deleting notification:', err);
+      alert('Failed to delete notification');
+    }
+  };
+
+  const handleCheckPendingFeedback = async () => {
+    try {
+      setLoading(true);
+      await notificationService.checkPendingFeedback();
+      
+      // Refresh notifications
+      fetchNotifications(1, true);
+      alert('Checked for pending feedback responses');
+    } catch (err) {
+      console.error('Error checking pending feedback:', err);
+      alert('Failed to check pending feedback');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getCategoryIcon = (category) => {
+    switch (category) {
+      case 'guest':
+        return <UserIcon className="h-5 w-5 text-blue-500" />;
       case 'feedback':
-        return <CheckCircleIcon className="h-5 w-5 text-purple-500" />;
-      case 'loyalty':
-        return <BellIcon className="h-5 w-5 text-yellow-500" />;
+        return <MessageSquareIcon className="h-5 w-5 text-purple-500" />;
       case 'alert':
         return <AlertCircleIcon className="h-5 w-5 text-red-500" />;
       default:
         return <BellIcon className="h-5 w-5 text-gray-500" />;
     }
   };
-  const markAsRead = id => {
-    // In a real application, this would update the notification status in the database
-    console.log(`Marking notification ${id} as read`);
+
+  const getCategoryBadgeColor = (category) => {
+    switch (category) {
+      case 'guest':
+        return 'bg-blue-100 text-blue-800';
+      case 'feedback':
+        return 'bg-purple-100 text-purple-800';
+      case 'alert':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
   };
-  const deleteNotification = id => {
-    // In a real application, this would delete the notification
-    console.log(`Deleting notification ${id}`);
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins} min${diffMins > 1 ? 's' : ''} ago`;
+    if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    if (diffDays < 7) return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
-  return <div className="space-y-6">
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-8 w-8 animate-spin text-navy-blue" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+        <p className="font-medium">Error loading notifications</p>
+        <p className="text-sm mt-1">{error}</p>
+        <button 
+          onClick={() => fetchNotifications(1, true)}
+          className="mt-2 text-sm underline"
+        >
+          Try again
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">
-          Notification Center
-        </h1>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Notification Center
+          </h1>
+          {unreadCount > 0 && (
+            <p className="text-sm text-gray-500 mt-1">
+              {unreadCount} unread notification{unreadCount > 1 ? 's' : ''}
+            </p>
+          )}
+        </div>
         <div className="flex space-x-3">
-          <button className="bg-navy-blue hover:bg-navy-blue-dark text-white py-2 px-4 rounded-md text-sm">
+          <button 
+            onClick={handleCheckPendingFeedback}
+            className="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 py-2 px-4 rounded-md text-sm"
+          >
+            Check Pending Feedback
+          </button>
+          <button 
+            onClick={handleMarkAllAsRead}
+            disabled={unreadCount === 0}
+            className="bg-navy-blue hover:bg-navy-blue-dark text-white py-2 px-4 rounded-md text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             Mark All as Read
           </button>
         </div>
@@ -105,59 +232,68 @@ const NotificationCenter = () => {
             <button onClick={() => setFilter('unread')} className={`px-4 py-2 text-sm font-medium rounded-md ${filter === 'unread' ? 'bg-navy-blue text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
               Unread
             </button>
-            <button onClick={() => setFilter('reminders')} className={`px-4 py-2 text-sm font-medium rounded-md ${filter === 'reminders' ? 'bg-navy-blue text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
-              Stay Reminders
+            <button onClick={() => setFilter('guest')} className={`px-4 py-2 text-sm font-medium rounded-md ${filter === 'guest' ? 'bg-navy-blue text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
+              Guests
             </button>
-            <button onClick={() => setFilter('offers')} className={`px-4 py-2 text-sm font-medium rounded-md ${filter === 'offers' ? 'bg-navy-blue text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
-              Offers
+            <button onClick={() => setFilter('feedback')} className={`px-4 py-2 text-sm font-medium rounded-md ${filter === 'feedback' ? 'bg-navy-blue text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
+              Feedback
             </button>
-            <button onClick={() => setFilter('alerts')} className={`px-4 py-2 text-sm font-medium rounded-md ${filter === 'alerts' ? 'bg-navy-blue text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
+            <button onClick={() => setFilter('alert')} className={`px-4 py-2 text-sm font-medium rounded-md ${filter === 'alert' ? 'bg-navy-blue text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
               Alerts
             </button>
           </div>
         </div>
         <div className="divide-y divide-gray-200">
-          {filteredNotifications.length > 0 ? filteredNotifications.map(notification => <div key={notification.id} className={`p-6 hover:bg-gray-50 cursor-pointer ${!notification.read ? 'bg-blue-50' : ''} ${selectedNotification?.id === notification.id ? 'bg-gray-50' : ''}`} onClick={() => setSelectedNotification(notification)}>
+          {notifications.length > 0 ? (
+            notifications.map(notification => (
+              <div key={notification._id} className={`p-6 hover:bg-gray-50 transition-colors ${!notification.isRead ? 'bg-blue-50' : ''}`}>
                 <div className="flex items-start justify-between">
-                  <div className="flex items-start">
+                  <div className="flex items-start flex-1">
                     <div className="flex-shrink-0">
-                      {getTypeIcon(notification.type)}
+                      {getCategoryIcon(notification.category)}
                     </div>
-                    <div className="ml-3">
-                      <p className={`text-sm font-medium ${!notification.read ? 'text-gray-900' : 'text-gray-700'}`}>
-                        {notification.title}
-                      </p>
-                      <p className="mt-1 text-sm text-gray-500">
-                        {notification.message}
-                      </p>
-                      <div className="mt-2 flex items-center">
+                    <div className="ml-3 flex-1">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <p className={`text-sm font-medium ${!notification.isRead ? 'text-gray-900' : 'text-gray-700'}`}>
+                            {notification.title}
+                          </p>
+                          <p className="mt-1 text-sm text-gray-500">
+                            {notification.message}
+                          </p>
+                        </div>
+                        <span className={`ml-3 px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getCategoryBadgeColor(notification.category)}`}>
+                          {notification.category}
+                        </span>
+                      </div>
+                      <div className="mt-2 flex items-center justify-between">
                         <p className="text-xs text-gray-400">
-                          {notification.date}
+                          {formatDate(notification.createdAt)}
                         </p>
-                        {notification.guest && <span className="ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
-                            {notification.guest}
-                          </span>}
+                        <div className="flex space-x-2">
+                          <button 
+                            onClick={() => handleMarkAsRead(notification._id, notification.isRead)}
+                            className={`text-xs ${notification.isRead ? 'text-gray-500 hover:text-gray-700' : 'text-blue-600 hover:text-blue-800'} font-medium`}
+                            title={notification.isRead ? 'Mark as unread' : 'Mark as read'}
+                          >
+                            {notification.isRead ? 'Mark unread' : 'Mark read'}
+                          </button>
+                          <span className="text-gray-300">|</span>
+                          <button 
+                            onClick={() => handleDelete(notification._id)}
+                            className="text-xs text-red-600 hover:text-red-800 font-medium"
+                          >
+                            Delete
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
-                  <div className="flex space-x-2">
-                    {!notification.read && <button onClick={e => {
-                e.stopPropagation();
-                markAsRead(notification.id);
-              }} className="p-1 rounded-full text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gold">
-                        <span className="sr-only">Mark as read</span>
-                        <CheckCircleIcon className="h-5 w-5" />
-                      </button>}
-                    <button onClick={e => {
-                e.stopPropagation();
-                deleteNotification(notification.id);
-              }} className="p-1 rounded-full text-gray-400 hover:text-red-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gold">
-                      <span className="sr-only">Delete</span>
-                      <XIcon className="h-5 w-5" />
-                    </button>
-                  </div>
                 </div>
-              </div>) : <div className="py-12 text-center">
+              </div>
+            ))
+          ) : (
+            <div className="py-12 text-center">
               <BellIcon className="mx-auto h-12 w-12 text-gray-400" />
               <h3 className="mt-2 text-sm font-medium text-gray-900">
                 No notifications
@@ -165,72 +301,31 @@ const NotificationCenter = () => {
               <p className="mt-1 text-sm text-gray-500">
                 There are no notifications matching your current filter.
               </p>
-            </div>}
+            </div>
+          )}
         </div>
-      </div>
-      {/* Notification Detail Panel (could be expanded in a real application) */}
-      {selectedNotification && <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">
-              Notification Details
-            </h2>
-            <button onClick={() => setSelectedNotification(null)} className="text-gray-400 hover:text-gray-500">
-              <XIcon className="h-5 w-5" />
+        {/* Load More Button */}
+        {pagination.hasMore && notifications.length > 0 && (
+          <div className="p-4 border-t border-gray-200 text-center">
+            <button
+              onClick={handleLoadMore}
+              disabled={loadingMore}
+              className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loadingMore ? (
+                <>
+                  <Loader2 className="animate-spin -ml-1 mr-2 h-4 w-4" />
+                  Loading...
+                </>
+              ) : (
+                `Load More (${pagination.total - notifications.length} remaining)`
+              )}
             </button>
           </div>
-          <div className="flex items-start mb-4">
-            <div className="flex-shrink-0">
-              {getTypeIcon(selectedNotification.type)}
-            </div>
-            <div className="ml-3">
-              <p className="text-lg font-medium text-gray-900">
-                {selectedNotification.title}
-              </p>
-              <p className="mt-1 text-gray-500">
-                {selectedNotification.message}
-              </p>
-              <p className="mt-2 text-sm text-gray-400">
-                {selectedNotification.date}
-              </p>
-            </div>
-          </div>
-          {selectedNotification.guest && <div className="mt-4 p-4 bg-gray-50 rounded-md">
-              <h3 className="text-sm font-medium text-gray-900">
-                Related Guest
-              </h3>
-              <div className="mt-2 flex items-center">
-                <div className="flex-shrink-0 h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
-                  <span className="text-gray-600 font-medium">
-                    {selectedNotification.guest.charAt(0)}
-                  </span>
-                </div>
-                <div className="ml-3">
-                  <p className="text-sm font-medium text-gray-900">
-                    {selectedNotification.guest}
-                  </p>
-                </div>
-                <div className="ml-auto">
-                  <button className="text-sm text-navy-blue hover:text-navy-blue-dark">
-                    View Profile
-                  </button>
-                </div>
-              </div>
-            </div>}
-          <div className="mt-6 flex justify-end space-x-3">
-            {!selectedNotification.read && <button onClick={() => markAsRead(selectedNotification.id)} className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gold">
-                Mark as Read
-              </button>}
-            {selectedNotification.type === 'reminder' && <button className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-navy-blue hover:bg-navy-blue-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gold">
-                Send Reminder
-              </button>}
-            {selectedNotification.type === 'feedback' && <button className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-navy-blue hover:bg-navy-blue-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gold">
-                View Feedback
-              </button>}
-            {selectedNotification.type === 'offer' && <button className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-navy-blue hover:bg-navy-blue-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gold">
-                View Offer
-              </button>}
-          </div>
-        </div>}
-    </div>;
+        )}
+      </div>
+    </div>
+  );
 };
+
 export default NotificationCenter;

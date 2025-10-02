@@ -1,12 +1,14 @@
-import { Router } from 'express'
-import { enrollGuest, getLoyaltyDetails, addPoints } from '../controllers/loyaltyController.js'
+import { Router } from 'express';
+import { enrollGuest, getLoyaltyDetails, addPoints, getAllMembers, deleteMember } from '../controllers/loyaltyController.js';
 
-const router = Router()
+const router = Router();
 
-router.post('/', enrollGuest)
-router.get('/', getLoyaltyDetails)
-router.put('/', addPoints)
+router.get('/all', getAllMembers);
+router.get('/', getLoyaltyDetails);
+router.post('/', enrollGuest);
+router.put('/', addPoints);
+router.delete('/:guestId', deleteMember);
 
-export default router
+export default router;
 
 

@@ -1,84 +1,72 @@
 import React, { useState } from 'react';
 import { SearchIcon, FilterIcon, EditIcon, UsersIcon, TrashIcon } from 'lucide-react';
-const offers = [{
-  id: 1,
-  name: 'Summer Escape',
-  description: '20% off on all room bookings for stays between June and August',
-  discount: '20%',
-  type: 'percentage',
-  validFrom: '2023-06-01',
-  validTo: '2023-08-31',
-  status: 'active',
-  assignedTo: 145,
-  redemptions: 78
-}, {
-  id: 2,
-  name: 'Spa Retreat',
-  description: 'Buy one spa treatment, get second 50% off',
-  discount: '50% on second',
-  type: 'special',
-  validFrom: '2023-05-15',
-  validTo: '2023-12-31',
-  status: 'active',
-  assignedTo: 86,
-  redemptions: 42
-}, {
-  id: 3,
-  name: 'Loyalty Member Exclusive',
-  description: 'Free room upgrade for Gold and Platinum members',
-  discount: 'Room upgrade',
-  type: 'special',
-  validFrom: '2023-01-01',
-  validTo: '2023-12-31',
-  status: 'active',
-  assignedTo: 61,
-  redemptions: 29
-}, {
-  id: 4,
-  name: 'Weekend Getaway',
-  description: '$50 food & beverage credit on weekend stays',
-  discount: '$50 credit',
-  type: 'fixed',
-  validFrom: '2023-07-01',
-  validTo: '2023-09-30',
-  status: 'active',
-  assignedTo: 112,
-  redemptions: 53
-}, {
-  id: 5,
-  name: 'Early Bird Special',
-  description: '15% off when booking 60+ days in advance',
-  discount: '15%',
-  type: 'percentage',
-  validFrom: '2023-01-01',
-  validTo: '2023-12-31',
-  status: 'active',
-  assignedTo: 98,
-  redemptions: 67
-}, {
-  id: 6,
-  name: 'Winter Holiday',
-  description: '25% off stays during December holidays',
-  discount: '25%',
-  type: 'percentage',
-  validFrom: '2023-12-01',
-  validTo: '2023-12-31',
-  status: 'inactive',
-  assignedTo: 0,
-  redemptions: 0
-}];
+
 const OffersList = ({
+  offers = [],
+  loading = false,
+  error = null,
   onCreateOffer,
   onEditOffer,
+  onDeleteOffer,
   onAssignOffer
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState('all'); // all, active, inactive
   const filteredOffers = offers.filter(offer => {
+    if (!offer) return false; // Filter out null/undefined offers
     if (filter === 'active') return offer.status === 'active';
     if (filter === 'inactive') return offer.status === 'inactive';
     return true;
-  }).filter(offer => offer.name.toLowerCase().includes(searchTerm.toLowerCase()) || offer.description.toLowerCase().includes(searchTerm.toLowerCase()));
+  }).filter(offer => {
+    if (!offer) return false; // Filter out null/undefined offers
+    const title = offer.title || '';
+    const description = offer.description || '';
+    const search = searchTerm.toLowerCase();
+    return title.toLowerCase().includes(search) || description.toLowerCase().includes(search);
+  });
+
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+  };
+
+  const formatDiscount = (offer) => {
+    if (offer.discountType === 'percentage') {
+      return `${offer.discountValue}%`;
+    } else if (offer.discountType === 'fixed') {
+      return `$${offer.discountValue}`;
+    } else {
+      return 'Special Offer';
+    }
+  };
+  if (loading) {
+    return (
+      <div className="bg-white rounded-lg shadow p-12">
+        <div className="flex justify-center items-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-navy-blue"></div>
+          <span className="ml-3 text-gray-600">Loading offers...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-white rounded-lg shadow p-12">
+        <div className="text-center">
+          <p className="text-red-600 mb-4">{error}</p>
+          <button 
+            onClick={onCreateOffer} 
+            className="bg-navy-blue hover:bg-navy-blue-dark text-white py-2 px-4 rounded-md text-sm"
+          >
+            Create First Offer
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return <div className="bg-white rounded-lg shadow">
       <div className="p-6 border-b border-gray-200">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-3 md:space-y-0">
@@ -106,60 +94,69 @@ const OffersList = ({
         </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
-        {filteredOffers.map(offer => <div key={offer.id} className="border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+        {filteredOffers.map(offer => <div key={offer._id} className="border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
             <div className="p-6">
               <div className="flex justify-between items-start">
                 <h3 className="text-lg font-semibold text-gray-900">
-                  {offer.name}
+                  {offer?.title || 'Untitled Offer'}
                 </h3>
                 <span className={`px-2 py-1 inline-flex text-xs leading-4 font-semibold rounded-full ${offer.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                   {offer.status === 'active' ? 'Active' : 'Inactive'}
                 </span>
               </div>
-              <p className="mt-2 text-sm text-gray-600">{offer.description}</p>
+              <p className="mt-2 text-sm text-gray-600">{offer?.description || 'No description'}</p>
               <div className="mt-4 grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-xs text-gray-500">Discount</p>
                   <p className="text-sm font-medium text-gray-900">
-                    {offer.discount}
+                    {formatDiscount(offer)}
                   </p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Type</p>
                   <p className="text-sm font-medium text-gray-900 capitalize">
-                    {offer.type}
+                    {offer?.discountType || 'N/A'}
                   </p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Valid From</p>
                   <p className="text-sm font-medium text-gray-900">
-                    {offer.validFrom}
+                    {formatDate(offer?.validFrom)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500">Valid To</p>
+                  <p className="text-xs text-gray-500">Valid Until</p>
                   <p className="text-sm font-medium text-gray-900">
-                    {offer.validTo}
+                    {formatDate(offer?.validUntil)}
                   </p>
                 </div>
               </div>
-              <div className="mt-4 flex items-center justify-between">
-                <div className="flex items-center text-sm text-gray-500">
-                  <UsersIcon className="h-4 w-4 mr-1" />
-                  <span>Assigned: {offer.assignedTo}</span>
+              {offer.minStay && (
+                <div className="mt-4 text-xs text-gray-500">
+                  Min Stay: {offer.minStay} nights
+                  {offer.maxStay && ` | Max Stay: ${offer.maxStay} nights`}
                 </div>
-                <div className="text-sm text-gray-500">
-                  Redemptions: {offer.redemptions}
-                </div>
-              </div>
+              )}
               <div className="mt-4 pt-4 border-t border-gray-200 flex justify-end space-x-2">
-                <button onClick={() => onEditOffer(offer)} className="p-1 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100">
+                <button 
+                  onClick={() => onEditOffer(offer)} 
+                  className="p-1 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+                  title="Edit Offer"
+                >
                   <EditIcon className="h-5 w-5" />
                 </button>
-                <button onClick={() => onAssignOffer(offer)} className="p-1 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100">
+                <button 
+                  onClick={() => onAssignOffer(offer)} 
+                  className="p-1 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100"
+                  title="Assign to Guests"
+                >
                   <UsersIcon className="h-5 w-5" />
                 </button>
-                <button className="p-1 rounded-md text-gray-500 hover:text-red-600 hover:bg-gray-100">
+                <button 
+                  onClick={() => onDeleteOffer(offer._id)} 
+                  className="p-1 rounded-md text-gray-500 hover:text-red-600 hover:bg-gray-100"
+                  title="Delete Offer"
+                >
                   <TrashIcon className="h-5 w-5" />
                 </button>
               </div>
