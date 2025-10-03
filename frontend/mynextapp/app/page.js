@@ -114,11 +114,20 @@ export default function Page() {
                 ) : (
                   <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gray-200 rounded" />
                 )}
-                <span className="font-medium text-xs sm:text-base">
-                  <Link href={`/items/${item._id}`} className="text-blue-600 hover:underline">
-                    {item.name}
-                  </Link>
-                </span>
+                <div className="flex flex-col space-y-1">
+                  <span className="font-medium text-xs sm:text-base">
+                    <Link href={`/items/${item._id}`} className="text-blue-600 hover:underline">
+                      {item.name}
+                    </Link>
+                  </span>
+                  <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                    item.quantity === 0 
+                      ? 'text-red-600 bg-red-100' 
+                      : 'text-green-600 bg-green-100'
+                  }`}>
+                    {item.quantity === 0 ? 'Out of Stock' : 'In Stock'}
+                  </span>
+                </div>
               </td>
 
               <td className="border p-2">
