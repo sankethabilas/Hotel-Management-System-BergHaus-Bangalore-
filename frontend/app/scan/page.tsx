@@ -17,29 +17,14 @@ function ScanContent() {
             Berghaus Bungalow
           </h1>
           <p className="text-lg text-gray-600">Staff Attendance System</p>
-          {qrId && (
-            <p className="text-sm text-gray-500 mt-2">
-              QR Session: {qrId.substring(0, 12)}...
-            </p>
-          )}
+          <p className="text-sm text-gray-500 mt-2">
+            Mark your check-in and check-out times
+          </p>
         </div>
         
         <AttendanceScanner qrId={qrId || undefined} />
         
         <div className="mt-8 text-center space-y-4">
-          <div className="bg-white rounded-lg p-4 shadow-sm max-w-md mx-auto">
-            <h3 className="font-semibold text-gray-800 mb-2">💡 Quick Access</h3>
-            <p className="text-sm text-gray-600 mb-3">
-              Bookmark this page for easy attendance marking
-            </p>
-            <Link 
-              href="/scan" 
-              className="inline-block px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
-            >
-              Direct Attendance Page
-            </Link>
-          </div>
-          
           <p className="text-xs text-gray-500 max-w-lg mx-auto">
             This is a secure attendance marking system. Your check-in/check-out data is recorded for hotel management purposes. 
             Only authorized hotel staff can access this system.

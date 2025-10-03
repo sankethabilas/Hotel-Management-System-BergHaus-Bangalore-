@@ -238,18 +238,31 @@ const staffLogin = async (req, res) => {
     if (!staff) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid credentials'
+        message: 'Invalid employee ID or staff member is inactive'
       });
     }
 
-    // Check password (default is employee ID)
-    const isPasswordValid = password === staff.password || 
-                           (staff.password === '' && password === employeeId);
+    // Password logic:
+    // 1. If staff hasn't changed password yet (password = employeeId), use employeeId
+    // 2. If staff has changed password (password != employeeId), use ONLY the new password
+    let isPasswordValid;
+    
+    if (staff.password === employeeId) {
+      // Staff hasn't changed password yet, use employee ID
+      isPasswordValid = password === employeeId;
+    } else {
+      // Staff has changed password, use ONLY the new password
+      isPasswordValid = password === staff.password;
+    }
 
     if (!isPasswordValid) {
+      const message = staff.password === employeeId 
+        ? 'Invalid password. Use your Employee ID as password'
+        : 'Invalid password. Use your custom password';
+      
       return res.status(401).json({
         success: false,
-        message: 'Invalid credentials'
+        message
       });
     }
 
@@ -331,6 +344,73 @@ const getStaffDashboard = async (req, res) => {
   }
 };
 
+// Change staff password
+const changePassword = async (req, res) => {
+  try {
+    const staffId = req.user.id;
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+
+    // Validation
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Current password, new password, and confirm password are required'
+      });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'New password and confirm password do not match'
+      });
+    }
+
+    if (newPassword.length < 4) {
+      return res.status(400).json({
+        success: false,
+        message: 'New password must be at least 4 characters long'
+      });
+    }
+
+    // Find staff member
+    const staff = await Staff.findById(staffId);
+    if (!staff) {
+      return res.status(404).json({
+        success: false,
+        message: 'Staff member not found'
+      });
+    }
+
+    // Verify current password
+    // Current password could be either their employee ID (default) or their custom password
+    const isCurrentPasswordValid = (currentPassword === staff.employeeId) || 
+                                  (staff.password && currentPassword === staff.password);
+
+    if (!isCurrentPasswordValid) {
+      return res.status(401).json({
+        success: false,
+        message: 'Current password is incorrect'
+      });
+    }
+
+    // Update password
+    staff.password = newPassword;
+    await staff.save();
+
+    res.json({
+      success: true,
+      message: 'Password changed successfully'
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to change password',
+      error: error.message
+    });
+  }
+};
+
 // Get staff by employee ID
 const getStaffByEmployeeId = async (req, res) => {
   try {
@@ -371,5 +451,6 @@ module.exports = {
   deleteStaff,
   staffLogin,
   getStaffDashboard,
+  changePassword,
   getStaffByEmployeeId
 };

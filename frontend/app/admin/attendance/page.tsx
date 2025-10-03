@@ -48,15 +48,6 @@ export default function AdminAttendancePage() {
     });
   };
 
-  const getStatusBadge = (status: string) => {
-    const colors = attendanceAPI.getStatusColor(status);
-    return (
-      <span className={`px-2 py-1 rounded-full text-xs font-medium ${colors}`}>
-        {status.toUpperCase()}
-      </span>
-    );
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -73,51 +64,6 @@ export default function AdminAttendancePage() {
           {loading ? 'Refreshing...' : 'Refresh Data'}
         </button>
       </div>
-
-      {/* Today's Summary Cards */}
-      {todayAttendance && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          <div className="admin-card p-4">
-            <div className="text-xs font-medium text-gray-600">Total Staff</div>
-            <div className="mt-1 text-2xl font-semibold" style={{ color: '#006bb8' }}>
-              {todayAttendance.summary.total}
-            </div>
-            <div className="text-xs text-gray-500">Marked attendance today</div>
-          </div>
-          
-          <div className="admin-card p-4">
-            <div className="text-xs font-medium text-gray-600">Present</div>
-            <div className="mt-1 text-2xl font-semibold text-green-600">
-              {todayAttendance.summary.present}
-            </div>
-            <div className="text-xs text-gray-500">On time arrivals</div>
-          </div>
-          
-          <div className="admin-card p-4">
-            <div className="text-xs font-medium text-gray-600">Late</div>
-            <div className="mt-1 text-2xl font-semibold text-yellow-600">
-              {todayAttendance.summary.late}
-            </div>
-            <div className="text-xs text-gray-500">Late arrivals</div>
-          </div>
-          
-          <div className="admin-card p-4">
-            <div className="text-xs font-medium text-gray-600">Checked Out</div>
-            <div className="mt-1 text-2xl font-semibold text-blue-600">
-              {todayAttendance.summary.checkedOut}
-            </div>
-            <div className="text-xs text-gray-500">Completed shifts</div>
-          </div>
-          
-          <div className="admin-card p-4">
-            <div className="text-xs font-medium text-gray-600">Still Working</div>
-            <div className="mt-1 text-2xl font-semibold" style={{ color: '#2fa0df' }}>
-              {todayAttendance.summary.stillWorking}
-            </div>
-            <div className="text-xs text-gray-500">Currently active</div>
-          </div>
-        </div>
-      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* QR Code Display */}
@@ -179,9 +125,6 @@ export default function AdminAttendancePage() {
                       <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Hours
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Status
-                      </th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
@@ -201,7 +144,6 @@ export default function AdminAttendancePage() {
                         <td className="px-4 py-3 text-sm text-gray-700">
                           {record.workingHours > 0 ? attendanceAPI.formatWorkingHours(record.workingHours) : '-'}
                         </td>
-                        <td className="px-4 py-3">{getStatusBadge(record.status)}</td>
                       </tr>
                     ))}
                   </tbody>

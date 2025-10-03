@@ -154,6 +154,111 @@ const scanQRCode = async (req, res) => {
   }
 };
 
+// Direct attendance marking without QR code
+const markAttendance = async (req, res) => {
+  try {
+    const { staffId, action = 'checkin', location = 'BergHaus Bangalore Hotel' } = req.body;
+
+    if (!staffId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Staff ID is required'
+      });
+    }
+
+    // Verify staff exists
+    const staff = await Staff.findById(staffId);
+    if (!staff) {
+      return res.status(404).json({
+        success: false,
+        message: 'Staff member not found'
+      });
+    }
+
+    const today = new Date().toISOString().split('T')[0];
+    const currentTime = new Date();
+
+    // Check if already checked in today
+    let attendance = await Attendance.findOne({ 
+      staffId: staffId, 
+      date: today 
+    });
+
+    if (action === 'checkin') {
+      if (attendance && attendance.checkInTime) {
+        return res.status(400).json({
+          success: false,
+          message: 'Already checked in today',
+          attendance: attendance
+        });
+      }
+
+      // Determine status based on time (assuming 9 AM is start time)
+      const startTime = new Date();
+      startTime.setHours(9, 0, 0, 0);
+      const status = currentTime > startTime ? 'late' : 'present';
+
+      // Create new attendance record
+      attendance = new Attendance({
+        staffId: staffId,
+        staffName: staff.fullName,
+        staffEmail: staff.email,
+        department: staff.department,
+        checkInTime: currentTime,
+        date: today,
+        status: status,
+        location: location,
+        qrCodeId: 'DIRECT_ENTRY', // Mark as direct entry
+        ipAddress: req.ip,
+        deviceInfo: req.get('User-Agent') || 'Unknown device'
+      });
+
+      await attendance.save();
+
+      res.json({
+        success: true,
+        message: `Check-in successful! Welcome ${staff.fullName}`,
+        attendance: attendance,
+        status: status
+      });
+
+    } else if (action === 'checkout') {
+      if (!attendance) {
+        return res.status(400).json({
+          success: false,
+          message: 'No check-in record found for today'
+        });
+      }
+
+      if (attendance.checkOutTime) {
+        return res.status(400).json({
+          success: false,
+          message: 'Already checked out today'
+        });
+      }
+
+      // Update checkout time and calculate working hours
+      attendance.checkOutTime = currentTime;
+      attendance.calculateWorkingHours();
+      await attendance.save();
+
+      res.json({
+        success: true,
+        message: `Check-out successful! Goodbye ${staff.fullName}`,
+        attendance: attendance,
+        workingHours: attendance.workingHours
+      });
+    }
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to process attendance',
+      error: error.message
+    });
+  }
+};
+
 // Get all attendance records
 const getAllAttendance = async (req, res) => {
   try {
@@ -269,6 +374,7 @@ const getAttendanceStats = async (req, res) => {
 module.exports = {
   generateQRCode,
   scanQRCode,
+  markAttendance,
   getAllAttendance,
   getTodayAttendance,
   getAttendanceStats
