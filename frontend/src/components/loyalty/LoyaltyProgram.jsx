@@ -83,11 +83,6 @@ const LoyaltyProgram = () => {
   return <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Loyalty Program</h1>
-        <div className="flex space-x-3">
-          <button onClick={() => setView('enrollment')} className="bg-navy-blue hover:bg-navy-blue-dark text-white py-2 px-4 rounded-md text-sm">
-            Enroll New Guest
-          </button>
-        </div>
       </div>
 
       {error && (
@@ -120,6 +115,7 @@ const LoyaltyProgram = () => {
         <EnrollmentForm 
           onSubmit={handleEnrollGuest}
           onCancel={() => setView('dashboard')}
+          enrolledMembers={members}
         />
       )}
       

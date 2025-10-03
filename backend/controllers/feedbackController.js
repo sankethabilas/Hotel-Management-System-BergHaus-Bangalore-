@@ -55,4 +55,27 @@ export async function addResponse(req, res) {
   res.json(updated)
 }
 
+export async function deleteFeedback(req, res) {
+  const { id } = req.params
+  
+  try {
+    const deleted = await Feedback.findByIdAndDelete(id)
+    
+    if (!deleted) {
+      return res.status(404).json({ message: 'Feedback not found' })
+    }
+    
+    res.json({ 
+      message: 'Feedback deleted successfully',
+      deletedFeedback: deleted
+    })
+  } catch (error) {
+    console.error('Error deleting feedback:', error)
+    res.status(500).json({ 
+      message: 'Failed to delete feedback',
+      error: error.message 
+    })
+  }
+}
+
 

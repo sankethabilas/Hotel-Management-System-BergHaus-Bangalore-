@@ -4,7 +4,8 @@ import { loyaltyService } from '../../services/loyaltyService';
 
 const EnrollmentForm = ({
   onSubmit,
-  onCancel
+  onCancel,
+  enrolledMembers = []
 }) => {
   const [guests, setGuests] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -14,17 +15,22 @@ const EnrollmentForm = ({
   const [selectedGuest, setSelectedGuest] = useState(null);
   const [initialPoints, setInitialPoints] = useState(0);
 
-  // Fetch available guests on mount
+  // Fetch available guests on mount and when enrolled members change
   useEffect(() => {
     fetchGuests();
-  }, []);
+  }, [enrolledMembers]);
 
   const fetchGuests = async () => {
     try {
       setLoading(true);
       setError(null);
       const data = await loyaltyService.getAvailableGuests();
-      setGuests(data);
+      
+      // Filter out guests who are already enrolled in loyalty program
+      const enrolledUserIds = enrolledMembers.map(member => member.userId?._id || member.userId);
+      const availableGuests = data.filter(guest => !enrolledUserIds.includes(guest._id));
+      
+      setGuests(availableGuests);
     } catch (err) {
       setError(err.message);
       console.error('Error fetching guests:', err);

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import FeedbackList from './FeedbackList';
-import FeedbackForm from './FeedbackForm';
 import FeedbackResponse from './FeedbackResponse';
 import { feedbackService } from '../../services/feedbackService';
 
@@ -9,7 +8,7 @@ const FeedbackManagement = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedFeedback, setSelectedFeedback] = useState(null);
-  const [view, setView] = useState('list'); // list, form, response
+  const [view, setView] = useState('list'); // list, response
   const [responseMode, setResponseMode] = useState('view'); // view, respond, edit
 
   // Fetch all feedbacks on component mount
@@ -31,39 +30,7 @@ const FeedbackManagement = () => {
     }
   };
 
-  const handleCreateFeedback = async (feedbackData) => {
-    try {
-      setLoading(true);
-      setError(null);
-      await feedbackService.createFeedback(feedbackData);
-      await fetchFeedbacks(); // Refresh the list
-      setView('list');
-      return { success: true };
-    } catch (err) {
-      setError(err.message);
-      console.error('Error creating feedback:', err);
-      return { success: false, error: err.message };
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  const handleUpdateFeedback = async (id, feedbackData) => {
-    try {
-      setLoading(true);
-      setError(null);
-      await feedbackService.updateFeedback(id, feedbackData);
-      await fetchFeedbacks(); // Refresh the list
-      setView('list');
-      return { success: true };
-    } catch (err) {
-      setError(err.message);
-      console.error('Error updating feedback:', err);
-      return { success: false, error: err.message };
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleDeleteFeedback = async (id) => {
     if (!window.confirm('Are you sure you want to delete this feedback?')) {
@@ -109,13 +76,10 @@ const FeedbackManagement = () => {
         <h1 className="text-2xl font-bold text-gray-900">
           Feedback Management
         </h1>
-        <div className="flex space-x-3">
-          <button onClick={() => {
-          setView('form');
-          setSelectedFeedback(null);
-        }} className="bg-navy-blue hover:bg-navy-blue-dark text-white py-2 px-4 rounded-md text-sm">
-            Add New Feedback
-          </button>
+        <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-2 rounded-md text-sm">
+          <p className="text-xs">
+            📝 Guests can submit feedback via the <a href="/contact" className="underline font-semibold">Contact Page</a>
+          </p>
         </div>
       </div>
       {error && (
@@ -134,14 +98,6 @@ const FeedbackManagement = () => {
             setView('response');
           }}
           onDeleteFeedback={handleDeleteFeedback}
-        />
-      )}
-      
-      {view === 'form' && (
-        <FeedbackForm 
-          onSubmit={handleCreateFeedback} 
-          onCancel={() => setView('list')}
-          loading={loading}
         />
       )}
       
