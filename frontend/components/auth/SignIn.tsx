@@ -105,7 +105,7 @@ export default function SignIn() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-hms-highlight via-white to-hms-accent/20 flex items-center justify-center p-4" style={{
-      backgroundImage: "url('/IMG-20250815-WA0004.jpg')",
+      backgroundImage: "url('/image.png')",
       backgroundSize: 'cover',
       backgroundPosition: 'center',
       backgroundAttachment: 'fixed'
@@ -120,7 +120,7 @@ export default function SignIn() {
             <div className="flex justify-center mb-2">
               <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-hms-primary/20 shadow-lg">
                 <Image
-                  src="/logo.jpg"
+                  src="/next.svg"
                   alt="HMS Logo"
                   fill
                   className="object-cover"

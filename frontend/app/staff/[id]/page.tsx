@@ -1,18 +1,28 @@
 'use client';
+// This tells Next.js that this component is a 
+// Client Component (runs in the browser, not just server-side).
 
 import { useState, useEffect } from 'react';
+// React hooks for state management and side effects.
 import Link from 'next/link';
+//Next.js link component for client-side navigation between pages.
 import { Staff } from '@/types/staff';
+// Importing the Staff type (TypeScript interface) from types folder for type safety.
 import { staffAPI } from '@/services/api';
+// API service functions for fetching staff details from backend.
 import { use } from 'react';
+// React experimental `use` hook (used here to resolve async `params`).
 import StaffPaymentHistory from '@/components/StaffPaymentHistory';
+// Custom component that displays staff payment history records.
 
+/* ---------- Types ---------- */
 interface StaffDetailsPageProps {
   params: Promise<{
     id: string;
   }>;
 }
 
+/* ---------- Component ---------- */
 export default function StaffDetailsPage({ params }: StaffDetailsPageProps) {
   const resolvedParams = use(params);
   const [staff, setStaff] = useState<Staff | null>(null);
@@ -23,6 +33,8 @@ export default function StaffDetailsPage({ params }: StaffDetailsPageProps) {
     fetchStaff();
   }, [resolvedParams.id]);
 
+
+  /* ---------- Function to fetch staff details ---------- */
   const fetchStaff = async () => {
     try {
       setLoading(true);
@@ -82,6 +94,8 @@ export default function StaffDetailsPage({ params }: StaffDetailsPageProps) {
     );
   }
 
+
+   /* ---------- Main Page UI (When staff data is available) ---------- */
   return (
     <div className="max-w-4xl mx-auto space-y-8">
       {/* Staff Details Card */}

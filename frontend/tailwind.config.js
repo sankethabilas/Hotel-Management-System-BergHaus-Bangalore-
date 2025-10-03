@@ -10,12 +10,10 @@ module.exports = {
     extend: {
       colors: {
         // HMS Custom Color Palette
-        hms: {
-          primary: '#006bb8',
-          secondary: '#2fa0df',
-          accent: '#ffc973',
-          highlight: '#fee3b3',
-        },
+        'hms-primary': '#006bb8',
+        'hms-secondary': '#2fa0df', 
+        'hms-accent': '#ffc973',
+        'hms-highlight': '#fee3b3',
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",

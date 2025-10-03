@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-// Icons
+// Icons 
 const EmailIcon = ({ className }: { className: string }) => (
   <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
@@ -29,6 +29,7 @@ const EyeOffIcon = ({ className }: { className: string }) => (
   </svg>
 );
 
+/*Main Component*/
 export default function StaffLogin() {
   const [formData, setFormData] = useState({
     email: '',
@@ -93,13 +94,13 @@ export default function StaffLogin() {
       <div className="w-full max-w-md">
         {/* Logo/Header */}
         <div className="text-center mb-8">
-          <div className="mx-auto h-16 w-16 bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
+          <div className="mx-auto h-14 w-14 bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
             <svg className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
             </svg>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">BergHaus Bangalore</h1>
-          <p className="text-gray-600">Staff Portal</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">BergHaus Bangalow</h1>
+          <p className="text-gray-600">Staff Login Portal</p>
         </div>
 
         {/* Login Form */}
@@ -132,7 +133,7 @@ export default function StaffLogin() {
                   value={formData.email}
                   onChange={handleInputChange}
                   className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                  placeholder="Enter your email"
+                  placeholder="Enter your staff email"
                   required
                 />
               </div>

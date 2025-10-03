@@ -4,9 +4,8 @@
   "description": "Reservation & Front Desk Management System with User Management",
   "main": "index.js",
   "scripts": {
-    "dev": "concurrently \"npm run server\" \"npm run client\"",
-    "server": "cd backend && npm run dev",
-    "client": "cd frontend && npm run dev",
+    "backend": "cd backend && npm run dev",
+    "frontend": "cd frontend && npm run dev",
     "install-all": "npm install && cd backend && npm install && cd ../frontend && npm install"
   },
   "keywords": [
@@ -20,7 +19,6 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "concurrently": "^8.2.2"
   },
   "dependencies": {
     "axios": "^1.12.2"

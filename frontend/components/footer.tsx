@@ -13,7 +13,7 @@ export default function Footer() {
             <div className="flex items-center space-x-3">
               <div className="relative w-8 h-8 rounded-full overflow-hidden border border-hms-primary/20">
                 <Image
-                  src="/logo.jpg"
+                  src="/next.svg"
                   alt="HMS Logo"
                   fill
                   className="object-cover"

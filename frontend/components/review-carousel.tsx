@@ -23,7 +23,7 @@ const reviews: Review[] = [
     rating: 5,
     comment: 'We stayed after stage 16 of pekoe trail. The owner sent a car to pick us up for free at the train station. We asked for lunch, dinner and everything was perfect!',
     date: '2 weeks ago',
-    avatar: '/IMG-20250815-WA0008.jpg'
+    avatar: '/image.png'
   },
   {
     id: '2',
@@ -32,7 +32,7 @@ const reviews: Review[] = [
     rating: 5,
     comment: 'This was our favourite stay on the Pekoe Trail and one of the nicest places we\'ve stayed in Sri Lanka! The guesthouse is absolutely stunning, set in the hills.',
     date: '1 month ago',
-    avatar: '/IMG-20250815-WA0009.jpg'
+    avatar: '/globe.svg'
   },
   {
     id: '3',
@@ -41,7 +41,7 @@ const reviews: Review[] = [
     rating: 5,
     comment: 'Great view from the room and bed, the bed was so comfortable! The owners were really nice and it\'s in a quiet location in the hills.',
     date: '3 weeks ago',
-    avatar: '/IMG-20250815-WA0010.jpg'
+    avatar: '/vercel.svg'
   },
   {
     id: '4',
@@ -50,7 +50,7 @@ const reviews: Review[] = [
     rating: 5,
     comment: 'We had such a nice welcome by the friendly owner. She made us feel at home and gave us such good service. As well as the staff. Our stay of one night was perfect!',
     date: '1 week ago',
-    avatar: '/IMG-20250815-WA0011.jpg'
+    avatar: '/file.svg'
   }
 ];
 

@@ -55,7 +55,7 @@ export default function Navbar({ className }: NavbarProps) {
           <Link href="/" className="flex items-center space-x-3 group">
             <div className="relative w-10 h-10 rounded-full overflow-hidden border-2 border-hms-primary/20">
               <Image
-                src="/logo.jpg"
+                src="/next.svg"
                 alt="HMS Logo"
                 fill
                 className="object-cover group-hover:scale-105 transition-transform duration-200"

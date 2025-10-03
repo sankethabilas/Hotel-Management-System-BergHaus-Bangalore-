@@ -40,7 +40,7 @@ const rooms = [
     description: 'Spacious double room with stunning mountain views, extra-large double bed, and modern amenities.',
     price: 10478,
     originalPrice: 13608,
-    image: '/IMG-20250815-WA0007.jpg',
+    image: '/image.png',
     capacity: 2,
     amenities: ['Mountain View', 'Balcony', 'Patio', 'Ensuite Bathroom', 'Flat-screen TV', 'Terrace'],
     rating: 9.4,
@@ -53,7 +53,7 @@ const rooms = [
     description: 'Perfect for families with bunk bed and large double bed, featuring mountain views and family amenities.',
     price: 12807,
     originalPrice: 16632,
-    image: '/IMG-20250815-WA0008.jpg',
+    image: '/window.svg',
     capacity: 4,
     amenities: ['Mountain View', 'Bunk Bed', 'Large Double Bed', 'Family Friendly', 'Flat-screen TV', 'Terrace'],
     rating: 9.2,
@@ -66,7 +66,7 @@ const rooms = [
     description: 'Flexible room configuration with two futon beds, mountain views, and outdoor spaces.',
     price: 10478,
     originalPrice: 13608,
-    image: '/IMG-20250815-WA0009.jpg',
+    image: '/globe.svg',
     capacity: 2,
     amenities: ['Mountain View', 'Twin Beds', 'Balcony', 'Patio', 'Ensuite Bathroom', 'Terrace'],
     rating: 9.6,
@@ -79,7 +79,7 @@ const rooms = [
     description: 'Perfect for solo travelers with large double bed and all the amenities you need.',
     price: 9432,
     originalPrice: 12247,
-    image: '/IMG-20250815-WA0010.jpg',
+    image: '/image.png',
     capacity: 1,
     amenities: ['Mountain View', 'Single Occupancy', 'Large Double Bed', 'Balcony', 'Patio', 'Terrace'],
     rating: 9.0,
@@ -237,7 +237,7 @@ export default function HomePage() {
             <div className="relative">
               <div className="relative h-96 lg:h-[500px] rounded-2xl overflow-hidden shadow-2xl">
                 <Image
-                  src="/IMG-20250815-WA0011.jpg"
+                  src="/vercel.svg"
                   alt="Hotel Interior"
                   fill
                   className="object-cover"

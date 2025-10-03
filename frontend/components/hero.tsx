@@ -12,7 +12,7 @@ export default function Hero() {
       {/* Background Image with Parallax Effect */}
       <div className="absolute inset-0 z-0">
         <Image
-          src="/IMG-20250815-WA0006.jpg"
+          src="/image.png"
           alt="Luxury Hotel Interior"
           fill
           className="object-cover"
