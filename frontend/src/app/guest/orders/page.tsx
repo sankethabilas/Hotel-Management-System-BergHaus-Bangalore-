@@ -45,6 +45,8 @@ export default function GuestOrdersPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [billGenerating, setBillGenerating] = useState<string | null>(null);
+  const [billMessages, setBillMessages] = useState<{[key: string]: string}>({});
 
   // Get guest info from localStorage (you might want to implement proper guest session management)
   const [guestInfo, setGuestInfo] = useState<{name: string, roomNumber: string, phone: string} | null>(null);
@@ -117,6 +119,46 @@ export default function GuestOrdersPage() {
     } catch (err) {
       console.error('Error cancelling order:', err);
       alert('Failed to cancel order. Please try again.');
+    }
+  };
+
+  const generateBill = async (orderId: string) => {
+    setBillGenerating(orderId);
+    setBillMessages(prev => ({ ...prev, [orderId]: '' }));
+    
+    try {
+      const response = await fetch(`http://localhost:5001/api/bills/generate/${orderId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          serviceChargePercentage: 10,
+          vatPercentage: 15,
+          discount: 0,
+          discountReason: '',
+          notes: ''
+        })
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        const message = `Bill ${data.data.billNumber} generated successfully!`;
+        setBillMessages(prev => ({ ...prev, [orderId]: message }));
+        // Open the PDF in a new tab
+        window.open(`http://localhost:5001/api/bills/${data.data.billId}/pdf`, '_blank');
+      } else {
+        setBillMessages(prev => ({ ...prev, [orderId]: data.message || 'Failed to generate bill' }));
+      }
+    } catch (error: any) {
+      console.error('Error generating bill:', error);
+      setBillMessages(prev => ({ ...prev, [orderId]: 'Failed to generate bill. Please try again.' }));
+    } finally {
+      setBillGenerating(null);
+      setTimeout(() => {
+        setBillMessages(prev => ({ ...prev, [orderId]: '' }));
+      }, 5000);
     }
   };
 
@@ -322,6 +364,38 @@ export default function GuestOrdersPage() {
                         </div>
                       </div>
                     ))}
+                  </div>
+                  
+                  {/* Order Actions */}
+                  <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
+                    <div className="flex justify-between items-center">
+                      <div className="text-sm text-gray-600">
+                        Placed on {new Date(order.createdAt).toLocaleDateString()}
+                      </div>
+                      <button
+                        onClick={() => generateBill(order._id)}
+                        disabled={billGenerating === order._id}
+                        className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium flex items-center"
+                      >
+                        {billGenerating === order._id ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                            Generating...
+                          </>
+                        ) : (
+                          '📄 Generate Bill'
+                        )}
+                      </button>
+                    </div>
+                    {billMessages[order._id] && (
+                      <div className={`mt-2 text-sm p-2 rounded ${
+                        billMessages[order._id].includes('successfully') 
+                          ? 'bg-green-100 text-green-700' 
+                          : 'bg-red-100 text-red-700'
+                      }`}>
+                        {billMessages[order._id]}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

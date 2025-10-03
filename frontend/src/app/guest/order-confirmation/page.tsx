@@ -43,6 +43,8 @@ export default function OrderConfirmationPage() {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [billGenerating, setBillGenerating] = useState(false);
+  const [billMessage, setBillMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -71,6 +73,43 @@ export default function OrderConfirmationPage() {
 
     fetchOrder();
   }, [orderNumber]);
+
+  const generateBill = async (orderId: string) => {
+    setBillGenerating(true);
+    setBillMessage(null);
+    
+    try {
+      const response = await fetch(`http://localhost:5001/api/bills/generate/${orderId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          serviceChargePercentage: 10,
+          vatPercentage: 15,
+          discount: 0,
+          discountReason: '',
+          notes: ''
+        })
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        setBillMessage(`Bill ${data.data.billNumber} generated successfully!`);
+        // Open the PDF in a new tab
+        window.open(`http://localhost:5001/api/bills/${data.data.billId}/pdf`, '_blank');
+      } else {
+        setBillMessage(data.message || 'Failed to generate bill');
+      }
+    } catch (error: any) {
+      console.error('Error generating bill:', error);
+      setBillMessage('Failed to generate bill. Please try again.');
+    } finally {
+      setBillGenerating(false);
+      setTimeout(() => setBillMessage(null), 5000);
+    }
+  };
 
   if (loading) {
     return (
@@ -245,19 +284,44 @@ export default function OrderConfirmationPage() {
                   <p className="text-sm text-gray-600">
                     You can track your order status using the order number: <strong>{order.orderNumber}</strong>
                   </p>
-                  <div className="flex space-x-3">
-                    <Link
-                      href={`/guest/order-tracker?orderNumber=${order.orderNumber}`}
-                      className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors text-center text-sm font-medium"
+                  <div className="space-y-3">
+                    <div className="flex space-x-3">
+                      <Link
+                        href={`/guest/order-tracker?orderNumber=${order.orderNumber}`}
+                        className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors text-center text-sm font-medium"
+                      >
+                        Track Order
+                      </Link>
+                      <Link
+                        href="/guest/menu"
+                        className="flex-1 bg-gray-100 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-200 transition-colors text-center text-sm font-medium"
+                      >
+                        Order More
+                      </Link>
+                    </div>
+                    <button
+                      onClick={() => generateBill(order._id)}
+                      disabled={billGenerating}
+                      className="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-center text-sm font-medium flex items-center justify-center"
                     >
-                      Track Order
-                    </Link>
-                    <Link
-                      href="/guest/menu"
-                      className="flex-1 bg-gray-100 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-200 transition-colors text-center text-sm font-medium"
-                    >
-                      Order More
-                    </Link>
+                      {billGenerating ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          Generating...
+                        </>
+                      ) : (
+                        '📄 Generate Bill'
+                      )}
+                    </button>
+                    {billMessage && (
+                      <div className={`text-center text-sm p-2 rounded ${
+                        billMessage.includes('successfully') 
+                          ? 'bg-green-100 text-green-700' 
+                          : 'bg-red-100 text-red-700'
+                      }`}>
+                        {billMessage}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

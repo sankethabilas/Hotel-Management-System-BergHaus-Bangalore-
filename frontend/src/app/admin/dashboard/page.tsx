@@ -7,8 +7,9 @@ import OrderManagement from '@/components/OrderManagement';
 import BannerManagement from '@/components/BannerManagement';
 import Reports from '@/components/Reports';
 import PromotionManagement from '@/components/PromotionManagement';
+import BillManagement from '@/components/BillManagement';
 
-type TabType = 'menu' | 'orders' | 'banners' | 'promotions' | 'reports';
+type TabType = 'menu' | 'orders' | 'banners' | 'promotions' | 'bills' | 'reports';
 
 export default function AdminDashboardPage() {
   const router = useRouter();
@@ -143,6 +144,16 @@ export default function AdminDashboardPage() {
               🎉 Promotions & Discounts
             </button>
             <button
+              onClick={() => setActiveTab('bills')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'bills'
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              📄 Bill Management
+            </button>
+            <button
               onClick={() => setActiveTab('reports')}
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
                 activeTab === 'reports'
@@ -160,6 +171,7 @@ export default function AdminDashboardPage() {
         {activeTab === 'orders' && <OrderManagement />}
         {activeTab === 'banners' && <BannerManagement />}
         {activeTab === 'promotions' && <PromotionManagement />}
+        {activeTab === 'bills' && <BillManagement onClose={() => setActiveTab('menu')} />}
         {activeTab === 'reports' && <Reports />}
       </main>
     </div>
