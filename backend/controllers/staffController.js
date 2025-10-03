@@ -238,18 +238,18 @@ const staffLogin = async (req, res) => {
     if (!staff) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid credentials'
+        message: 'Invalid employee ID or staff member is inactive'
       });
     }
 
-    // Check password (default is employee ID)
-    const isPasswordValid = password === staff.password || 
-                           (staff.password === '' && password === employeeId);
+    // Simple password check: password should be the same as employeeId
+    // The requirement is: staff enters their ID, then enters the same ID as password
+    const isPasswordValid = password === employeeId;
 
     if (!isPasswordValid) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid credentials'
+        message: 'Invalid password. Password should be the same as your Employee ID'
       });
     }
 
