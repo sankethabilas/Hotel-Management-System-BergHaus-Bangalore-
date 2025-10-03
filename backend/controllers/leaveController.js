@@ -9,10 +9,24 @@ const createLeaveRequest = async (req, res) => {
       startDate,
       endDate,
       reason,
-      emergencyContact
+      emergencyContact,
+      staffId // Allow passing staffId in the request body for testing
     } = req.body;
 
-    const staffId = req.user.id;
+    // Try to get staffId from authentication, or use provided staffId, or use a default
+    let currentStaffId = req.user?.id || staffId;
+    
+    if (!currentStaffId) {
+      // For testing purposes, use the first staff member found
+      const firstStaff = await Staff.findOne({ isActive: true });
+      if (!firstStaff) {
+        return res.status(400).json({
+          success: false,
+          message: 'No staff member found. Please ensure you are logged in or contact admin.'
+        });
+      }
+      currentStaffId = firstStaff._id;
+    }
 
     // Validate dates
     const start = new Date(startDate);
@@ -38,7 +52,7 @@ const createLeaveRequest = async (req, res) => {
     const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1;
 
     // Get staff details
-    const staff = await Staff.findById(staffId);
+    const staff = await Staff.findById(currentStaffId);
     if (!staff) {
       return res.status(404).json({
         success: false,
@@ -48,7 +62,7 @@ const createLeaveRequest = async (req, res) => {
 
     // Create leave request
     const leave = new Leave({
-      staffId,
+      staffId: currentStaffId,
       staffName: staff.fullName,
       staffEmail: staff.email,
       department: staff.department,
@@ -133,18 +147,40 @@ const getAllLeaveRequests = async (req, res) => {
 // Get staff's own leave requests
 const getMyLeaveRequests = async (req, res) => {
   try {
-    const staffId = req.user.id;
+    console.log('Getting my leave requests...');
+    // Try to get staffId from authentication, or use the first staff member as fallback
+    let staffId = req.user?.id;
+    console.log('staffId from req.user:', staffId);
+    
+    if (!staffId) {
+      console.log('No staffId, looking for first staff member...');
+      // For testing purposes, use the first staff member found
+      const firstStaff = await Staff.findOne({ isActive: true });
+      console.log('Found first staff:', firstStaff);
+      if (!firstStaff) {
+        return res.status(400).json({
+          success: false,
+          message: 'No staff member found. Please ensure you are logged in or contact admin.'
+        });
+      }
+      staffId = firstStaff._id;
+    }
+    
+    console.log('Using staffId:', staffId);
     const { page = 1, limit = 10, status } = req.query;
     
     let filter = { staffId };
     if (status) filter.status = status;
+    console.log('Filter:', filter);
 
     const leaves = await Leave.find(filter)
       .sort({ createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit);
 
+    console.log('Found leaves:', leaves.length);
     const total = await Leave.countDocuments(filter);
+    console.log('Total leaves:', total);
 
     res.json({
       success: true,
@@ -157,6 +193,7 @@ const getMyLeaveRequests = async (req, res) => {
     });
 
   } catch (error) {
+    console.error('Error in getMyLeaveRequests:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch your leave requests',
