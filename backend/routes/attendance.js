@@ -3,6 +3,7 @@ const router = express.Router();
 const {
   generateQRCode,
   scanQRCode,
+  markAttendance,
   getAllAttendance,
   getTodayAttendance,
   getAttendanceStats
@@ -13,11 +14,11 @@ const { protect, authorize } = require('../middleware/auth');
 // Public routes for QR code generation and scanning
 router.get('/qr/generate', generateQRCode);
 router.post('/scan/:qrId', scanQRCode);
+router.post('/mark', markAttendance); // New direct attendance marking route
 
-// Protected routes
-router.use(protect);
-router.get('/', authorize('admin', 'frontdesk'), getAllAttendance);
-router.get('/today', authorize('admin', 'frontdesk'), getTodayAttendance);
-router.get('/stats', authorize('admin', 'frontdesk'), getAttendanceStats);
+// Public routes (authentication removed for admin functions)
+router.get('/', getAllAttendance);
+router.get('/today', getTodayAttendance);
+router.get('/stats', getAttendanceStats);
 
 module.exports = router;
