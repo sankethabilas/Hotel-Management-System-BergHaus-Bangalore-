@@ -10,7 +10,7 @@ import {
   UpdateUserData, 
   ChangePasswordData,
   UserQueryParams 
-} from '@/types';
+} from '@/types/index';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 

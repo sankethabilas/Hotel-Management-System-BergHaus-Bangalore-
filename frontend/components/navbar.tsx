@@ -61,7 +61,7 @@ export default function Navbar({ className }: NavbarProps) {
                 className="object-cover group-hover:scale-105 transition-transform duration-200"
               />
             </div>
-            <span className="text-xl font-bold text-hms-primary group-hover:text-hms-secondary transition-colors duration-200">
+            <span className="text-lg font-bold text-hms-primary group-hover:text-hms-secondary transition-colors duration-200">
              Berghaus Bungalow
             </span>
           </Link>
@@ -70,45 +70,51 @@ export default function Navbar({ className }: NavbarProps) {
           <div className="hidden md:flex items-center space-x-8">
             <Link 
               href="/" 
-              className="text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary transition-colors duration-200 font-medium"
+              className="text-sm text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary transition-colors duration-200 font-medium"
             >
               Home
             </Link>
             <Link 
               href="/rooms" 
-              className="text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary transition-colors duration-200 font-medium"
+              className="text-sm text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary transition-colors duration-200 font-medium"
             >
               Rooms
             </Link>
             <Link 
               href="/facilities" 
-              className="text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary transition-colors duration-200 font-medium"
+              className="text-sm text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary transition-colors duration-200 font-medium"
             >
               Facilities
             </Link>
             <Link 
+              href="/Food-home" 
+              className="text-sm text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary transition-colors duration-200 font-medium"
+            >
+              Food Menu
+            </Link>
+            <Link 
               href="/about" 
-              className="text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary transition-colors duration-200 font-medium"
+              className="text-sm text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary transition-colors duration-200 font-medium"
             >
               About Us
             </Link>
             <Link 
               href="/contact" 
-              className="text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary transition-colors duration-200 font-medium"
+              className="text-sm text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary transition-colors duration-200 font-medium"
             >
               Contact
             </Link>
             {isAuthenticated ? (
               <Link 
                 href="/reservations" 
-                className="text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary transition-colors duration-200 font-medium"
+                className="text-sm text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary transition-colors duration-200 font-medium"
               >
                 Reservations
               </Link>
             ) : (
               <Link 
                 href="/auth/signin" 
-                className="text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary transition-colors duration-200 font-medium"
+                className="text-sm text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary transition-colors duration-200 font-medium"
                 title="Sign in to view reservations"
               >
                 Reservations
@@ -116,7 +122,7 @@ export default function Navbar({ className }: NavbarProps) {
             )}
             <Link 
               href="/booking" 
-              className="bg-hms-primary hover:bg-hms-primary/90 text-white px-4 py-2 rounded-md transition-all duration-200 hover:scale-105 font-medium"
+              className="text-sm bg-hms-primary hover:bg-hms-primary/90 text-white px-4 py-2 rounded-md transition-all duration-200 hover:scale-105 font-medium"
             >
               Book Now
             </Link>
@@ -197,35 +203,42 @@ export default function Navbar({ className }: NavbarProps) {
             <div className="px-2 pt-2 pb-3 space-y-1 bg-white dark:bg-gray-700 border-t border-gray-200 dark:border-gray-500">
               <Link
                 href="/"
-                className="block px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary hover:bg-gray-50 dark:hover:bg-gray-600 rounded-md transition-colors duration-200"
+                className="block px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary hover:bg-gray-50 dark:hover:bg-gray-600 rounded-md transition-colors duration-200"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Home
               </Link>
               <Link
                 href="/rooms"
-                className="block px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary hover:bg-gray-50 dark:hover:bg-gray-600 rounded-md transition-colors duration-200"
+                className="block px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary hover:bg-gray-50 dark:hover:bg-gray-600 rounded-md transition-colors duration-200"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Rooms
               </Link>
               <Link
                 href="/facilities"
-                className="block px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary hover:bg-gray-50 dark:hover:bg-gray-600 rounded-md transition-colors duration-200"
+                className="block px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary hover:bg-gray-50 dark:hover:bg-gray-600 rounded-md transition-colors duration-200"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Facilities
               </Link>
               <Link
+                href="/Food-home"
+                className="block px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary hover:bg-gray-50 dark:hover:bg-gray-600 rounded-md transition-colors duration-200"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Food Menu
+              </Link>
+              <Link
                 href="/about"
-                className="block px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary hover:bg-gray-50 dark:hover:bg-gray-600 rounded-md transition-colors duration-200"
+                className="block px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary hover:bg-gray-50 dark:hover:bg-gray-600 rounded-md transition-colors duration-200"
                 onClick={() => setIsMenuOpen(false)}
               >
                 About Us
               </Link>
               <Link
                 href="/contact"
-                className="block px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary hover:bg-gray-50 dark:hover:bg-gray-600 rounded-md transition-colors duration-200"
+                className="block px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary hover:bg-gray-50 dark:hover:bg-gray-600 rounded-md transition-colors duration-200"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Contact
@@ -233,7 +246,7 @@ export default function Navbar({ className }: NavbarProps) {
               {isAuthenticated ? (
                 <Link
                   href="/reservations"
-                  className="block px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary hover:bg-gray-50 dark:hover:bg-gray-600 rounded-md transition-colors duration-200"
+                  className="block px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary hover:bg-gray-50 dark:hover:bg-gray-600 rounded-md transition-colors duration-200"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Reservations
@@ -241,7 +254,7 @@ export default function Navbar({ className }: NavbarProps) {
               ) : (
                 <Link
                   href="/auth/signin"
-                  className="block px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary hover:bg-gray-50 dark:hover:bg-gray-600 rounded-md transition-colors duration-200"
+                  className="block px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary hover:bg-gray-50 dark:hover:bg-gray-600 rounded-md transition-colors duration-200"
                   onClick={() => setIsMenuOpen(false)}
                   title="Sign in to view reservations"
                 >
@@ -250,7 +263,7 @@ export default function Navbar({ className }: NavbarProps) {
               )}
               <Link
                 href="/booking"
-                className="block px-3 py-2 bg-hms-primary hover:bg-hms-primary/90 text-white rounded-md transition-colors duration-200 text-center font-medium"
+                className="block px-3 py-2 text-sm bg-hms-primary hover:bg-hms-primary/90 text-white rounded-md transition-colors duration-200 text-center font-medium"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Book Now

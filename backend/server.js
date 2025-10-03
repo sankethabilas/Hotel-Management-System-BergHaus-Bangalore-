@@ -41,6 +41,36 @@ app.use(cookieParser());
 // Serve static files (uploaded images)
 app.use('/uploads', express.static('uploads'));
 
+// Import upload middleware
+const upload = require('./middleware/upload');
+
+// Image upload endpoint
+app.post('/api/upload', upload.single('image'), (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'No image file provided'
+      });
+    }
+
+    const imagePath = `/uploads/${req.file.filename}`;
+    
+    res.json({
+      success: true,
+      message: 'Image uploaded successfully',
+      imagePath: imagePath,
+      filename: req.file.filename
+    });
+  } catch (error) {
+    console.error('Upload error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to upload image'
+    });
+  }
+});
+
 // Connect to Database
 connectDB();
 
@@ -62,12 +92,22 @@ app.use('/api/leaves', require('./routes/leaves'));
 app.use('/api/payments', require('./routes/payments'));
 app.use('/api/attendance', require('./routes/attendance'));
 
+// Routes - Food & Beverage Management System
+app.use('/api/menu', require('./routes/menuRoutes'));
+app.use('/api/orders', require('./routes/orderRoutes'));
+app.use('/api/admin', require('./routes/adminRoutes'));
+app.use('/api/banners', require('./routes/banners'));
+app.use('/api/promotions', require('./routes/promotions'));
+app.use('/api/reports', require('./routes/reports'));
+app.use('/api/inventory', require('./routes/inventoryRoutes'));
+app.use('/api/staff-requests', require('./routes/staffRequestRoutes'));
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'OK', 
-    message: 'Unified HMS Backend is running - Hotel Booking + Staff Management',
-    systems: ['Hotel Booking', 'Staff Management', 'Reservations', 'Payments'],
+    message: 'Unified HMS Backend is running - Hotel Booking + Staff Management + Food & Beverage',
+    systems: ['Hotel Booking', 'Staff Management', 'Food & Beverage', 'Reservations', 'Payments', 'Menu Management'],
     timestamp: new Date().toISOString()
   });
 });

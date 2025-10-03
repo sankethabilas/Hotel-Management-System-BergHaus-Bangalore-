@@ -138,7 +138,7 @@ export default function ReservationsPage() {
       console.error('Error fetching reservations:', error);
       toast({
         title: "Error",
-        description: `Network error: ${error.message}`,
+        description: `Network error: ${error instanceof Error ? error.message : 'Unknown error'}`,
         variant: "destructive",
       });
     } finally {
@@ -365,7 +365,7 @@ export default function ReservationsPage() {
                           <span>{room.roomNumber} ({room.roomType})</span>
                         </div>
                       ))
-                    ) : reservation.roomId ? (
+                    ) : reservation.rooms && reservation.rooms.length > 0 ? (
                       <div className="text-sm flex items-center space-x-1">
                         <Bed className="w-3 h-3" />
                         <span>Room assigned (Legacy format)</span>

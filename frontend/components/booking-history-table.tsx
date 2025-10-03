@@ -17,7 +17,7 @@ import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { ArrivalTimeEditor } from '@/components/ui/arrival-time-editor';
 import { useToast } from '@/hooks/use-toast';
 import { bookingAPI } from '@/lib/api';
-import { Booking, BookingStatus } from '@/types';
+import { Booking, BookingStatus } from '@/types/index';
 import { 
   Calendar, 
   Clock, 

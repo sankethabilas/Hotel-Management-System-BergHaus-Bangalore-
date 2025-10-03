@@ -253,15 +253,15 @@ export default function RoomAllocationPage() {
   const getRoomStatusBadge = (status: string) => {
     const statusConfig = {
       'available': { label: 'Available', variant: 'default' as const, className: 'bg-green-100 text-green-800' },
-      'occupied': { label: 'Occupied', variant: 'destructive' as const },
-      'maintenance': { label: 'Maintenance', variant: 'secondary' as const },
-      'reserved': { label: 'Reserved', variant: 'secondary' as const }
+      'occupied': { label: 'Occupied', variant: 'destructive' as const, className: '' },
+      'maintenance': { label: 'Maintenance', variant: 'secondary' as const, className: '' },
+      'reserved': { label: 'Reserved', variant: 'secondary' as const, className: '' }
     };
 
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.available;
     
     return (
-      <Badge variant={config.variant} className={config.className}>
+      <Badge variant={config.variant} className={config.className || ''}>
         {config.label}
       </Badge>
     );

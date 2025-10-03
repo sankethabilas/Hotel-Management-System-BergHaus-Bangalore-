@@ -1,10 +1,17 @@
-// components/admin/StatCardsRow.jsx
+// components/admin/StatCardsRow.tsx
+interface StatCardsRowProps {
+  totalProducts: number;
+  stocksBelowFive: number;
+  totalSuppliers: number;
+  staffRequests: number;
+}
+
 export default function StatCardsRow({
   totalProducts,
   stocksBelowFive,
   totalSuppliers,
   staffRequests,
-}) {
+}: StatCardsRowProps) {
   const cards = [
     {
       title: "Total Products",

@@ -256,7 +256,7 @@ export default function StaffDashboard() {
               {/* Left side - Welcome */}
               <div className="flex items-center space-x-4">
                 <div className="h-10 w-10 rounded-lg bg-blue-600 flex items-center justify-center text-white text-lg font-medium">
-                  {getDepartmentIcon(staffData.department)}
+                  {getDepartmentIcon(staffData.department || '')}
                 </div>
                 <div>
                   <h1 className="text-xl font-bold text-gray-900">
@@ -288,7 +288,7 @@ export default function StaffDashboard() {
                     <div className="text-left flex-1">
                       <div className="flex items-center space-x-2">
                         <p className="text-sm font-semibold text-gray-900">{staffData.fullName}</p>
-                        <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium border ${getDepartmentColor(staffData.department)}`}>
+                        <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium border ${getDepartmentColor(staffData.department || '')}`}>
                           {staffData.department}
                         </span>
                       </div>

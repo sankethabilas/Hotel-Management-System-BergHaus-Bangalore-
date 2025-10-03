@@ -1,4 +1,4 @@
-const API_BASE_URL = '/api/attendance';
+const API_BASE_URL = 'http://localhost:5000/api/attendance';
 
 export interface AttendanceRecord {
   _id: string;

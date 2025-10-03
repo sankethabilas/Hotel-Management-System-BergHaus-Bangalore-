@@ -791,7 +791,7 @@ export default function CheckInCheckOutPage() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setActionDialog({ open: false, type: null, reservation: null })}>
+            <Button variant="outline" onClick={() => setActionDialog({ open: false, type: null, booking: null })}>
               Cancel
             </Button>
             <Button onClick={executeAction}>
@@ -933,23 +933,7 @@ export default function CheckInCheckOutPage() {
                 </div>
               )}
 
-              {/* Existing Custom Charges */}
-              {paymentDialog.reservation?.customCharges && paymentDialog.reservation.customCharges.length > 0 && (
-                <div className="space-y-2">
-                  <h4 className="font-medium">Applied Charges:</h4>
-                  {paymentDialog.reservation.customCharges.map((charge: any, index: number) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                      <div className="flex-1">
-                        <p className="font-medium">{charge.description}</p>
-                        <p className="text-sm text-gray-600">
-                          ${charge.amount} ({charge.category})
-                        </p>
-                      </div>
-                      <Badge variant="outline">Applied</Badge>
-                    </div>
-                  ))}
-                </div>
-              )}
+              {/* Custom Charges section removed - not part of current Booking model */}
             </div>
 
             {/* Bill Actions */}
@@ -969,7 +953,7 @@ export default function CheckInCheckOutPage() {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setPaymentDialog({ open: false, reservation: null })}>
+            <Button variant="outline" onClick={() => setPaymentDialog({ open: false, booking: null })}>
               Close
             </Button>
           </DialogFooter>
