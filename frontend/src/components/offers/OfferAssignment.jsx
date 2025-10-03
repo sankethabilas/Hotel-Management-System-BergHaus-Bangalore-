@@ -12,6 +12,7 @@ const OfferAssignment = ({
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedGuests, setSelectedGuests] = useState([]);
+  const [initiallyAssignedGuests, setInitiallyAssignedGuests] = useState([]);
   const [filter, setFilter] = useState('all'); // all, platinum, gold, silver, bronze, assigned
 
   useEffect(() => {
@@ -24,15 +25,30 @@ const OfferAssignment = ({
       setError(null);
       const members = await loyaltyService.getAllMembers();
       
+      console.log('Fetched members for offer assignment:', members);
+      console.log('Current offer ID:', offer._id);
+      
       // Transform loyalty members to guest format
-      const transformedGuests = members.map(member => ({
-        id: member.guestId,
-        _id: member._id,
-        name: member.guestName || 'Unknown',
-        email: member.email || '',
-        tier: member.tier || 'Silver',
-        assigned: member.assignedOffers?.some(offerId => String(offerId) === String(offer._id)) || false
-      }));
+      const transformedGuests = members.map(member => {
+        // Handle both populated and unpopulated assignedOffers
+        const hasOffer = member.assignedOffers?.some(offerItem => {
+          const offerIdToCheck = typeof offerItem === 'object' ? offerItem._id : offerItem;
+          const matches = String(offerIdToCheck) === String(offer._id);
+          if (matches) {
+            console.log(`Guest ${member.guestName} has offer ${offer._id} assigned`);
+          }
+          return matches;
+        }) || false;
+        
+        return {
+          id: member.guestId,
+          _id: member._id,
+          name: member.guestName || 'Unknown',
+          email: member.email || '',
+          tier: member.tier || 'Silver',
+          assigned: hasOffer
+        };
+      });
       
       setGuests(transformedGuests);
       
@@ -41,6 +57,7 @@ const OfferAssignment = ({
         .filter(guest => guest.assigned)
         .map(guest => guest.id);
       setSelectedGuests(alreadyAssigned);
+      setInitiallyAssignedGuests(alreadyAssigned);
     } catch (err) {
       console.error('Error fetching guests:', err);
       setError('Failed to load guests');
@@ -200,8 +217,12 @@ const OfferAssignment = ({
                       {guest.tier}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {guest.assigned ? 'Already assigned' : 'Not assigned'}
+                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    {selectedGuests.includes(guest.id) ? (
+                      <span className="text-green-600 font-medium">✓ Assigned</span>
+                    ) : (
+                      <span className="text-gray-500">Not assigned</span>
+                    )}
                   </td>
                 </tr>)}
             </tbody>
@@ -220,15 +241,26 @@ const OfferAssignment = ({
           </button>
           <button 
             type="button" 
-            onClick={() => onSubmit(selectedGuests)} 
-            disabled={selectedGuests.length === 0}
-            className={`px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gold ${
-              selectedGuests.length === 0 
-                ? 'bg-gray-400 cursor-not-allowed' 
-                : 'bg-navy-blue hover:bg-navy-blue-dark'
-            }`}
+            onClick={() => {
+              // Validation: Check if no guests are selected and none were initially assigned
+              if (selectedGuests.length === 0 && initiallyAssignedGuests.length === 0) {
+                alert('Please select at least one guest to assign this offer, or click Cancel to go back.');
+                return;
+              }
+              
+              // Confirmation: Check if unassigning all previously assigned guests
+              if (selectedGuests.length === 0 && initiallyAssignedGuests.length > 0) {
+                const confirmed = window.confirm(
+                  `This will unassign all ${initiallyAssignedGuests.length} guest(s) from this offer. Are you sure you want to continue?`
+                );
+                if (!confirmed) return;
+              }
+              
+              onSubmit(selectedGuests, initiallyAssignedGuests);
+            }} 
+            className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-navy-blue hover:bg-navy-blue-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gold"
           >
-            Assign to {selectedGuests.length} Guest{selectedGuests.length !== 1 ? 's' : ''}
+            Update Assignment ({selectedGuests.length} Guest{selectedGuests.length !== 1 ? 's' : ''} Selected)
           </button>
         </div>
       </div>

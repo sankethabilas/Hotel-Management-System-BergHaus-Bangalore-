@@ -10,6 +10,14 @@ const FeedbackResponse = ({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [isEditing, setIsEditing] = useState(mode === 'respond' || mode === 'edit');
+  const [charCount, setCharCount] = useState((feedback.managerResponse || '').length);
+  const minLength = 10;
+  const maxLength = 1000;
+
+  const handleResponseChange = (value) => {
+    setResponse(value);
+    setCharCount(value.length);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -87,20 +95,42 @@ const FeedbackResponse = ({
         
         <form onSubmit={handleSubmit}>
           <div>
-            <label htmlFor="response" className="block text-sm font-medium text-gray-700">
-              Admin Response {(mode === 'respond' || mode === 'edit') && '*'}
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label htmlFor="response" className="block text-sm font-medium text-gray-700">
+                Admin Response {(mode === 'respond' || mode === 'edit') && '*'}
+              </label>
+              {(mode === 'respond' || mode === 'edit') && (
+                <span className={`text-xs ${
+                  charCount < minLength ? 'text-red-500' :
+                  charCount > maxLength ? 'text-red-500' :
+                  'text-gray-500'
+                }`}>
+                  {charCount}/{maxLength} characters
+                  {charCount < minLength && ` (min ${minLength})`}
+                </span>
+              )}
+            </div>
             <textarea 
               name="response" 
               id="response" 
               rows={4} 
               value={response} 
-              onChange={(e) => setResponse(e.target.value)} 
+              onChange={(e) => handleResponseChange(e.target.value)} 
               disabled={mode === 'view' || submitting} 
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm disabled:bg-gray-100 disabled:cursor-not-allowed" 
+              maxLength={maxLength}
+              className={`mt-1 block w-full border ${
+                (mode === 'respond' || mode === 'edit') && charCount > 0 && charCount < minLength
+                  ? 'border-red-300'
+                  : 'border-gray-300'
+              } rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm disabled:bg-gray-100 disabled:cursor-not-allowed`}
               required={mode === 'respond' || mode === 'edit'}
-              placeholder={mode === 'view' ? 'No response yet' : 'Type your response here...'}
+              placeholder={mode === 'view' ? 'No response yet' : 'Type your response here... (minimum 10 characters)'}
             />
+            {(mode === 'respond' || mode === 'edit') && charCount > 0 && charCount < minLength && (
+              <p className="mt-1 text-xs text-red-600">
+                Response must be at least {minLength} characters long
+              </p>
+            )}
             {feedback.status === 'responded' && feedback.responseDate && (
               <p className="mt-1 text-xs text-gray-500">
                 {mode === 'view' ? 'Responded' : 'Last responded'} on {formatDate(feedback.responseDate)}
@@ -120,7 +150,7 @@ const FeedbackResponse = ({
               <button 
                 type="submit" 
                 className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={submitting || !response.trim()}
+                disabled={submitting || !response.trim() || charCount < minLength}
               >
                 {submitting ? 'Submitting...' : mode === 'edit' ? 'Update Response' : 'Submit Response'}
               </button>

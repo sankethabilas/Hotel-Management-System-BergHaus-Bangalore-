@@ -12,6 +12,55 @@ const PointsTracker = ({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+  const [balanceWarning, setBalanceWarning] = useState(null);
+
+  const checkBalance = (memberId, amount, txnType) => {
+    if (!memberId || !amount || amount <= 0) {
+      setBalanceWarning(null);
+      return;
+    }
+
+    const member = members.find(m => m.guestId === memberId);
+    if (!member) return;
+
+    // Check if this is a deduction transaction
+    if (txnType === 'redeem' || txnType === 'adjust-negative') {
+      const currentPoints = member.points || 0;
+      const deductAmount = parseInt(amount);
+      
+      if (deductAmount > currentPoints) {
+        setBalanceWarning(
+          `⚠️ Insufficient balance! ${member.guestName} only has ${currentPoints} points. Cannot deduct ${deductAmount} points.`
+        );
+      } else if (deductAmount === currentPoints) {
+        setBalanceWarning(
+          `⚠️ This will use all ${currentPoints} points. Balance will be 0.`
+        );
+      } else {
+        const remaining = currentPoints - deductAmount;
+        setBalanceWarning(
+          `✓ Valid transaction. Remaining balance: ${remaining} points`
+        );
+      }
+    } else {
+      setBalanceWarning(null);
+    }
+  };
+
+  const handlePointsChange = (value) => {
+    setPointsAmount(value);
+    checkBalance(selectedMember, value, transactionType);
+  };
+
+  const handleMemberChange = (memberId) => {
+    setSelectedMember(memberId);
+    checkBalance(memberId, pointsAmount, transactionType);
+  };
+
+  const handleTransactionTypeChange = (type) => {
+    setTransactionType(type);
+    checkBalance(selectedMember, pointsAmount, type);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -26,15 +75,28 @@ const PointsTracker = ({
       return;
     }
 
-    setSubmitting(true);
-    setError(null);
-    setSuccess(null);
-
     // Calculate points change based on transaction type
     let pointsChange = parseInt(pointsAmount);
     if (transactionType === 'redeem' || transactionType === 'adjust-negative') {
       pointsChange = -pointsChange;
     }
+    
+    // Balance check for point deduction (redeem or adjust-negative)
+    if (pointsChange < 0) {
+      const currentPoints = member.points || 0;
+      const deductAmount = Math.abs(pointsChange);
+      
+      if (deductAmount > currentPoints) {
+        setError(
+          `Insufficient balance! ${member.guestName} only has ${currentPoints} points. Cannot deduct ${deductAmount} points.`
+        );
+        return;
+      }
+    }
+    
+    setSubmitting(true);
+    setError(null);
+    setSuccess(null);
 
     const result = await onUpdatePoints(selectedMember, pointsChange);
     
@@ -89,7 +151,7 @@ const PointsTracker = ({
                 id="guest" 
                 name="guest" 
                 value={selectedMember}
-                onChange={(e) => setSelectedMember(e.target.value)}
+                onChange={(e) => handleMemberChange(e.target.value)}
                 className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 pl-3 pr-10 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" 
                 required
                 disabled={submitting}
@@ -110,7 +172,7 @@ const PointsTracker = ({
                 id="transactionType" 
                 name="transactionType" 
                 value={transactionType}
-                onChange={(e) => setTransactionType(e.target.value)}
+                onChange={(e) => handleTransactionTypeChange(e.target.value)}
                 className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 pl-3 pr-10 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                 disabled={submitting}
               >
@@ -129,13 +191,22 @@ const PointsTracker = ({
                 name="points" 
                 id="points" 
                 value={pointsAmount}
-                onChange={(e) => setPointsAmount(e.target.value)}
+                onChange={(e) => handlePointsChange(e.target.value)}
                 className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" 
                 placeholder="Enter amount" 
                 min="1" 
                 required
                 disabled={submitting}
               />
+              {balanceWarning && (
+                <p className={`mt-2 text-sm ${
+                  balanceWarning.includes('Insufficient') ? 'text-red-600' :
+                  balanceWarning.includes('all') ? 'text-yellow-600' :
+                  'text-green-600'
+                }`}>
+                  {balanceWarning}
+                </p>
+              )}
             </div>
           </div>
 

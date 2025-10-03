@@ -87,20 +87,45 @@ const OffersManagement = () => {
     }
   };
 
-  const handleAssignOffer = async (selectedGuestIds) => {
+  const handleAssignOffer = async (selectedGuestIds, initiallyAssignedIds = []) => {
     try {
       setLoading(true);
       setError(null);
-      // Assign offer to each selected guest
-      for (const guestId of selectedGuestIds) {
+      
+      // Determine which guests to assign and unassign
+      const toAssign = selectedGuestIds.filter(id => !initiallyAssignedIds.includes(id));
+      const toUnassign = initiallyAssignedIds.filter(id => !selectedGuestIds.includes(id));
+      
+      // Assign offer to newly selected guests
+      for (const guestId of toAssign) {
         await offerService.assignOfferToGuest(guestId, selectedOffer._id);
       }
-      alert(`Offer assigned to ${selectedGuestIds.length} guest(s) successfully!`);
+      
+      // Unassign offer from deselected guests
+      for (const guestId of toUnassign) {
+        await offerService.unassignOfferFromGuest(guestId, selectedOffer._id);
+      }
+      
+      const assignedCount = toAssign.length;
+      const unassignedCount = toUnassign.length;
+      
+      let message = '';
+      if (assignedCount > 0 && unassignedCount > 0) {
+        message = `Offer assigned to ${assignedCount} guest(s) and unassigned from ${unassignedCount} guest(s)!`;
+      } else if (assignedCount > 0) {
+        message = `Offer assigned to ${assignedCount} guest(s) successfully!`;
+      } else if (unassignedCount > 0) {
+        message = `Offer unassigned from ${unassignedCount} guest(s) successfully!`;
+      } else {
+        message = 'No changes made.';
+      }
+      
+      alert(message);
       setView('list');
     } catch (err) {
       setError(err.message);
-      alert('Error assigning offer: ' + err.message);
-      console.error('Error assigning offer:', err);
+      alert('Error updating assignment: ' + err.message);
+      console.error('Error updating assignment:', err);
     } finally {
       setLoading(false);
     }

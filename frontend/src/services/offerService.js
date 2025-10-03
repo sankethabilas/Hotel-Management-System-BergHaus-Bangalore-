@@ -59,5 +59,15 @@ export const offerService = {
     } catch (error) {
       throw new Error(error.response?.data?.message || 'Failed to assign offer');
     }
+  },
+
+  // Unassign offer from guest
+  unassignOfferFromGuest: async (guestId, offerId) => {
+    try {
+      const response = await api.post(`/offers/unassign`, { guestId, offerId });
+      return response.data;
+    } catch (error) {
+      throw new Error(error.response?.data?.message || 'Failed to unassign offer');
+    }
   }
 };

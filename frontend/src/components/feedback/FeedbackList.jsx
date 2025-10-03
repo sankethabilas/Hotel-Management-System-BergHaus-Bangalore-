@@ -7,17 +7,43 @@ const FeedbackList = ({
   onViewFeedback,
   onDeleteFeedback
 }) => {
-  const [filter, setFilter] = useState('all'); // all, pending, responded
+  const [filterStatus, setFilterStatus] = useState('all'); // all, pending, responded
+  const [filterRating, setFilterRating] = useState('all'); // all, 1, 2, 3, 4, 5
+  const [sortBy, setSortBy] = useState('date-desc'); // date-desc, date-asc, rating-desc, rating-asc
   const [searchTerm, setSearchTerm] = useState('');
   
-  const filteredFeedback = feedbacks.filter(feedback => {
-    if (filter === 'pending') return feedback.status === 'pending';
-    if (filter === 'responded') return feedback.status === 'responded';
+  let filteredFeedback = feedbacks.filter(feedback => {
+    // Status filter
+    if (filterStatus === 'pending' && feedback.status !== 'pending') return false;
+    if (filterStatus === 'responded' && feedback.status !== 'responded') return false;
+    
+    // Rating filter
+    if (filterRating !== 'all' && feedback.rating !== parseInt(filterRating)) return false;
+    
+    // Search filter
+    const guestName = feedback.guestName || '';
+    const comment = feedback.comment || '';
+    const search = searchTerm.toLowerCase();
+    if (searchTerm && !guestName.toLowerCase().includes(search) && !comment.toLowerCase().includes(search)) {
+      return false;
+    }
+    
     return true;
-  }).filter(feedback => 
-    feedback.guestName.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    feedback.comment.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  });
+
+  // Apply sorting
+  filteredFeedback = [...filteredFeedback].sort((a, b) => {
+    if (sortBy === 'date-desc') {
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    } else if (sortBy === 'date-asc') {
+      return new Date(a.createdAt) - new Date(b.createdAt);
+    } else if (sortBy === 'rating-desc') {
+      return b.rating - a.rating;
+    } else if (sortBy === 'rating-asc') {
+      return a.rating - b.rating;
+    }
+    return 0;
+  });
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -37,16 +63,27 @@ const FeedbackList = ({
           <div className="flex items-center space-x-3">
             <div className="flex items-center">
               <FilterIcon className="h-5 w-5 text-gray-400 mr-2" />
-              <select className="border border-gray-300 rounded-md shadow-sm py-2 pl-3 pr-8 text-sm focus:outline-none focus:ring-gold focus:border-gold" value={filter} onChange={e => setFilter(e.target.value)}>
-                <option value="all">All Feedback</option>
+              <select className="border border-gray-300 rounded-md shadow-sm py-2 pl-3 pr-8 text-sm focus:outline-none focus:ring-gold focus:border-gold" value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
+                <option value="all">All Status</option>
                 <option value="pending">Pending</option>
                 <option value="responded">Responded</option>
               </select>
             </div>
-            <select className="border border-gray-300 rounded-md shadow-sm py-2 pl-3 pr-8 text-sm focus:outline-none focus:ring-gold focus:border-gold">
-              <option>Sort by Latest</option>
-              <option>Sort by Rating (High to Low)</option>
-              <option>Sort by Rating (Low to High)</option>
+            <div className="flex items-center">
+              <select className="border border-gray-300 rounded-md shadow-sm py-2 pl-3 pr-8 text-sm focus:outline-none focus:ring-gold focus:border-gold" value={filterRating} onChange={e => setFilterRating(e.target.value)}>
+                <option value="all">All Ratings</option>
+                <option value="5">5 Stars</option>
+                <option value="4">4 Stars</option>
+                <option value="3">3 Stars</option>
+                <option value="2">2 Stars</option>
+                <option value="1">1 Star</option>
+              </select>
+            </div>
+            <select className="border border-gray-300 rounded-md shadow-sm py-2 pl-3 pr-8 text-sm focus:outline-none focus:ring-gold focus:border-gold" value={sortBy} onChange={e => setSortBy(e.target.value)}>
+              <option value="date-desc">Latest First</option>
+              <option value="date-asc">Oldest First</option>
+              <option value="rating-desc">Rating (High to Low)</option>
+              <option value="rating-asc">Rating (Low to High)</option>
             </select>
           </div>
         </div>
