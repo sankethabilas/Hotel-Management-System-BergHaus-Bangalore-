@@ -10,6 +10,7 @@ export default function HRLeaveManagement() {
   const [leaves, setLeaves] = useState<LeaveWithStaffInfo[]>([]);
   const [staff, setStaff] = useState<Staff[]>([]);
   const [loading, setLoading] = useState(true);
+  const [clearing, setClearing] = useState(false);
   const [error, setError] = useState<string>('');
   const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'rejected'>('all');
   const [processingId, setProcessingId] = useState<string>('');
@@ -37,7 +38,15 @@ export default function HRLeaveManagement() {
             email: staffInfo.email,
             department: staffInfo.department,
             jobRole: staffInfo.jobRole
-          } : undefined
+          } : {
+            // Fallback to leave record data if staff not found
+            _id: leave.staffId,
+            employeeId: 'N/A',
+            fullName: leave.staffName || 'Unknown Staff',
+            email: leave.staffEmail || 'N/A',
+            department: leave.department || 'N/A',
+            jobRole: 'N/A'
+          }
         };
       });
 
@@ -69,6 +78,51 @@ export default function HRLeaveManagement() {
       setError(error instanceof Error ? error.message : 'Failed to update leave status');
     } finally {
       setProcessingId('');
+    }
+  };
+
+  const handleClearProcessed = async () => {
+    try {
+      setClearing(true);
+      setError('');
+      
+      // Filter out approved and rejected leaves
+      const processedLeaves = leaves.filter(leave => 
+        leave.status === 'approved' || leave.status === 'rejected'
+      );
+      
+      if (processedLeaves.length === 0) {
+        setError('No processed requests to clear');
+        return;
+      }
+
+      // Delete each processed leave sequentially to avoid timeout
+      let deletedCount = 0;
+      for (const leave of processedLeaves) {
+        if (leave._id) {
+          try {
+            await leaveAPI.deleteLeave(leave._id);
+            deletedCount++;
+          } catch (error) {
+            console.error(`Failed to delete leave ${leave._id}:`, error);
+            // Continue with other deletes even if one fails
+          }
+        }
+      }
+      
+      // Show success message with count
+      if (deletedCount > 0) {
+        setError(`Successfully cleared ${deletedCount} processed request(s)`);
+        // Clear the success message after 3 seconds
+        setTimeout(() => setError(''), 3000);
+      }
+      
+      // Refresh the data
+      await fetchData();
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Failed to clear processed requests');
+    } finally {
+      setClearing(false);
     }
   };
 
@@ -173,24 +227,37 @@ export default function HRLeaveManagement() {
         </div>
       </div>
 
-      {/* Filter Tabs */}
+      {/* Filter Tabs and Clear Button */}
       <div className="bg-white rounded-lg shadow">
         <div className="border-b border-gray-200">
-          <nav className="-mb-px flex space-x-8 px-6">
-            {(['all', 'pending', 'approved', 'rejected'] as const).map((status) => (
+          <div className="flex justify-between items-center px-6">
+            <nav className="-mb-px flex space-x-8">
+              {(['all', 'pending', 'approved', 'rejected'] as const).map((status) => (
+                <button
+                  key={status}
+                  onClick={() => setFilter(status)}
+                  className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                    filter === status
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  {status.charAt(0).toUpperCase() + status.slice(1)} ({statusCounts[status]})
+                </button>
+              ))}
+            </nav>
+            
+            {/* Clear Processed Requests Button */}
+            {(statusCounts.approved > 0 || statusCounts.rejected > 0) && (
               <button
-                key={status}
-                onClick={() => setFilter(status)}
-                className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                  filter === status
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
+                onClick={handleClearProcessed}
+                disabled={clearing || loading}
+                className="py-2 px-4 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {status.charAt(0).toUpperCase() + status.slice(1)} ({statusCounts[status]})
+                {clearing ? 'Clearing...' : `Clear Processed (${statusCounts.approved + statusCounts.rejected})`}
               </button>
-            ))}
-          </nav>
+            )}
+          </div>
         </div>
 
         {/* Leave Requests Table */}
@@ -212,25 +279,25 @@ export default function HRLeaveManagement() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Employee
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Leave Type
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Duration
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Dates
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Reason
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
@@ -238,25 +305,30 @@ export default function HRLeaveManagement() {
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredLeaves.map((leave) => (
                   <tr key={leave._id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-4 py-3 whitespace-nowrap">
                       <div className="flex items-center">
                         <div>
                           <div className="text-sm font-medium text-gray-900">
-                            {leave.staffInfo ? leave.staffInfo.fullName : 'Unknown Staff'}
+                            {leave.staffInfo?.fullName || leave.staffName || 'Unknown Staff'}
                           </div>
                           <div className="text-sm text-gray-500">
-                            {leave.staffInfo && (
+                            {leave.staffInfo && leave.staffInfo.employeeId !== 'N/A' && (
                               <>
-                                {leave.staffInfo.employeeId} • {leave.staffInfo.department}
+                                {leave.staffInfo.employeeId} • {leave.staffInfo.department || leave.department}
+                              </>
+                            )}
+                            {leave.staffInfo && leave.staffInfo.employeeId === 'N/A' && leave.staffInfo.department !== 'N/A' && (
+                              <>
+                                {leave.staffInfo.department || leave.department}
                               </>
                             )}
                           </div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-4 py-3 whitespace-nowrap">
                       <div className="flex items-center">
-                        <span className="text-lg mr-2">
+                        <span className="text-sm mr-2">
                           {LEAVE_TYPE_CONFIG[leave.leaveType].icon}
                         </span>
                         <div>
@@ -266,28 +338,28 @@ export default function HRLeaveManagement() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-4 py-3 whitespace-nowrap">
                       <div className="text-sm text-gray-900 font-medium">
                         {calculateDuration(leave.startDate, leave.endDate)} day(s)
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="px-4 py-3 whitespace-nowrap">
                       <div className="text-sm text-gray-900">
                         <div>{formatDate(leave.startDate)}</div>
                         <div className="text-gray-500">to {formatDate(leave.endDate)}</div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${LEAVE_STATUS_CONFIG[leave.status].color}`}>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <span className={`inline-flex px-2 py-1 text-sm font-medium rounded-full ${LEAVE_STATUS_CONFIG[leave.status].color}`}>
                         {LEAVE_STATUS_CONFIG[leave.status].label}
                       </span>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-3">
                       <div className="text-sm text-gray-900 max-w-xs">
                         {leave.reason || 'No reason provided'}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <td className="px-4 py-3 whitespace-nowrap text-sm font-medium">
                       {leave.status === 'pending' ? (
                         <div className="flex space-x-2">
                           <button

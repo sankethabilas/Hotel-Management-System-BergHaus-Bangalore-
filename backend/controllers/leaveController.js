@@ -147,16 +147,12 @@ const getAllLeaveRequests = async (req, res) => {
 // Get staff's own leave requests
 const getMyLeaveRequests = async (req, res) => {
   try {
-    console.log('Getting my leave requests...');
     // Try to get staffId from authentication, or use the first staff member as fallback
     let staffId = req.user?.id;
-    console.log('staffId from req.user:', staffId);
     
     if (!staffId) {
-      console.log('No staffId, looking for first staff member...');
       // For testing purposes, use the first staff member found
       const firstStaff = await Staff.findOne({ isActive: true });
-      console.log('Found first staff:', firstStaff);
       if (!firstStaff) {
         return res.status(400).json({
           success: false,
@@ -166,21 +162,17 @@ const getMyLeaveRequests = async (req, res) => {
       staffId = firstStaff._id;
     }
     
-    console.log('Using staffId:', staffId);
     const { page = 1, limit = 10, status } = req.query;
     
     let filter = { staffId };
     if (status) filter.status = status;
-    console.log('Filter:', filter);
 
     const leaves = await Leave.find(filter)
       .sort({ createdAt: -1 })
       .limit(limit * 1)
       .skip((page - 1) * limit);
 
-    console.log('Found leaves:', leaves.length);
     const total = await Leave.countDocuments(filter);
-    console.log('Total leaves:', total);
 
     res.json({
       success: true,
@@ -215,14 +207,20 @@ const updateLeaveStatus = async (req, res) => {
       });
     }
 
+    const updateData = { 
+      status,
+      adminComments: adminComments || '',
+      reviewedAt: new Date()
+    };
+
+    // Only add reviewedBy if user is authenticated
+    if (req.user && req.user.id) {
+      updateData.reviewedBy = req.user.id;
+    }
+
     const leave = await Leave.findByIdAndUpdate(
       id,
-      { 
-        status,
-        adminComments: adminComments || '',
-        reviewedAt: new Date(),
-        reviewedBy: req.user.id
-      },
+      updateData,
       { new: true }
     ).populate('staffId', 'fullName email department');
 
@@ -252,7 +250,21 @@ const updateLeaveStatus = async (req, res) => {
 const cancelLeaveRequest = async (req, res) => {
   try {
     const { id } = req.params;
-    const staffId = req.user.id;
+    
+    // Get staffId from user authentication or use first available staff for testing
+    let staffId = req.user?.id;
+    
+    if (!staffId) {
+      // For testing purposes, use the first staff member found
+      const firstStaff = await Staff.findOne({ isActive: true });
+      if (!firstStaff) {
+        return res.status(400).json({
+          success: false,
+          message: 'No staff member found. Please ensure you are logged in.'
+        });
+      }
+      staffId = firstStaff._id;
+    }
 
     const leave = await Leave.findOne({ _id: id, staffId });
 
@@ -354,11 +366,45 @@ const getLeaveStatistics = async (req, res) => {
   }
 };
 
+// Delete leave request
+const deleteLeaveRequest = async (req, res) => {
+  try {
+    console.log('DELETE request received for ID:', req.params.id);
+    const { id } = req.params;
+
+    console.log('Attempting to delete leave with ID:', id);
+    const leave = await Leave.findByIdAndDelete(id);
+
+    if (!leave) {
+      console.log('Leave request not found:', id);
+      return res.status(404).json({
+        success: false,
+        message: 'Leave request not found'
+      });
+    }
+
+    console.log('Leave request deleted successfully:', id);
+    res.json({
+      success: true,
+      message: 'Leave request deleted successfully'
+    });
+
+  } catch (error) {
+    console.error('Error deleting leave request:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete leave request',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   createLeaveRequest,
   getAllLeaveRequests,
   getMyLeaveRequests,
   updateLeaveStatus,
   cancelLeaveRequest,
-  getLeaveStatistics
+  getLeaveStatistics,
+  deleteLeaveRequest
 };

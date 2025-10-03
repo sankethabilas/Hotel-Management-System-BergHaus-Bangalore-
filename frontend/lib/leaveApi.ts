@@ -20,6 +20,10 @@ class LeaveAPI {
   ): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`;
     
+    // Determine timeout based on the operation
+    const isDeleteOperation = options.method === 'DELETE';
+    const timeoutMs = isDeleteOperation ? 30000 : 10000; // 30 seconds for deletes, 10 for others
+    
     const config: RequestInit = {
       headers: {
         'Content-Type': 'application/json',
@@ -27,7 +31,7 @@ class LeaveAPI {
         ...options.headers,
       },
       // Add timeout to prevent hanging requests
-      signal: AbortSignal.timeout(10000), // 10 second timeout
+      signal: AbortSignal.timeout(timeoutMs),
       ...options,
     };
 

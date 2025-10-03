@@ -6,17 +6,19 @@ const {
   getMyLeaveRequests,
   updateLeaveStatus,
   cancelLeaveRequest,
-  getLeaveStatistics
+  getLeaveStatistics,
+  deleteLeaveRequest
 } = require('../controllers/leaveController');
 
 const { protect, authorize } = require('../middleware/auth');
 
 // Public routes (no authentication required for admin functions)
+router.get('/statistics', getLeaveStatistics); // Get statistics (must be before /:id routes)
+router.get('/my-requests', getMyLeaveRequests); // Get user's own requests  
 router.get('/', getAllLeaveRequests); // Get all leave requests
 router.post('/', createLeaveRequest); // Create leave requests (handled in controller)
-router.get('/my-requests', getMyLeaveRequests); // Get user's own requests  
 router.put('/:id/cancel', cancelLeaveRequest); // Cancel requests
 router.put('/:id/status', updateLeaveStatus); // Update status
-router.get('/statistics', getLeaveStatistics); // Get statistics
+router.delete('/:id', deleteLeaveRequest); // Delete requests
 
 module.exports = router;
