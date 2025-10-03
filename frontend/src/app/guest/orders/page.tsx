@@ -327,18 +327,22 @@ export default function GuestOrdersPage() {
                   <div className="space-y-3">
                     {order.items.map((item, index) => (
                       <div key={index} className="flex items-start gap-4 p-3 bg-gray-50 rounded-lg">
-                        {item.menuItem.image && (
+                        {item?.menuItem?.image ? (
                           <img
                             src={item.menuItem.image}
-                            alt={item.menuItem.name}
+                            alt={item?.menuItem?.name || 'Menu item'}
                             className="w-16 h-16 object-cover rounded-lg"
                           />
+                        ) : (
+                          <div className="w-16 h-16 rounded-lg bg-gray-200 flex items-center justify-center text-xs text-gray-500">
+                            No image
+                          </div>
                         )}
                         <div className="flex-1">
                           <div className="flex justify-between items-start">
                             <div>
-                              <h5 className="font-medium text-gray-900">{item.menuItem.name}</h5>
-                              <p className="text-sm text-gray-600">Qty: {item.quantity} × ${item.menuItem.price.toFixed(2)}</p>
+                              <h5 className="font-medium text-gray-900">{item?.menuItem?.name || 'Item'}</h5>
+                              <p className="text-sm text-gray-600">Qty: {item.quantity} × ${((item?.menuItem?.price as number) || 0).toFixed(2)}</p>
                               <p className="font-medium text-gray-900">${item.totalPrice.toFixed(2)}</p>
                             </div>
                           </div>
