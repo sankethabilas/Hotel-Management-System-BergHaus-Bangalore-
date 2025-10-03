@@ -8,6 +8,7 @@ const {
   deleteStaff,
   staffLogin,
   getStaffDashboard,
+  changePassword,
   getStaffByEmployeeId
 } = require('../controllers/staffController');
 
@@ -22,6 +23,7 @@ router.use(protect);
 router.post('/', authorize('admin', 'frontdesk'), createStaff);
 router.get('/', authorize('admin', 'frontdesk'), getAllStaff);
 router.get('/dashboard', getStaffDashboard); // Staff can access their own dashboard
+router.post('/change-password', changePassword); // Staff can change their own password
 router.get('/employee/:employeeId', getStaffByEmployeeId); // Staff can get their own info by employee ID
 router.get('/:id', authorize('admin', 'frontdesk'), getStaffById);
 router.put('/:id', authorize('admin', 'frontdesk'), updateStaff);
