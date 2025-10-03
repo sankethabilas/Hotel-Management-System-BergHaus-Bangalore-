@@ -11,6 +11,8 @@ const MenuItem = require('./models/MenuItem');
 const Order = require('./models/Order');
 const Banner = require('./models/Banner');
 const Promotion = require('./models/Promotion');
+const Bill = require('./models/Bill');
+const billGenerator = require('./services/billGenerator');
 
 const app = express();
 const PORT = 5001;
@@ -2181,6 +2183,332 @@ app.get('/api/reports/ingredient-forecast', authenticate, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to generate ingredient forecast report',
+      error: error.message
+    });
+  }
+});
+
+// ================================
+// BILL GENERATION ENDPOINTS
+// ================================
+
+// Generate bill for an order (guest version - no auth required)
+app.post('/api/bills/generate/:orderId', async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { serviceChargePercentage = 10, vatPercentage = 15, discount = 0, discountReason = '', notes = '' } = req.body;
+
+    let order;
+    if (isMongoConnected) {
+      order = await Order.findById(orderId).populate('items.menuItem');
+      if (!order) {
+        return res.status(404).json({
+          success: false,
+          message: 'Order not found'
+        });
+      }
+    } else {
+      order = tempOrders.find(o => o._id === orderId);
+      if (!order) {
+        return res.status(404).json({
+          success: false,
+          message: 'Order not found'
+        });
+      }
+    }
+
+    // Allow generating multiple bills for the same order
+    // (Removed duplicate bill check to allow multiple bill generations)
+
+    // Prepare bill data
+    const billNumber = Bill.generateBillNumber();
+    const items = order.items.map(item => ({
+      menuItemId: item.menuItem._id || item.menuItem,
+      name: item.menuItem.name || 'Unknown Item',
+      quantity: item.quantity,
+      unitPrice: item.menuItem.price || 0,
+      totalPrice: (item.menuItem.price || 0) * item.quantity
+    }));
+
+    const billData = {
+      billNumber,
+      orderId,
+      orderNumber: order.orderNumber,
+      customerInfo: order.customerInfo,
+      items,
+      pricing: {
+        subtotal: items.reduce((sum, item) => sum + item.totalPrice, 0),
+        serviceChargePercentage,
+        vatPercentage,
+        discount,
+        discountReason
+      },
+      paymentMethod: order.paymentMethod,
+      status: 'generated',
+      generatedBy: req.user ? req.user.id : null, // Allow guest generation
+      notes
+    };
+
+    // Calculate totals
+    const bill = new Bill(billData);
+    bill.calculateTotals();
+
+    let savedBill;
+    if (isMongoConnected) {
+      savedBill = await bill.save();
+    } else {
+      // For in-memory storage
+      savedBill = {
+        ...bill.toObject(),
+        _id: Date.now().toString(),
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+    }
+
+    res.status(201).json({
+      success: true,
+      message: 'Bill generated successfully',
+      data: {
+        billId: savedBill._id,
+        billNumber: savedBill.billNumber,
+        orderNumber: savedBill.orderNumber,
+        total: savedBill.pricing.total,
+        status: savedBill.status
+      }
+    });
+
+  } catch (error) {
+    console.error('Generate bill error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to generate bill',
+      error: error.message
+    });
+  }
+});
+
+// Get bill PDF (guest version - no auth required)
+app.get('/api/bills/:billId/pdf', async (req, res) => {
+  try {
+    console.log('PDF request for bill ID:', req.params.billId);
+    const { billId } = req.params;
+
+    let bill;
+    if (isMongoConnected) {
+      bill = await Bill.findById(billId).populate('orderId');
+      if (!bill) {
+        console.log('Bill not found:', billId);
+        return res.status(404).json({
+          success: false,
+          message: 'Bill not found'
+        });
+      }
+      console.log('Bill found:', bill.billNumber);
+    } else {
+      console.log('Database not connected');
+      return res.status(503).json({
+        success: false,
+        message: 'PDF generation requires database connection'
+      });
+    }
+
+    // Generate PDF
+    console.log('Converting bill to plain object...');
+    const plainBill = bill.toObject ? bill.toObject() : bill;
+    console.log('Bill data before PDF generation:', JSON.stringify(plainBill, null, 2));
+    
+    console.log('Calling PDF generator...');
+    const pdfBuffer = await billGenerator.generatePDF(plainBill);
+    console.log('PDF generated successfully, size:', pdfBuffer.length);
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="bill-${bill.billNumber}.pdf"`);
+    res.send(pdfBuffer);
+
+  } catch (error) {
+    console.error('Generate PDF error:', error);
+    console.error('Error stack:', error.stack);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to generate PDF',
+      error: error.message
+    });
+  }
+});
+
+// Get all bills
+app.get('/api/bills', authenticate, async (req, res) => {
+  try {
+    const { page = 1, limit = 10, status, customerEmail, roomNumber } = req.query;
+    const skip = (page - 1) * limit;
+
+    let query = {};
+    if (status) query.status = status;
+    if (customerEmail) query['customerInfo.email'] = customerEmail;
+    if (roomNumber) query['customerInfo.roomNumber'] = roomNumber;
+
+    let bills;
+    if (isMongoConnected) {
+      bills = await Bill.find(query)
+        .populate('orderId', 'orderNumber status')
+        .populate('generatedBy', 'username')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(parseInt(limit));
+
+      const total = await Bill.countDocuments(query);
+      
+      res.json({
+        success: true,
+        data: {
+          bills,
+          pagination: {
+            current: parseInt(page),
+            pages: Math.ceil(total / limit),
+            total
+          }
+        }
+      });
+    } else {
+      res.json({
+        success: true,
+        data: {
+          bills: [],
+          pagination: { current: 1, pages: 0, total: 0 }
+        }
+      });
+    }
+
+  } catch (error) {
+    console.error('Get bills error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch bills',
+      error: error.message
+    });
+  }
+});
+
+// Get bill by ID
+app.get('/api/bills/:billId', authenticate, async (req, res) => {
+  try {
+    const { billId } = req.params;
+
+    let bill;
+    if (isMongoConnected) {
+      bill = await Bill.findById(billId)
+        .populate('orderId', 'orderNumber status items')
+        .populate('generatedBy', 'username')
+        .populate('items.menuItemId', 'name price');
+      
+      if (!bill) {
+        return res.status(404).json({
+          success: false,
+          message: 'Bill not found'
+        });
+      }
+    } else {
+      return res.status(503).json({
+        success: false,
+        message: 'Bill retrieval requires database connection'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: bill
+    });
+
+  } catch (error) {
+    console.error('Get bill error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch bill',
+      error: error.message
+    });
+  }
+});
+
+// Mark bill as paid
+app.put('/api/bills/:billId/pay', authenticate, async (req, res) => {
+  try {
+    const { billId } = req.params;
+
+    let bill;
+    if (isMongoConnected) {
+      bill = await Bill.findById(billId);
+      if (!bill) {
+        return res.status(404).json({
+          success: false,
+          message: 'Bill not found'
+        });
+      }
+
+      await bill.markAsPaid();
+      
+      res.json({
+        success: true,
+        message: 'Bill marked as paid',
+        data: { billId: bill._id, status: bill.status, paidAt: bill.paidAt }
+      });
+    } else {
+      res.status(503).json({
+        success: false,
+        message: 'Bill payment requires database connection'
+      });
+    }
+
+  } catch (error) {
+    console.error('Mark bill as paid error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to mark bill as paid',
+      error: error.message
+    });
+  }
+});
+
+// Process refund
+app.put('/api/bills/:billId/refund', authenticate, async (req, res) => {
+  try {
+    const { billId } = req.params;
+    const { reason } = req.body;
+
+    let bill;
+    if (isMongoConnected) {
+      bill = await Bill.findById(billId);
+      if (!bill) {
+        return res.status(404).json({
+          success: false,
+          message: 'Bill not found'
+        });
+      }
+
+      await bill.processRefund(reason);
+      
+      res.json({
+        success: true,
+        message: 'Refund processed successfully',
+        data: { 
+          billId: bill._id, 
+          status: bill.status, 
+          refundedAt: bill.refundedAt,
+          refundReason: bill.refundReason
+        }
+      });
+    } else {
+      res.status(503).json({
+        success: false,
+        message: 'Refund processing requires database connection'
+      });
+    }
+
+  } catch (error) {
+    console.error('Process refund error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to process refund',
       error: error.message
     });
   }
