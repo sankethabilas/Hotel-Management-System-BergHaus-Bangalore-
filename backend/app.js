@@ -1,8 +1,8 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-const router = require("./routes/StaffRoute");
-const leaveRoutes = require("./routes/leaveRoute");
+const staffRoutes = require("./routes/staff");
+const leaveRoutes = require("./routes/leaves");
 const attendanceRoutes = require("./routes/attendanceRoute");
 const paymentRoutes = require("./routes/paymentRoute");
 
@@ -15,8 +15,8 @@ app.use(cors({
 }));
 app.use(express.json());
 
-app.use("/staff", router);
-app.use("/leave", leaveRoutes);
+app.use("/api/staff", staffRoutes);
+app.use("/api/leaves", leaveRoutes);
 app.use("/api/payments", paymentRoutes);
 // Temporarily disabled: app.use("/api/attendance", attendanceRoutes);
 

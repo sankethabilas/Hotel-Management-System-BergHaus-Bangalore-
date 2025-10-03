@@ -11,17 +11,12 @@ const {
 
 const { protect, authorize } = require('../middleware/auth');
 
-// All routes require authentication
-router.use(protect);
-
-// Staff routes
-router.post('/', createLeaveRequest); // Staff can create leave requests
-router.get('/my-requests', getMyLeaveRequests); // Staff can view their own requests
-router.put('/:id/cancel', cancelLeaveRequest); // Staff can cancel their pending requests
-
-// Admin/HR routes
-router.get('/', authorize('admin', 'frontdesk'), getAllLeaveRequests);
-router.put('/:id/status', authorize('admin', 'frontdesk'), updateLeaveStatus);
-router.get('/statistics', authorize('admin', 'frontdesk'), getLeaveStatistics);
+// Remove authentication requirements for now
+router.get('/', getAllLeaveRequests); // Get all leave requests
+router.post('/', createLeaveRequest); // Create leave requests
+router.get('/my-requests', getMyLeaveRequests); // Get user's own requests
+router.put('/:id/cancel', cancelLeaveRequest); // Cancel requests
+router.put('/:id/status', updateLeaveStatus); // Update status
+router.get('/statistics', getLeaveStatistics); // Get statistics
 
 module.exports = router;

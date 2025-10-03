@@ -132,7 +132,7 @@ export default function StaffForm({ staffId, isEdit = false, basePathPrefix = ''
               {isEdit ? 'Edit Staff Member' : 'Staff Registration'}
             </h1>
             <button
-              onClick={() => router.push(`${basePathPrefix}/staff` || '/admin/staff')}
+              onClick={() => router.push(basePathPrefix ? `${basePathPrefix}/staff` : '/admin/staff')}
               className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
             >
               ← Back to Staff List
