@@ -155,7 +155,7 @@ const sendBookingCancellation = async (booking) => {
               </tr>
               <tr>
                 <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Refund Amount:</strong></td>
-                <td style="padding: 8px; border-bottom: 1px solid #ddd;">$${booking.refundAmount.toFixed(2)}</td>
+                <td style="padding: 8px; border-bottom: 1px solid #ddd;">$${booking.totalAmount.toFixed(2)}</td>
               </tr>
             </table>
             
@@ -688,7 +688,33 @@ const sendBillEmail = async (billData, pdfBuffer) => {
   }
 };
 
+// Generic send email function
+const sendEmail = async (emailData) => {
+  try {
+    // Check if email is configured
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+      console.log('Email not configured - email would be sent to:', emailData.to);
+      console.log('Subject:', emailData.subject);
+      return;
+    }
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER || 'noreply@hms.com',
+      to: emailData.to,
+      subject: emailData.subject,
+      html: emailData.html
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log('Email sent successfully to:', emailData.to);
+  } catch (error) {
+    console.error('Failed to send email:', error);
+    throw error;
+  }
+};
+
 module.exports = {
+  sendEmail,
   sendWelcomeEmail,
   sendBookingConfirmation,
   sendBookingCancellation,

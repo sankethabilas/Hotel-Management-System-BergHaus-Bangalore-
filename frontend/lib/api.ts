@@ -265,14 +265,16 @@ export const bookingAPI = {
   },
 
   // Cancel a booking
-  cancelBooking: async (bookingId: string): Promise<ApiResponse<{
+  cancelBooking: async (bookingId: string, reason?: string): Promise<ApiResponse<{
     reservation: {
       id: string;
       status: string;
       bookingReference: string;
     };
   }>> => {
-    const response: AxiosResponse<ApiResponse<any>> = await api.post(`/booking/${bookingId}/cancel`);
+    const response: AxiosResponse<ApiResponse<any>> = await api.post(`/booking/${bookingId}/cancel`, {
+      reason: reason || 'Cancelled by guest'
+    });
     return response.data;
   },
 

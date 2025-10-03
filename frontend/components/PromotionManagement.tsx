@@ -37,7 +37,7 @@ export default function PromotionManagement() {
     name: '',
     description: '',
     discountPercentage: 10,
-    type: 'percentage' as const,
+    type: 'percentage' as 'percentage' | 'seasonal' | 'category' | 'time-based',
     categories: [] as string[],
     timeRanges: [{ startTime: '', endTime: '', days: [] as string[] }],
     seasonalDates: { startDate: '', endDate: '' },

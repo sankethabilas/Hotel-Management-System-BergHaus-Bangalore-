@@ -36,7 +36,7 @@ const BannerManagement: React.FC = () => {
     title: '',
     description: '',
     image: '',
-    type: 'deal' as const,
+    type: 'deal' as 'deal' | 'promotion' | 'announcement' | 'feature',
     isActive: true,
     priority: 0,
     buttonText: 'Learn More',

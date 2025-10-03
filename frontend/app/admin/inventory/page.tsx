@@ -90,7 +90,7 @@ export default function InventoryDashboardPage() {
     });
     
     // Add summary at the end
-    const finalY = doc.lastAutoTable.finalY + 10;
+    const finalY = (doc as any).lastAutoTable.finalY + 10;
     doc.setFontSize(12);
     doc.text(`Total Inventory Value: LKR ${totalInventoryValue.toFixed(2)}`, 14, finalY);
     doc.text(`Total Consumed Items Value: LKR ${totalConsumedValue.toFixed(2)}`, 14, finalY + 7);
@@ -125,7 +125,7 @@ export default function InventoryDashboardPage() {
   const daysLeftToMonthEnd = useMemo(() => {
     const today = new Date();
     const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0); // last day of current month
-    const diff = Math.ceil((lastDay - today) / (1000 * 60 * 60 * 24));
+    const diff = Math.ceil((lastDay.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
     return diff;
   }, []);
 

@@ -77,12 +77,6 @@ export default function FrontdeskLayout({ children }: FrontdeskLayoutProps) {
         current: pathname === '/frontdesk/checkin-checkout'
       },
       {
-        name: 'Attendance',
-        href: '/frontdesk/attendance',
-        icon: UserCheck,
-        current: pathname === '/frontdesk/attendance'
-      },
-      {
         name: 'Booking History',
         href: '/frontdesk/booking-history',
         icon: History,

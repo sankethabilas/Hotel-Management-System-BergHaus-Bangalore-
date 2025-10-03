@@ -87,9 +87,9 @@ export default function GuestOrdersPage() {
       
       if (data.success) {
         // Handle orders with null menuItem by providing fallback data
-        const validOrders = (data.data || []).map(order => ({
+        const validOrders = (data.data || []).map((order: any) => ({
           ...order,
-          items: order.items.map(item => {
+          items: order.items.map((item: any) => {
             if (!item.menuItem) {
               console.warn('Order item with null menuItem found:', item);
               // Provide fallback data for null menuItem

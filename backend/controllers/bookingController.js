@@ -415,18 +415,43 @@ const cancelBooking = async (req, res) => {
   try {
     const { id } = req.params;
     const { reason } = req.body;
-    const userId = req.user.id; // Get from authenticated user
+    
+    // Debug logging
+    console.log('Cancel booking request:', { id, reason, user: req.user });
+    
+    // Check if user is authenticated
+    if (!req.user || !req.user.id) {
+      console.error('No user found in request:', req.user);
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required'
+      });
+    }
+    
+    const userId = req.user.id;
 
     const booking = await Booking.findById(id);
     if (!booking) {
+      console.log('Booking not found:', id);
       return res.status(404).json({
         success: false,
         message: 'Booking not found'
       });
     }
 
+    console.log('Booking found:', { 
+      bookingId: booking._id, 
+      guestId: booking.guestId, 
+      userId, 
+      status: booking.status 
+    });
+
     // Check if user owns this booking
     if (booking.guestId.toString() !== userId.toString()) {
+      console.log('User does not own this booking:', { 
+        bookingGuestId: booking.guestId.toString(), 
+        userId: userId.toString() 
+      });
       return res.status(403).json({
         success: false,
         message: 'You can only cancel your own bookings'
@@ -456,13 +481,18 @@ const cancelBooking = async (req, res) => {
     booking.cancellationDate = new Date();
     booking.cancellationReason = reason || 'Cancelled by guest';
 
+    console.log('Saving booking with status:', booking.status);
     await booking.save();
+    console.log('Booking saved successfully');
 
     // Send cancellation email
     try {
+      console.log('Sending cancellation email for booking:', booking._id);
       await emailService.sendBookingCancellation(booking);
+      console.log('Cancellation email sent successfully');
     } catch (emailError) {
       console.error('Failed to send cancellation email:', emailError);
+      // Don't fail the cancellation if email fails
     }
 
     res.json({
@@ -476,9 +506,11 @@ const cancelBooking = async (req, res) => {
 
   } catch (error) {
     console.error('Cancel booking error:', error);
+    console.error('Error stack:', error.stack);
     res.status(500).json({
       success: false,
-      message: 'Internal server error'
+      message: 'Internal server error',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };

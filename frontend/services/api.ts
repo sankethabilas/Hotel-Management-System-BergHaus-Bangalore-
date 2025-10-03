@@ -152,17 +152,17 @@ export const menuAPI = {
     } catch (error) {
       console.error('Error fetching menu items:', error);
       console.error('Error type:', typeof error);
-      console.error('Error constructor:', error.constructor.name);
+      console.error('Error constructor:', (error as any).constructor.name);
       
-      if (error.response) {
-        console.error('Response status:', error.response.status);
-        console.error('Response data:', error.response.data);
-        console.error('Response headers:', error.response.headers);
-      } else if (error.request) {
-        console.error('No response received:', error.request);
-        console.error('Request config:', error.config);
+      if ((error as any).response) {
+        console.error('Response status:', (error as any).response.status);
+        console.error('Response data:', (error as any).response.data);
+        console.error('Response headers:', (error as any).response.headers);
+      } else if ((error as any).request) {
+        console.error('No response received:', (error as any).request);
+        console.error('Request config:', (error as any).config);
       } else {
-        console.error('Error setting up request:', error.message);
+        console.error('Error setting up request:', (error as any).message);
       }
       throw error;
     }
