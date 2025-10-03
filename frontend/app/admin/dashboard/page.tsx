@@ -2,6 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import { getRequests } from '../../../lib/alertApi';
 
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState({
@@ -12,6 +15,7 @@ export default function AdminDashboardPage() {
     totalBookings: 0,
     occupiedRooms: 0
   });
+  const [staffRequests, setStaffRequests] = useState([]);
 
   useEffect(() => {
     loadDashboardStats();
@@ -20,18 +24,20 @@ export default function AdminDashboardPage() {
   const loadDashboardStats = async () => {
     try {
       // Load dashboard statistics
-      const [staffRes, paymentsRes, leavesRes, bookingsRes] = await Promise.all([
+      const [staffRes, paymentsRes, leavesRes, bookingsRes, requestsRes] = await Promise.all([
         fetch('http://localhost:5000/api/staff'),
         fetch('http://localhost:5000/api/payments'),
         fetch('http://localhost:5000/api/leaves'),
-        fetch('http://localhost:5000/api/bookings')
+        fetch('http://localhost:5000/api/bookings'),
+        getRequests()
       ]);
 
-      const [staffData, paymentsData, leavesData, bookingsData] = await Promise.all([
+      const [staffData, paymentsData, leavesData, bookingsData, requestsData] = await Promise.all([
         staffRes.json(),
         paymentsRes.json(),
         bookingsRes.json(),
-        leavesRes.json()
+        leavesRes.json(),
+        requestsRes.json()
       ]);
 
       setStats({
@@ -42,11 +48,48 @@ export default function AdminDashboardPage() {
         totalBookings: bookingsData.data?.length || 0,
         occupiedRooms: bookingsData.data?.filter((b: any) => b.status === 'confirmed').length || 0
       });
+
+      setStaffRequests(requestsData.data?.requests || []);
     } catch (error) {
       console.error('Error loading dashboard stats:', error);
     }
   };
 
+  // Generate Staff Requests Report
+  const downloadStaffRequestsReport = () => {
+    const doc = new jsPDF();
+    doc.text("Staff Requests Report", 14, 15);
+
+    const tableData = staffRequests.map((req: any) => [
+      req.staffName,
+      req.staffEmail,
+      req.itemName,
+      req.quantity,
+      req.reason,
+      req.category,
+      req.concern || "-",
+      req.isDone ? "Done" : "Pending",
+    ]);
+
+    (doc as any).autoTable({
+      head: [
+        [
+          "Staff Name",
+          "Email",
+          "Item",
+          "Qty",
+          "Reason",
+          "Category",
+          "Concern",
+          "Status",
+        ],
+      ],
+      body: tableData,
+      startY: 25,
+    });
+
+    doc.save("staff_requests_report.pdf");
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -248,6 +291,40 @@ export default function AdminDashboardPage() {
               </div>
             </div>
           </Link>
+
+          <Link href="/admin/alerts" className="bg-white overflow-hidden shadow rounded-lg hover:shadow-md transition-shadow">
+            <div className="p-6">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                    <span className="text-2xl">🔔</span>
+                  </div>
+                </div>
+                <div className="ml-4">
+                  <h3 className="text-lg font-medium text-gray-900">Staff Requests</h3>
+                  <p className="text-sm text-gray-500">Manage staff requests and alerts</p>
+                </div>
+              </div>
+            </div>
+          </Link>
+        </div>
+
+        {/* Report Generation Section */}
+        <div className="mt-8 bg-white shadow rounded-lg">
+          <div className="px-4 py-5 sm:p-6">
+            <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">📊 Generate Reports</h3>
+            <div className="flex flex-wrap gap-4">
+              <button
+                onClick={downloadStaffRequestsReport}
+                className="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+              >
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Download Staff Requests Report
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Recent Activity */}

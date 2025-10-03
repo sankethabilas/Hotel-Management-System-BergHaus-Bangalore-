@@ -13,8 +13,8 @@ export default function StaffRequestForm({ onRequestSubmitted, onClose }: StaffR
     staffEmail: "",
     itemName: "",
     quantity: 1,
-    reason: "",
-    category: "",
+    reason: "Request a new item",
+    category: "Kitchen",
     concern: "",
   });
 
@@ -24,16 +24,20 @@ export default function StaffRequestForm({ onRequestSubmitted, onClose }: StaffR
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
 
+    // Required field validations
     if (!form.staffName.trim()) newErrors.staffName = "Staff name is required";
     if (!form.staffEmail.trim()) newErrors.staffEmail = "Staff email is required";
     if (!form.itemName.trim()) newErrors.itemName = "Item name is required";
     if (form.quantity < 1) newErrors.quantity = "Quantity must be at least 1";
-    if (!form.reason) newErrors.reason = "Reason is required";
-    if (!form.category) newErrors.category = "Category is required";
-
+    
     // Email validation
     if (form.staffEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.staffEmail)) {
       newErrors.staffEmail = "Please enter a valid email address";
+    }
+
+    // Name validation (no numbers or special characters except spaces, hyphens, and apostrophes)
+    if (form.staffName && !/^[a-zA-Z\s'-]+$/.test(form.staffName)) {
+      newErrors.staffName = "Please enter a valid name (letters, spaces, hyphens, and apostrophes only)";
     }
 
     setErrors(newErrors);
@@ -65,8 +69,8 @@ export default function StaffRequestForm({ onRequestSubmitted, onClose }: StaffR
         staffEmail: "",
         itemName: "",
         quantity: 1,
-        reason: "",
-        category: "",
+        reason: "Request a new item",
+        category: "Kitchen",
         concern: "",
       });
       if (onRequestSubmitted) onRequestSubmitted();
@@ -224,9 +228,11 @@ export default function StaffRequestForm({ onRequestSubmitted, onClose }: StaffR
                     errors.reason ? 'border-red-500 bg-red-50' : 'border-gray-300'
                   }`}
                 >
-                  <option value="">Select a reason</option>
                   <option value="Request a new item">Request a new item</option>
                   <option value="Item was damaged">Item was damaged</option>
+                  <option value="Item was lost">Item was lost</option>
+                  <option value="Replacement needed">Replacement needed</option>
+                  <option value="Additional quantity needed">Additional quantity needed</option>
                   <option value="Other">Other</option>
                 </select>
                 {errors.reason && <p className="text-red-500 text-sm mt-1">{errors.reason}</p>}
@@ -245,10 +251,11 @@ export default function StaffRequestForm({ onRequestSubmitted, onClose }: StaffR
                     errors.category ? 'border-red-500 bg-red-50' : 'border-gray-300'
                   }`}
                 >
-                  <option value="">Select category</option>
                   <option value="Kitchen">Kitchen</option>
                   <option value="Housekeeping">Housekeeping</option>
                   <option value="Maintenance">Maintenance</option>
+                  <option value="Front Desk">Front Desk</option>
+                  <option value="Administration">Administration</option>
                 </select>
                 {errors.category && <p className="text-red-500 text-sm mt-1">{errors.category}</p>}
               </div>

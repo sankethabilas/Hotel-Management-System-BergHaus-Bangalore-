@@ -235,6 +235,7 @@ export default function StaffDashboard() {
       };
 
       setStaffData(completeStaffData);
+      console.log('Staff department:', completeStaffData.department);
     } catch (error) {
       console.error('Error parsing staff data:', error);
       // Redirect to login if data is corrupted
@@ -510,31 +511,76 @@ export default function StaffDashboard() {
                       </button>
                     </a>
 
-                    {/* Department Dashboard - No Link */}
-                    <button className="w-full bg-gray-400 text-white rounded-lg p-4 cursor-not-allowed opacity-70">
-                      <div className="flex items-center space-x-3">
-                        <div className="p-2 bg-gray-500 rounded-lg">
-                          <ChartBarIcon className="h-5 w-5" />
+                    {/* Department Dashboard - Conditional based on department */}
+                    {(staffData?.department?.toLowerCase() === 'kitchen' || 
+                      staffData?.department?.toLowerCase() === 'food & beverage' || 
+                      staffData?.department?.toLowerCase() === 'food and beverage') && (
+                      <a href="/staff/food-beverage" className="block w-full">
+                        <button className="w-full bg-indigo-600 text-white rounded-lg p-4 hover:bg-indigo-700 transition-colors">
+                          <div className="flex items-center space-x-3">
+                            <div className="p-2 bg-indigo-500 rounded-lg">
+                              <ChartBarIcon className="h-5 w-5" />
+                            </div>
+                            <div className="text-left">
+                              <h3 className="font-semibold">Department Dashboard</h3>
+                              <p className="text-indigo-100 text-sm">Food & Beverage Management</p>
+                            </div>
+                          </div>
+                        </button>
+                      </a>
+                    )}
+                    
+                    {(staffData?.department?.toLowerCase() === 'reception' || 
+                      staffData?.department?.toLowerCase() === 'front office' || 
+                      staffData?.department?.toLowerCase() === 'frontdesk') && (
+                      <a href="/frontdesk/dashboard" className="block w-full">
+                        <button className="w-full bg-blue-600 text-white rounded-lg p-4 hover:bg-blue-700 transition-colors">
+                          <div className="flex items-center space-x-3">
+                            <div className="p-2 bg-blue-500 rounded-lg">
+                              <ChartBarIcon className="h-5 w-5" />
+                            </div>
+                            <div className="text-left">
+                              <h3 className="font-semibold">Department Dashboard</h3>
+                              <p className="text-blue-100 text-sm">Frontdesk Management</p>
+                            </div>
+                          </div>
+                        </button>
+                      </a>
+                    )}
+                    
+                    {!(staffData?.department?.toLowerCase() === 'kitchen' || 
+                      staffData?.department?.toLowerCase() === 'food & beverage' || 
+                      staffData?.department?.toLowerCase() === 'food and beverage' ||
+                      staffData?.department?.toLowerCase() === 'reception' || 
+                      staffData?.department?.toLowerCase() === 'front office' || 
+                      staffData?.department?.toLowerCase() === 'frontdesk') && (
+                      <button className="w-full bg-gray-400 text-white rounded-lg p-4 cursor-not-allowed opacity-70">
+                        <div className="flex items-center space-x-3">
+                          <div className="p-2 bg-gray-500 rounded-lg">
+                            <ChartBarIcon className="h-5 w-5" />
+                          </div>
+                          <div className="text-left">
+                            <h3 className="font-semibold">Department Dashboard</h3>
+                            <p className="text-gray-200 text-sm">Not available for your department ({staffData?.department})</p>
+                          </div>
                         </div>
-                        <div className="text-left">
-                          <h3 className="font-semibold">Department Dashboard</h3>
-                          <p className="text-gray-200 text-sm">Coming soon...</p>
-                        </div>
-                      </div>
-                    </button>
+                      </button>
+                    )}
 
-                    {/* Request Inventory - No Link */}
-                    <button className="w-full bg-gray-400 text-white rounded-lg p-4 cursor-not-allowed opacity-70">
-                      <div className="flex items-center space-x-3">
-                        <div className="p-2 bg-gray-500 rounded-lg">
-                          <ClipboardListIcon className="h-5 w-5" />
+                    {/* Request Inventory */}
+                    <a href="/staff-request" className="block w-full">
+                      <button className="w-full bg-purple-600 text-white rounded-lg p-4 hover:bg-purple-700 transition-colors">
+                        <div className="flex items-center space-x-3">
+                          <div className="p-2 bg-purple-500 rounded-lg">
+                            <ClipboardListIcon className="h-5 w-5" />
+                          </div>
+                          <div className="text-left">
+                            <h3 className="font-semibold">Request Inventory</h3>
+                            <p className="text-purple-100 text-sm">Submit item requests</p>
+                          </div>
                         </div>
-                        <div className="text-left">
-                          <h3 className="font-semibold">Request Inventory</h3>
-                          <p className="text-gray-200 text-sm">Coming soon...</p>
-                        </div>
-                      </div>
-                    </button>
+                      </button>
+                    </a>
 
                   </div>
                 </div>
