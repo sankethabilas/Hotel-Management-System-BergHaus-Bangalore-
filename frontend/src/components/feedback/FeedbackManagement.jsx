@@ -87,7 +87,11 @@ const FeedbackManagement = () => {
     try {
       setLoading(true);
       setError(null);
-      await feedbackService.respondToFeedback(id, responseData);
+      // Wrap responseData in an object if it's a string
+      const payload = typeof responseData === 'string' 
+        ? { response: responseData } 
+        : responseData;
+      await feedbackService.respondToFeedback(id, payload);
       await fetchFeedbacks(); // Refresh the list
       setView('list');
       return { success: true };
