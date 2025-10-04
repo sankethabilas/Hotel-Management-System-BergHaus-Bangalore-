@@ -8,6 +8,7 @@ import { Menu, X, User, LogOut, MessageSquare } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { ThemeToggle } from '@/components/theme-toggle';
 import MessagesDropdown from '@/components/messages-dropdown';
+import { getProfileImageUrl, getUserInitials } from '@/utils/profileImage';
 
 interface NavbarProps {
   className?: string;
@@ -56,28 +57,12 @@ export default function Navbar({ className }: NavbarProps) {
     }
   }, [isAuthenticated]);
 
-  const getUserInitials = (user: any) => {
-    if (!user) return 'U';
-    const firstName = user.firstName || '';
-    const lastName = user.lastName || '';
-    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase() || 'U';
+  const getUserInitialsForUser = (user: any) => {
+    return getUserInitials(user?.firstName, user?.lastName);
   };
 
-  const getProfileImageUrl = (user: any) => {
-    if (!user) return undefined;
-    
-    // If user has a custom profile image (uploaded to backend)
-    if (user.profileImage && user.profileImage.startsWith('/uploads/')) {
-      return `http://localhost:5000${user.profileImage}`;
-    }
-    
-    // If user has a Google profile image (external URL)
-    if (user.profileImage && user.profileImage.startsWith('http')) {
-      return user.profileImage;
-    }
-    
-    // Fallback to undefined (will show initials)
-    return undefined;
+  const getProfileImageUrlForUser = (user: any) => {
+    return getProfileImageUrl(user?.profileImage);
   };
 
   return (
@@ -174,11 +159,11 @@ export default function Navbar({ className }: NavbarProps) {
                     <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                       <Avatar className="h-10 w-10">
                         <AvatarImage 
-                          src={getProfileImageUrl(user)} 
+                          src={getProfileImageUrlForUser(user)} 
                           alt={`${user?.firstName} ${user?.lastName}`} 
                         />
                         <AvatarFallback className="bg-hms-primary text-white">
-                          {getUserInitials(user)}
+                          {getUserInitialsForUser(user)}
                         </AvatarFallback>
                       </Avatar>
                     </Button>
@@ -327,11 +312,11 @@ export default function Navbar({ className }: NavbarProps) {
                     <div className="flex items-center space-x-3 mb-3">
                       <Avatar className="h-10 w-10">
                         <AvatarImage 
-                          src={getProfileImageUrl(user)} 
+                          src={getProfileImageUrlForUser(user)} 
                           alt={`${user?.firstName} ${user?.lastName}`} 
                         />
                         <AvatarFallback className="bg-hms-primary text-white">
-                          {getUserInitials(user)}
+                          {getUserInitialsForUser(user)}
                         </AvatarFallback>
                       </Avatar>
                       <div>

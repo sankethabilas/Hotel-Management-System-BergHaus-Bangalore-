@@ -54,18 +54,30 @@ const ReplyHistoryPage = () => {
   const loadReplies = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5000/api/contact/messages');
+      const response = await fetch('http://localhost:5000/api/contact/messages', {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const data = await response.json();
       
       if (data.success) {
         // Filter only messages that have replies
-        const messagesWithReplies = data.data.messages.filter((msg: ReplyHistory) => msg.response);
+        const messages = data.data.messages || data.data || [];
+        const messagesWithReplies = messages.filter((msg: ReplyHistory) => msg.response);
         setReplies(messagesWithReplies);
         setFilteredReplies(messagesWithReplies);
       } else {
+        console.error('API Error:', data);
         toast({
           title: "Error",
-          description: "Failed to load reply history",
+          description: data.message || "Failed to load reply history",
           variant: "destructive"
         });
       }
@@ -73,7 +85,7 @@ const ReplyHistoryPage = () => {
       console.error('Error loading replies:', error);
       toast({
         title: "Error",
-        description: "Failed to load reply history",
+        description: "Failed to load reply history. Please check your connection and try again.",
         variant: "destructive"
       });
     } finally {

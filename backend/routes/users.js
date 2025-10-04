@@ -9,9 +9,10 @@ const {
   deactivateUser,
   activateUser,
   uploadProfilePicture,
-  googleSignup,
-  upload
+  googleSignup
 } = require('../controllers/userController');
+
+const upload = require('../middleware/upload');
 
 const {
   validateUserUpdate
@@ -57,6 +58,33 @@ router.put('/:id/activate', protect, authorize('admin'), activateUser);
 // @route   POST /api/users/:id/upload
 // @desc    Upload profile picture
 // @access  Private (own profile or admin)
-router.post('/:id/upload', protect, upload.single('profileImage'), uploadProfilePicture);
+router.post('/:id/upload', protect, upload.single('profileImage'), (err, req, res, next) => {
+  if (err) {
+    console.error('Multer error in route:', err);
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({
+        success: false,
+        message: 'File too large. Maximum size is 5MB.'
+      });
+    }
+    if (err.code === 'LIMIT_UNEXPECTED_FILE') {
+      return res.status(400).json({
+        success: false,
+        message: 'Unexpected field name. Expected "profileImage".'
+      });
+    }
+    if (err.message.includes('Only image files')) {
+      return res.status(400).json({
+        success: false,
+        message: 'Only image files are allowed.'
+      });
+    }
+    return res.status(400).json({
+      success: false,
+      message: 'File upload error: ' + err.message
+    });
+  }
+  next();
+}, uploadProfilePicture);
 
 module.exports = router;

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,8 @@ import RoomCard from '@/components/room-card';
 import { EnhancedRoomCard } from '@/components/enhanced-room-card';
 import FacilityCard, { iconMap } from '@/components/facility-card';
 import ReviewCarousel from '@/components/review-carousel';
+import { useAuth } from '@/contexts/AuthContext';
+import { roomAPI } from '@/lib/api';
 import { 
   Star, 
   Users, 
@@ -33,57 +35,49 @@ import {
 } from 'lucide-react';
 
 // Sample data
-const rooms = [
+const defaultRooms = [
   {
     id: '1',
     name: 'Double Room with Mountain View',
     description: 'Spacious double room with stunning mountain views, extra-large double bed, and modern amenities.',
-    price: 10478,
-    originalPrice: 13608,
     image: '/IMG-20250815-WA0007.jpg',
     capacity: 2,
     amenities: ['Mountain View', 'Balcony', 'Patio', 'Ensuite Bathroom', 'Flat-screen TV', 'Terrace'],
     rating: 9.4,
     isPopular: true,
-    discount: 23
+    images: ['/IMG-20250815-WA0007.jpg']
   },
   {
     id: '2',
     name: 'Family Room with Mountain View',
     description: 'Perfect for families with bunk bed and large double bed, featuring mountain views and family amenities.',
-    price: 12807,
-    originalPrice: 16632,
     image: '/IMG-20250815-WA0008.jpg',
     capacity: 4,
     amenities: ['Mountain View', 'Bunk Bed', 'Large Double Bed', 'Family Friendly', 'Flat-screen TV', 'Terrace'],
     rating: 9.2,
     isPopular: true,
-    discount: 23
+    images: ['/IMG-20250815-WA0008.jpg']
   },
   {
     id: '3',
     name: 'Double or Twin Room',
     description: 'Flexible room configuration with two futon beds, mountain views, and outdoor spaces.',
-    price: 10478,
-    originalPrice: 13608,
     image: '/IMG-20250815-WA0009.jpg',
     capacity: 2,
     amenities: ['Mountain View', 'Twin Beds', 'Balcony', 'Patio', 'Ensuite Bathroom', 'Terrace'],
     rating: 9.6,
     isPopular: true,
-    discount: 23
+    images: ['/IMG-20250815-WA0009.jpg']
   },
   {
     id: '4',
     name: 'Single Room with Mountain View',
     description: 'Perfect for solo travelers with large double bed and all the amenities you need.',
-    price: 9432,
-    originalPrice: 12247,
     image: '/IMG-20250815-WA0010.jpg',
     capacity: 1,
     amenities: ['Mountain View', 'Single Occupancy', 'Large Double Bed', 'Balcony', 'Patio', 'Terrace'],
     rating: 9.0,
-    discount: 23
+    images: ['/IMG-20250815-WA0010.jpg']
   }
 ];
 
@@ -184,6 +178,75 @@ const specialOffers = [
 ];
 
 export default function HomePage() {
+  const { user } = useAuth();
+  const [rooms, setRooms] = useState(defaultRooms);
+  const [loading, setLoading] = useState(false);
+
+  // Check if user is admin
+  const isAdmin = user?.role === 'admin';
+
+  // Load rooms from API on component mount
+  useEffect(() => {
+    const loadRooms = async () => {
+      try {
+        setLoading(true);
+        const response = await roomAPI.getAllRooms();
+        if (response.success && response.data) {
+          // Transform API data to match our interface
+          const transformedRooms = response.data.map((room: any) => {
+            // Handle images - if no images from API, use default public images
+            let images = room.images || [];
+            if (images.length === 0) {
+              // Use default public images based on room type
+              const defaultImages: { [key: string]: string[] } = {
+                'Single': ['/IMG-20250815-WA0010.jpg'],
+                'Double': ['/IMG-20250815-WA0007.jpg'],
+                'Suite': ['/IMG-20250815-WA0008.jpg'],
+                'Family': ['/IMG-20250815-WA0008.jpg']
+              };
+              images = defaultImages[room.roomType] || ['/IMG-20250815-WA0007.jpg'];
+            }
+            
+            return {
+              id: room._id,
+              name: `${room.roomType || 'Standard'} Room - ${room.roomNumber || 'N/A'}`,
+              description: room.description || `Comfortable ${(room.roomType || 'standard').toLowerCase()} room`,
+              image: images[0] || '/IMG-20250815-WA0007.jpg',
+              capacity: room.capacity || 1,
+              amenities: room.amenities || [],
+              rating: 9.0, // Default rating
+              isPopular: room.status === 'available',
+              images: images
+            };
+          });
+          setRooms(transformedRooms);
+        }
+      } catch (error) {
+        console.error('Error loading rooms:', error);
+        // Keep default rooms if API fails
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadRooms();
+  }, []);
+
+  const handleRoomImageUpdate = (updatedRoom: any) => {
+    console.log('Updating room image:', updatedRoom);
+    setRooms(prevRooms => 
+      prevRooms.map(room => 
+        room.id === updatedRoom._id 
+          ? {
+              ...room,
+              image: updatedRoom.images && updatedRoom.images.length > 0 ? updatedRoom.images[0] : '/IMG-20250815-WA0007.jpg',
+              images: updatedRoom.images || []
+            }
+          : room
+      )
+    );
+  };
+
   return (
     <div className="min-h-screen">
       <Navbar />
@@ -266,16 +329,33 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {rooms.map((room) => (
-              <EnhancedRoomCard 
-                key={room.id} 
-                room={room}
-                onBook={(room) => {
-                  // Handle booking action
-                  window.location.href = `/availability?roomId=${room.id}`;
-                }}
-              />
-            ))}
+            {loading ? (
+              // Loading skeleton
+              Array.from({ length: 4 }).map((_, index) => (
+                <div key={index} className="animate-pulse">
+                  <div className="bg-gray-200 h-48 rounded-lg mb-4"></div>
+                  <div className="space-y-2">
+                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                    <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              rooms.map((room) => (
+                <EnhancedRoomCard 
+                  key={room.id} 
+                  room={room}
+                  onBook={(room) => {
+                    // Handle booking action
+                    window.location.href = `/availability?roomId=${room.id}`;
+                  }}
+                  onImageUpdate={handleRoomImageUpdate}
+                  showImageUpload={isAdmin}
+                  isAdmin={isAdmin}
+                />
+              ))
+            )}
           </div>
 
           <div className="text-center mt-12">

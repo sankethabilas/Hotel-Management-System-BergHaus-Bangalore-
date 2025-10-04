@@ -94,7 +94,7 @@ export default function MessagesDropdown({ isOpen, onClose, onUnreadCountChange 
 
       if (response.ok) {
         const data = await response.json();
-        const fetchedMessages = data.data?.docs || data.data || [];
+        const fetchedMessages = data.data?.docs || data.data?.messages || data.data || [];
         setMessages(fetchedMessages);
         
         // Notify parent about unread count

@@ -65,16 +65,31 @@ const CRMPage = () => {
   const loadMessages = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5000/api/contact/messages');
+      console.log('🔄 Loading contact messages from API...');
+      const response = await fetch('http://localhost:5000/api/contact/messages', {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const data = await response.json();
       
       if (data.success) {
-        setMessages(data.data.messages);
-        setFilteredMessages(data.data.messages);
+        const messages = data.data.messages || data.data || [];
+        console.log('✅ Successfully loaded messages:', messages.length);
+        console.log('📊 Sample message:', messages[0]);
+        setMessages(messages);
+        setFilteredMessages(messages);
       } else {
+        console.error('API Error:', data);
         toast({
           title: "Error",
-          description: "Failed to load contact messages",
+          description: data.message || "Failed to load contact messages",
           variant: "destructive"
         });
       }
@@ -82,7 +97,7 @@ const CRMPage = () => {
       console.error('Error loading messages:', error);
       toast({
         title: "Error",
-        description: "Failed to load contact messages",
+        description: "Failed to load contact messages. Please check your connection and try again.",
         variant: "destructive"
       });
     } finally {
@@ -297,12 +312,31 @@ const CRMPage = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            📥 Customer Relationship Management
-          </h1>
-          <p className="text-gray-600">
-            Manage guest inquiries and maintain excellent customer relationships
-          </p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                📥 Customer Relationship Management
+              </h1>
+              <p className="text-gray-600">
+                Manage guest inquiries and maintain excellent customer relationships
+              </p>
+              {loading && (
+                <div className="flex items-center mt-2 text-sm text-blue-600">
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Loading contact messages...
+                </div>
+              )}
+            </div>
+            <Button
+              onClick={() => loadMessages()}
+              variant="outline"
+              size="sm"
+              disabled={loading}
+            >
+              <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+          </div>
         </div>
 
         {/* Stats Cards */}
@@ -455,7 +489,21 @@ const CRMPage = () => {
               <Card>
                 <CardContent className="p-8 text-center">
                   <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-gray-600">No messages found</p>
+                  <p className="text-gray-600 mb-2">No messages found</p>
+                  <p className="text-sm text-gray-400 mb-4">
+                    {messages.length === 0 
+                      ? "No contact messages in the database. Try refreshing or check your connection."
+                      : "No messages match your current filters. Try adjusting your search criteria."
+                    }
+                  </p>
+                  <Button 
+                    onClick={() => loadMessages()} 
+                    variant="outline" 
+                    size="sm"
+                  >
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Refresh
+                  </Button>
                 </CardContent>
               </Card>
             ) : (

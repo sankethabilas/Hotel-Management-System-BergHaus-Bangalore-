@@ -12,28 +12,22 @@ interface RoomCardProps {
   id: string;
   name: string;
   description: string;
-  price: number;
-  originalPrice?: number;
   image: string;
   capacity: number;
   amenities: string[];
   rating: number;
   isPopular?: boolean;
-  discount?: number;
 }
 
 export default function RoomCard({ 
   id, 
   name, 
   description, 
-  price, 
-  originalPrice,
   image, 
   capacity, 
   amenities, 
   rating,
-  isPopular = false,
-  discount
+  isPopular = false
 }: RoomCardProps) {
   return (
     <Card className="group overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 bg-white">
@@ -85,26 +79,8 @@ export default function RoomCard({
             )}
           </div>
 
-          {/* Price and Book Button */}
-          <div className="flex items-center justify-between pt-4 border-t">
-            <div>
-              <div className="flex items-center space-x-2">
-                <span className="text-2xl font-bold text-hms-primary">
-                  LKR {price.toLocaleString()}
-                </span>
-                {originalPrice && (
-                  <span className="text-lg text-gray-500 line-through">
-                    LKR {originalPrice.toLocaleString()}
-                  </span>
-                )}
-              </div>
-              {discount && (
-                <Badge className="bg-green-500 text-white text-xs mt-1">
-                  {discount}% off
-                </Badge>
-              )}
-              <div className="text-gray-600 text-sm mt-1">/night</div>
-            </div>
+          {/* Book Button */}
+          <div className="flex justify-center pt-4 border-t">
             <Link href={`/rooms?room=${id}`}>
               <Button className="bg-hms-primary hover:bg-hms-primary/90 text-white transition-all duration-200 hover:scale-105">
                 View Details
