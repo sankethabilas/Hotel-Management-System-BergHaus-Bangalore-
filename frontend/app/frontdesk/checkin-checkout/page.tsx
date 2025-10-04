@@ -756,8 +756,7 @@ export default function CheckInCheckOutPage() {
                     {actionDialog.type === 'checkout' && (
                       <div className="space-y-4">
                         <div>
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="font-medium">Additional Charges</div>
+                          <div className="flex items-center justify-end mb-2">
                           <Button size="sm" onClick={addAdditionalCharge} variant="outline">
                             <Plus className="w-4 h-4 mr-1" />
                             Add Charge
