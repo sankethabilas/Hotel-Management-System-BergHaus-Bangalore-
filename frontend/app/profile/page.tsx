@@ -672,6 +672,11 @@ export default function ProfilePage() {
                       <span>Change Password</span>
                     </h3>
                     <div className="space-y-4">
+                      {/* Hidden dummy fields to trick password managers */}
+                      <div style={{ display: 'none' }}>
+                        <input type="text" name="username" autoComplete="username" />
+                        <input type="password" name="password" autoComplete="current-password" />
+                      </div>
                       <div key="current-password-field">
                         <Label htmlFor="currentPassword">Current Password</Label>
                         <Input
@@ -679,12 +684,21 @@ export default function ProfilePage() {
                           type="password"
                           value={passwordData.currentPassword}
                           onChange={(e) => handlePasswordChange('currentPassword', e.target.value)}
+                          onFocus={(e) => {
+                            // Clear any auto-filled value on focus
+                            if (e.target.value && !passwordData.currentPassword) {
+                              e.target.value = '';
+                              handlePasswordChange('currentPassword', '');
+                            }
+                          }}
                           className={`mt-1 ${
                             passwordErrors.currentPassword ? 'animate-shake border-red-500 focus:border-red-500' : 
                             'border-gray-300 focus:border-hms-primary'
                           }`}
                           placeholder="Enter your current password"
-                          autoComplete="off"
+                          autoComplete="new-password"
+                          data-form-type="other"
+                          data-lpignore="true"
                         />
                         {passwordErrors.currentPassword && (
                           <p className="text-sm text-red-600 animate-fade-in flex items-center gap-1 mt-1">

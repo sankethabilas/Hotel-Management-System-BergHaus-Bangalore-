@@ -911,6 +911,11 @@ export default function StaffDashboard() {
               </div>
 
               <form onSubmit={handleChangePassword} className="space-y-4">
+                {/* Hidden dummy fields to trick password managers */}
+                <div style={{ display: 'none' }}>
+                  <input type="text" name="username" autoComplete="username" />
+                  <input type="password" name="password" autoComplete="current-password" />
+                </div>
                 <div>
                   <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700 mb-1">
                     Current Password
@@ -920,10 +925,19 @@ export default function StaffDashboard() {
                     id="currentPassword"
                     value={passwordForm.currentPassword}
                     onChange={(e) => setPasswordForm(prev => ({ ...prev, currentPassword: e.target.value }))}
+                    onFocus={(e) => {
+                      // Clear any auto-filled value on focus
+                      if (e.target.value && !passwordForm.currentPassword) {
+                        e.target.value = '';
+                        setPasswordForm(prev => ({ ...prev, currentPassword: '' }));
+                      }
+                    }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     required
                     disabled={passwordLoading}
-                    autoComplete="off"
+                    autoComplete="new-password"
+                    data-form-type="other"
+                    data-lpignore="true"
                   />
                 </div>
 
