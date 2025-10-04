@@ -283,9 +283,9 @@ router.get('/messages/:id', protect, async (req, res) => {
 });
 
 // Update contact message status
-router.patch('/messages/:id/status', async (req, res) => {
+router.patch('/messages/:id/status', protect, async (req, res) => {
   try {
-    const { status, assignedTo } = req.body;
+    const { status, assignedTo, isRead } = req.body;
     
     const message = await ContactMessage.findById(req.params.id);
     if (!message) {
@@ -297,6 +297,7 @@ router.patch('/messages/:id/status', async (req, res) => {
 
     if (status) message.status = status;
     if (assignedTo) message.assignedTo = assignedTo;
+    if (typeof isRead === 'boolean') message.isRead = isRead;
 
     await message.save();
 
@@ -315,7 +316,7 @@ router.patch('/messages/:id/status', async (req, res) => {
 });
 
 // Add response to contact message
-router.patch('/messages/:id/response', async (req, res) => {
+router.patch('/messages/:id/response', protect, async (req, res) => {
   try {
     const { response, respondedBy } = req.body;
     

@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { safeApiFetch } from '@/lib/safeFetch';
 import { 
   MessageSquare, 
   Reply, 
@@ -85,16 +86,12 @@ export default function MessagesDropdown({ isOpen, onClose, onUnreadCountChange 
   const fetchMessages = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5000/api/contact/user/messages', {
+      const result = await safeApiFetch('/contact/user/messages', {
         credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        const fetchedMessages = data.data?.docs || data.data?.messages || data.data || [];
+      if (result.success && result.data) {
+        const fetchedMessages = result.data.data?.docs || result.data.data?.messages || result.data.data || [];
         setMessages(fetchedMessages);
         
         // Notify parent about unread count
@@ -103,10 +100,10 @@ export default function MessagesDropdown({ isOpen, onClose, onUnreadCountChange 
           onUnreadCountChange(unreadCount);
         }
       } else {
-        console.error('Failed to fetch messages');
+        console.error('Failed to fetch messages:', result.error);
         toast({
           title: 'Error',
-          description: 'Failed to fetch messages',
+          description: result.error || 'Failed to fetch messages',
           variant: 'destructive',
         });
       }
@@ -135,26 +132,27 @@ export default function MessagesDropdown({ isOpen, onClose, onUnreadCountChange 
 
   const markAsRead = async (messageId: string) => {
     try {
-      await fetch(`http://localhost:5000/api/contact/messages/${messageId}/status`, {
+      const result = await safeApiFetch(`/contact/messages/${messageId}/status`, {
         method: 'PATCH',
         credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({
           isRead: true
         }),
       });
       
-      // Update local state
-      setMessages(prev => prev.map(msg => 
-        msg._id === messageId ? { ...msg, isRead: true } : msg
-      ));
-      
-      // Update unread count
-      if (onUnreadCountChange) {
-        const unreadCount = messages.filter(msg => !msg.isRead && msg._id !== messageId).length;
-        onUnreadCountChange(unreadCount);
+      if (result.success) {
+        // Update local state
+        setMessages(prev => prev.map(msg => 
+          msg._id === messageId ? { ...msg, isRead: true } : msg
+        ));
+        
+        // Update unread count
+        if (onUnreadCountChange) {
+          const unreadCount = messages.filter(msg => !msg.isRead && msg._id !== messageId).length;
+          onUnreadCountChange(unreadCount);
+        }
+      } else {
+        console.error('Error marking message as read:', result.error);
       }
     } catch (error) {
       console.error('Error marking message as read:', error);
@@ -166,18 +164,15 @@ export default function MessagesDropdown({ isOpen, onClose, onUnreadCountChange 
 
     try {
       setSendingReply(true);
-      const response = await fetch(`http://localhost:5000/api/contact/messages/${selectedMessage._id}/response`, {
+      const result = await safeApiFetch(`/contact/messages/${selectedMessage._id}/response`, {
         method: 'PATCH',
         credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({
           response: replyText.trim(),
         }),
       });
 
-      if (response.ok) {
+      if (result.success) {
         toast({
           title: 'Reply Sent',
           description: 'Your reply has been sent successfully',
@@ -187,10 +182,9 @@ export default function MessagesDropdown({ isOpen, onClose, onUnreadCountChange 
         setReplyText('');
         fetchMessages(); // Refresh messages
       } else {
-        const errorData = await response.json();
         toast({
           title: 'Error',
-          description: errorData.message || 'Failed to send reply',
+          description: result.error || 'Failed to send reply',
           variant: 'destructive',
         });
       }
