@@ -678,11 +678,8 @@ export default function BillsPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="cash">Cash</SelectItem>
-                  <SelectItem value="card">Credit/Debit Card</SelectItem>
                   <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
-                  <SelectItem value="online">Online Payment</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
+                  <SelectItem value="cash_on_property">Cash on Property</SelectItem>
                 </SelectContent>
               </Select>
             </div>

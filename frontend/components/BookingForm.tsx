@@ -323,8 +323,8 @@ const BookingForm: React.FC<BookingFormProps> = ({
                     <SelectValue placeholder="Select payment method" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="card">Credit/Debit Card</SelectItem>
-                    <SelectItem value="online">Online Payment</SelectItem>
+                    <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                    <SelectItem value="cash_on_property">Cash on Property</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

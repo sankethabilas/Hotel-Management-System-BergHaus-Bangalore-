@@ -274,6 +274,7 @@ class PaymentAPI {
   getPaymentMethodLabel(method: string): string {
     switch (method) {
       case 'bank_transfer': return 'Bank Transfer';
+      case 'cash_on_property': return 'Cash on Property';
       case 'cash': return 'Cash';
       case 'cheque': return 'Cheque';
       default: return method;

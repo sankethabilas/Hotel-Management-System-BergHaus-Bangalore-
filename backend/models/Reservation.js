@@ -146,7 +146,7 @@ const reservationSchema = new mongoose.Schema({
   },
   paymentMethod: {
     type: String,
-    enum: ['cash', 'card', 'bank_transfer', 'online', 'other'],
+    enum: ['bank_transfer', 'cash_on_property'],
     default: null
   },
   paidAmount: {
