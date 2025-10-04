@@ -4,10 +4,9 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Menu, X, User, LogOut, MessageSquare } from 'lucide-react';
+import { Menu, X, User, LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { ThemeToggle } from '@/components/theme-toggle';
-import MessagesDropdown from '@/components/messages-dropdown';
 
 interface NavbarProps {
   className?: string;
@@ -15,8 +14,6 @@ interface NavbarProps {
 
 export default function Navbar({ className }: NavbarProps) {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
-  const [isMessagesOpen, setIsMessagesOpen] = React.useState(false);
-  const [unreadCount, setUnreadCount] = React.useState(0);
   const { user, isAuthenticated, logout, loading } = useAuth();
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
@@ -25,36 +22,6 @@ export default function Navbar({ className }: NavbarProps) {
     logout();
     setIsMenuOpen(false);
   };
-
-  const fetchUnreadCount = async () => {
-    if (!isAuthenticated) return;
-    
-    try {
-      const response = await fetch('http://localhost:5000/api/contact/user/messages?status=new', {
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        const unreadMessages = data.data?.docs?.filter((msg: any) => !msg.isRead) || [];
-        setUnreadCount(unreadMessages.length);
-      }
-    } catch (error) {
-      console.error('Error fetching unread count:', error);
-    }
-  };
-
-  React.useEffect(() => {
-    if (isAuthenticated) {
-      fetchUnreadCount();
-      // Refresh unread count every 30 seconds
-      const interval = setInterval(fetchUnreadCount, 30000);
-      return () => clearInterval(interval);
-    }
-  }, [isAuthenticated]);
 
   const getUserInitials = (user: any) => {
     if (!user) return 'U';
@@ -199,15 +166,6 @@ export default function Navbar({ className }: NavbarProps) {
                         <span>Profile</span>
                       </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setIsMessagesOpen(true)} className="cursor-pointer">
-                      <MessageSquare className="mr-2 h-4 w-4" />
-                      <span>Messages</span>
-                      {unreadCount > 0 && (
-                        <span className="ml-auto bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
-                          {unreadCount}
-                        </span>
-                      )}
-                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
                       <LogOut className="mr-2 h-4 w-4" />
@@ -348,20 +306,6 @@ export default function Navbar({ className }: NavbarProps) {
                         Profile
                       </Link>
                       <button
-                        onClick={() => {
-                          setIsMessagesOpen(true);
-                          setIsMenuOpen(false);
-                        }}
-                        className="flex items-center justify-between w-full text-left px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary hover:bg-gray-50 dark:hover:bg-gray-600 rounded-md transition-colors duration-200"
-                      >
-                        <span>Messages</span>
-                        {unreadCount > 0 && (
-                          <span className="bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
-                            {unreadCount}
-                          </span>
-                        )}
-                      </button>
-                      <button
                         onClick={handleLogout}
                         className="block w-full text-left px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md transition-colors duration-200"
                       >
@@ -383,13 +327,6 @@ export default function Navbar({ className }: NavbarProps) {
           </div>
         )}
       </div>
-
-      {/* Messages Dropdown */}
-      <MessagesDropdown 
-        isOpen={isMessagesOpen} 
-        onClose={() => setIsMessagesOpen(false)}
-        onUnreadCountChange={setUnreadCount}
-      />
     </nav>
   );
 }

@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { getRequests, markRequestDone, deleteRequest, getItems } from "../../../lib/alertApi";
 import Link from "next/link";
+import Navbar from "../../../components/admin/Navbar";
 
 interface StaffRequest {
   _id: string;
@@ -89,10 +90,13 @@ export default function AlertsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading alerts...</p>
+      <div className="min-h-screen bg-gray-50">
+        <Navbar active="alerts" />
+        <div className="flex items-center justify-center min-h-[calc(100vh-64px)]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading alerts...</p>
+          </div>
         </div>
       </div>
     );
@@ -100,11 +104,12 @@ export default function AlertsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <Navbar active="alerts" />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Alert Management</h1>
-          <p className="mt-2 text-gray-600">Monitor low stock alerts and staff requests</p>
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900">Alert Management</h1>
+          <p className="mt-2 text-sm sm:text-base text-gray-600">Monitor low stock alerts and staff requests</p>
         </div>
 
         {/* Low Stock Alerts Section */}
