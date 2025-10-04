@@ -102,6 +102,7 @@ app.use('/api/reports', require('./routes/reports'));
 app.use('/api/inventory', require('./routes/inventoryRoutes'));
 app.use('/api/staff-requests', require('./routes/staffRequestRoutes'));
 app.use('/api/contact', require('./routes/contact'));
+app.use('/api/feedback', require('./routes/feedback'));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

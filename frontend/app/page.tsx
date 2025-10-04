@@ -13,6 +13,7 @@ import RoomCard from '@/components/room-card';
 import { EnhancedRoomCard } from '@/components/enhanced-room-card';
 import FacilityCard, { iconMap } from '@/components/facility-card';
 import ReviewCarousel from '@/components/review-carousel';
+import FeedbackShowcase from '@/components/feedback-showcase';
 import { useAuth } from '@/contexts/AuthContext';
 import { roomAPI } from '@/lib/api';
 import { 
@@ -31,7 +32,8 @@ import {
   ArrowRight,
   CheckCircle,
   Mountain,
-  TreePine
+  TreePine,
+  MessageSquare
 } from 'lucide-react';
 
 // Sample data
@@ -424,6 +426,48 @@ export default function HomePage() {
           <ReviewCarousel />
         </div>
       </section>
+
+      {/* Feedback Section */}
+      <section className="py-20 bg-gradient-to-r from-hms-primary to-hms-secondary">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div className="mb-8">
+            <Badge className="bg-white text-hms-primary font-semibold mb-4">
+              Share Your Experience
+            </Badge>
+            <h2 className="text-4xl font-bold text-white mb-6">
+              Help Us Improve
+            </h2>
+            <p className="text-xl text-white/90 max-w-2xl mx-auto">
+              Your feedback is invaluable to us. Share your experience and help us create 
+              even better stays for future guests.
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/feedback">
+              <Button 
+                size="lg" 
+                className="bg-white text-hms-primary hover:bg-white/90 px-8 py-4 text-lg font-semibold"
+              >
+                <MessageSquare className="w-5 h-5 mr-2" />
+                Share Feedback
+              </Button>
+            </Link>
+            <Link href="/contact">
+              <Button 
+                size="lg" 
+                variant="outline" 
+                className="border-white text-white hover:bg-white hover:text-hms-primary px-8 py-4 text-lg font-semibold"
+              >
+                Contact Us
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Guest Feedback Showcase */}
+      <FeedbackShowcase />
 
       {/* Hotel Surroundings Preview */}
       <section className="py-20 bg-white">

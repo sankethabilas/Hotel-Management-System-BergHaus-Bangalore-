@@ -112,9 +112,22 @@ export default function FrontdeskLayout({ children }: FrontdeskLayoutProps) {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
+      // Show search options or redirect to reservations page with search query
       toast({
-        title: "Search",
-        description: `Searching for: ${searchQuery}`,
+        title: "Search Results",
+        description: `Searching for "${searchQuery}" across all reservations, bookings, and bills...`,
+        action: (
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => {
+              router.push(`/frontdesk/reservations?search=${encodeURIComponent(searchQuery.trim())}`);
+              setSearchQuery('');
+            }}
+          >
+            View Results
+          </Button>
+        ),
       });
     }
   };

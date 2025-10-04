@@ -414,28 +414,28 @@ router.get('/:id/download', protect, requireAdminOrFrontdesk, async (req, res) =
     bill.items.forEach(item => {
       doc.text(item.description, 50, yPosition);
       doc.text(item.quantity.toString(), 300, yPosition);
-      doc.text(`$${item.unitPrice.toFixed(2)}`, 350, yPosition);
-      doc.text(`$${item.totalPrice.toFixed(2)}`, 450, yPosition);
+      doc.text(`Rs ${item.unitPrice.toFixed(2)}`, 350, yPosition);
+      doc.text(`Rs ${item.totalPrice.toFixed(2)}`, 450, yPosition);
       yPosition += 20;
     });
     
     // Totals
     yPosition += 20;
-    doc.text(`Subtotal: $${bill.subtotal.toFixed(2)}`, 350, yPosition);
+    doc.text(`Subtotal: Rs ${bill.subtotal.toFixed(2)}`, 350, yPosition);
     yPosition += 20;
-    doc.text(`Tax: $${bill.tax.toFixed(2)}`, 350, yPosition);
+    doc.text(`Tax: Rs ${bill.tax.toFixed(2)}`, 350, yPosition);
     yPosition += 20;
     if (bill.discount > 0) {
-      doc.text(`Discount: -$${bill.discount.toFixed(2)}`, 350, yPosition);
+      doc.text(`Discount: -Rs ${bill.discount.toFixed(2)}`, 350, yPosition);
       yPosition += 20;
     }
-    doc.fontSize(14).text(`Total: $${bill.total.toFixed(2)}`, 350, yPosition);
+    doc.fontSize(14).text(`Total: Rs ${bill.total.toFixed(2)}`, 350, yPosition);
     
     if (bill.paidAmount > 0) {
       yPosition += 20;
-      doc.fontSize(12).text(`Paid: $${bill.paidAmount.toFixed(2)}`, 350, yPosition);
+      doc.fontSize(12).text(`Paid: Rs ${bill.paidAmount.toFixed(2)}`, 350, yPosition);
       yPosition += 20;
-      doc.text(`Balance: $${bill.balance.toFixed(2)}`, 350, yPosition);
+      doc.text(`Balance: Rs ${bill.balance.toFixed(2)}`, 350, yPosition);
     }
     
     // Footer

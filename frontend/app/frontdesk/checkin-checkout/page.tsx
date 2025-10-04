@@ -18,7 +18,7 @@ import {
   Phone,
   Plus,
   Minus,
-  DollarSign,
+  IndianRupee,
   Receipt,
   Download
 } from 'lucide-react';
@@ -674,7 +674,7 @@ export default function CheckInCheckOutPage() {
                                 variant="outline"
                                 onClick={() => handlePaymentManagement(booking)}
                               >
-                                <DollarSign className="w-4 h-4 mr-2" />
+                                <IndianRupee className="w-4 h-4 mr-2" />
                                 Payment
                               </Button>
                             </>
@@ -720,7 +720,7 @@ export default function CheckInCheckOutPage() {
                     <div>
                       <p className="font-medium">Booking Details</p>
                       <p><strong>Reference:</strong> {actionDialog.booking.bookingReference}</p>
-                      <p><strong>Total:</strong> ${actionDialog.booking.totalAmount}</p>
+                      <p><strong>Total:</strong> Rs {actionDialog.booking.totalAmount}</p>
                       <p><strong>Guests:</strong> {actionDialog.booking.numberOfGuests}</p>
                     </div>
                   </div>
@@ -765,7 +765,7 @@ export default function CheckInCheckOutPage() {
                               className="col-span-3"
                             />
                             <div className="col-span-1 text-sm font-medium">
-                              ${(charge.quantity * charge.unitPrice).toFixed(2)}
+                              Rs {(charge.quantity * charge.unitPrice).toFixed(2)}
                             </div>
                             <Button
                               size="sm"
@@ -780,7 +780,7 @@ export default function CheckInCheckOutPage() {
                         
                         {additionalCharges.length > 0 && (
                           <div className="text-right font-medium">
-                            Additional Total: ${additionalCharges.reduce((sum, charge) => sum + (charge.quantity * charge.unitPrice), 0).toFixed(2)}
+                            Additional Total: Rs {additionalCharges.reduce((sum, charge) => sum + (charge.quantity * charge.unitPrice), 0).toFixed(2)}
                           </div>
                         )}
                       </div>
@@ -812,7 +812,7 @@ export default function CheckInCheckOutPage() {
                   <p><strong>Guest:</strong> {paymentDialog.booking.guestName}</p>
                   <p><strong>Booking Reference:</strong> {paymentDialog.booking.bookingReference}</p>
                   <p><strong>Room:</strong> {paymentDialog.booking.roomNumber} ({paymentDialog.booking.roomType})</p>
-                  <p><strong>Current Total:</strong> ${paymentDialog.booking.totalAmount}</p>
+                  <p><strong>Current Total:</strong> Rs {paymentDialog.booking.totalAmount}</p>
                   <p><strong>Payment Status:</strong> 
                     <Badge variant={paymentDialog.booking.paymentStatus === 'paid' ? 'default' : 'destructive'} className="ml-2">
                       {paymentDialog.booking.paymentStatus}
@@ -911,7 +911,7 @@ export default function CheckInCheckOutPage() {
                       <div className="flex-1">
                         <p className="font-medium">{charge.description}</p>
                         <p className="text-sm text-gray-600">
-                          {charge.quantity} × ${charge.unitPrice} = ${(charge.quantity * charge.unitPrice).toFixed(2)}
+                          {charge.quantity} × Rs {charge.unitPrice} = Rs {(charge.quantity * charge.unitPrice).toFixed(2)}
                         </p>
                       </div>
                       <Button
@@ -925,7 +925,7 @@ export default function CheckInCheckOutPage() {
                   ))}
                   <div className="flex justify-between items-center pt-2 border-t">
                     <span className="font-medium">Additional Total:</span>
-                    <span className="font-bold">${customCharges.reduce((sum, charge) => sum + (charge.quantity * charge.unitPrice), 0).toFixed(2)}</span>
+                    <span className="font-bold">Rs {customCharges.reduce((sum, charge) => sum + (charge.quantity * charge.unitPrice), 0).toFixed(2)}</span>
                   </div>
                   <Button onClick={saveCustomCharges} className="w-full">
                     Save Custom Charges

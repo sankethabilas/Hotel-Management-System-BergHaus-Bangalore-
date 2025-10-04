@@ -13,12 +13,13 @@ import {
   Mail,
   Plus,
   Eye,
-  DollarSign,
+  IndianRupee,
   Calendar,
   User,
   CreditCard,
   FileText,
-  Minus
+  Minus,
+  X
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -110,6 +111,15 @@ export default function BillsPage() {
   useEffect(() => {
     fetchBills();
   }, [statusFilter]);
+
+  // Handle search query from URL parameters
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const searchParam = urlParams.get('search');
+    if (searchParam) {
+      setSearchQuery(searchParam);
+    }
+  }, []);
 
   const fetchBills = async () => {
     try {
@@ -394,6 +404,16 @@ export default function BillsPage() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
               />
+              {searchQuery && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-48">
@@ -419,6 +439,11 @@ export default function BillsPage() {
           <CardTitle className="flex items-center text-[#006bb8]">
             <Receipt className="w-5 h-5 mr-2" />
             Bills ({filteredBills.length})
+            {searchQuery && (
+              <Badge variant="secondary" className="ml-2">
+                Search: "{searchQuery}"
+              </Badge>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -459,10 +484,10 @@ export default function BillsPage() {
                       <span className="text-gray-400">N/A</span>
                     )}
                   </TableCell>
-                  <TableCell className="font-medium">${bill.total.toFixed(2)}</TableCell>
-                  <TableCell className="text-green-600">${bill.paidAmount.toFixed(2)}</TableCell>
+                  <TableCell className="font-medium">Rs {bill.total.toFixed(2)}</TableCell>
+                  <TableCell className="text-green-600">Rs {bill.paidAmount.toFixed(2)}</TableCell>
                   <TableCell className={bill.balance > 0 ? 'text-red-600' : 'text-green-600'}>
-                    ${bill.balance.toFixed(2)}
+                    Rs {bill.balance.toFixed(2)}
                   </TableCell>
                   <TableCell>{getStatusBadge(bill.status)}</TableCell>
                   <TableCell>
@@ -487,7 +512,7 @@ export default function BillsPage() {
                             onClick={() => handleAddPayment(bill)}
                             className="text-green-600 border-green-200 hover:bg-green-50"
                           >
-                            <DollarSign className="w-4 h-4" />
+                            <IndianRupee className="w-4 h-4" />
                           </Button>
                           <Button
                             size="sm"
@@ -535,7 +560,7 @@ export default function BillsPage() {
                 <div>
                   <h3 className="font-medium mb-2">Bill Information</h3>
                   <p><strong>Bill ID:</strong> {selectedBill.billId}</p>
-                  <p><strong>Status:</strong> {getStatusBadge(selectedBill.status)}</p>
+                  <div className="flex items-center gap-2"><strong>Status:</strong> {getStatusBadge(selectedBill.status)}</div>
                   <p><strong>Created:</strong> {new Date(selectedBill.createdAt).toLocaleDateString()}</p>
                   <p><strong>Due Date:</strong> {new Date(selectedBill.dueDate).toLocaleDateString()}</p>
                 </div>
@@ -566,8 +591,8 @@ export default function BillsPage() {
                       <TableRow key={index}>
                         <TableCell>{item.description}</TableCell>
                         <TableCell>{item.quantity}</TableCell>
-                        <TableCell>${item.unitPrice.toFixed(2)}</TableCell>
-                        <TableCell>${item.totalPrice.toFixed(2)}</TableCell>
+                        <TableCell>Rs {item.unitPrice.toFixed(2)}</TableCell>
+                        <TableCell>Rs {item.totalPrice.toFixed(2)}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
@@ -579,30 +604,30 @@ export default function BillsPage() {
                 <div className="space-y-2 max-w-sm ml-auto">
                   <div className="flex justify-between">
                     <span>Subtotal:</span>
-                    <span>${selectedBill.subtotal.toFixed(2)}</span>
+                    <span>Rs {selectedBill.subtotal.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Tax ({(selectedBill.taxRate * 100).toFixed(1)}%):</span>
-                    <span>${selectedBill.tax.toFixed(2)}</span>
+                    <span>Rs {selectedBill.tax.toFixed(2)}</span>
                   </div>
                   {selectedBill.discount > 0 && (
                     <div className="flex justify-between text-green-600">
                       <span>Discount:</span>
-                      <span>-${selectedBill.discount.toFixed(2)}</span>
+                      <span>-Rs {selectedBill.discount.toFixed(2)}</span>
                     </div>
                   )}
                   <div className="flex justify-between font-bold text-lg border-t pt-2">
                     <span>Total:</span>
-                    <span>${selectedBill.total.toFixed(2)}</span>
+                    <span>Rs {selectedBill.total.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-green-600">
                     <span>Paid:</span>
-                    <span>${selectedBill.paidAmount.toFixed(2)}</span>
+                    <span>Rs {selectedBill.paidAmount.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between font-bold">
                     <span>Balance:</span>
                     <span className={selectedBill.balance > 0 ? 'text-red-600' : 'text-green-600'}>
-                      ${selectedBill.balance.toFixed(2)}
+                      Rs {selectedBill.balance.toFixed(2)}
                     </span>
                   </div>
                 </div>
@@ -629,8 +654,8 @@ export default function BillsPage() {
                 <div className="mt-4">
                   <p><strong>Bill ID:</strong> {selectedBill.billId}</p>
                   <p><strong>Guest:</strong> {selectedBill.guestName}</p>
-                  <p><strong>Total Amount:</strong> ${selectedBill.total.toFixed(2)}</p>
-                  <p><strong>Outstanding Balance:</strong> ${selectedBill.balance.toFixed(2)}</p>
+                  <p><strong>Total Amount:</strong> Rs {selectedBill.total.toFixed(2)}</p>
+                  <p><strong>Outstanding Balance:</strong> Rs {selectedBill.balance.toFixed(2)}</p>
                 </div>
               )}
             </DialogDescription>
@@ -741,7 +766,7 @@ export default function BillsPage() {
               </Select>
             </div>
             <div className="bg-gray-50 p-3 rounded">
-              <p className="font-medium">Total: ${(newItem.quantity * newItem.unitPrice).toFixed(2)}</p>
+              <p className="font-medium">Total: Rs {(newItem.quantity * newItem.unitPrice).toFixed(2)}</p>
             </div>
           </div>
           <DialogFooter>

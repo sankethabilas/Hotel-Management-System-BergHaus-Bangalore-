@@ -211,7 +211,7 @@ const ContactUsPage = () => {
     },
     {
       question: "How much does it cost to stay?",
-      answer: "Our room rates vary by season and room type. Standard rooms start from $45 per night, Deluxe rooms from $65 per night, and our Bungalow Suites from $95 per night. All rates include breakfast and complimentary Wi-Fi. Please contact us for current pricing and special offers."
+      answer: "Our room rates vary by season and room type. Standard rooms start from Rs 9,432 per night, Deluxe rooms from Rs 10,478 per night, and our Bungalow Suites from Rs 12,807 per night. All rates include breakfast and complimentary Wi-Fi. Please contact us for current pricing and special offers."
     },
     {
       question: "What activities are available?",

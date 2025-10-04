@@ -79,7 +79,7 @@ const sendBookingConfirmation = async (booking) => {
               </tr>
               <tr>
                 <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Total Amount:</strong></td>
-                <td style="padding: 8px; border-bottom: 1px solid #ddd;">$${booking.totalAmount.toFixed(2)}</td>
+                <td style="padding: 8px; border-bottom: 1px solid #ddd;">Rs ${booking.totalAmount.toFixed(2)}</td>
               </tr>
             </table>
             
@@ -155,7 +155,7 @@ const sendBookingCancellation = async (booking) => {
               </tr>
               <tr>
                 <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Refund Amount:</strong></td>
-                <td style="padding: 8px; border-bottom: 1px solid #ddd;">$${booking.totalAmount.toFixed(2)}</td>
+                <td style="padding: 8px; border-bottom: 1px solid #ddd;">Rs ${booking.totalAmount.toFixed(2)}</td>
               </tr>
             </table>
             
@@ -463,7 +463,7 @@ const sendCheckoutEmailWithAttachment = async (reservation, bill, pdfBuffer) => 
               </tr>
               <tr>
                 <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Total Amount:</strong></td>
-                <td style="padding: 8px; border-bottom: 1px solid #ddd;">$${bill.total.toFixed(2)}</td>
+                <td style="padding: 8px; border-bottom: 1px solid #ddd;">Rs ${bill.total.toFixed(2)}</td>
               </tr>
               <tr>
                 <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Payment Status:</strong></td>
@@ -474,7 +474,7 @@ const sendCheckoutEmailWithAttachment = async (reservation, bill, pdfBuffer) => 
             <div style="background: #e8f4f8; padding: 15px; margin: 20px 0; border-left: 4px solid #006bb8;">
               <h3>Invoice Attached</h3>
               <p>Please find your detailed invoice attached to this email. Keep this for your records.</p>
-              ${bill.balance > 0 ? `<p style="color: #dc3545;"><strong>Outstanding Balance: $${bill.balance.toFixed(2)}</strong></p>` : ''}
+              ${bill.balance > 0 ? `<p style="color: #dc3545;"><strong>Outstanding Balance: Rs ${bill.balance.toFixed(2)}</strong></p>` : ''}
             </div>
             
             <div style="background: #d4edda; padding: 15px; margin: 20px 0; border-left: 4px solid #28a745;">
@@ -545,16 +545,16 @@ const sendPaymentStatusEmail = async (guestEmail, bill) => {
               </tr>
               <tr>
                 <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Total Amount:</strong></td>
-                <td style="padding: 8px; border-bottom: 1px solid #ddd;">$${bill.total.toFixed(2)}</td>
+                <td style="padding: 8px; border-bottom: 1px solid #ddd;">Rs ${bill.total.toFixed(2)}</td>
               </tr>
               <tr>
                 <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Amount Paid:</strong></td>
-                <td style="padding: 8px; border-bottom: 1px solid #ddd;">$${bill.paidAmount.toFixed(2)}</td>
+                <td style="padding: 8px; border-bottom: 1px solid #ddd;">Rs ${bill.paidAmount.toFixed(2)}</td>
               </tr>
               <tr>
                 <td style="padding: 8px; border-bottom: 1px solid #ddd;"><strong>Outstanding Balance:</strong></td>
                 <td style="padding: 8px; border-bottom: 1px solid #ddd; ${isFullyPaid ? 'color: #28a745;' : 'color: #dc3545;'}">
-                  $${bill.balance.toFixed(2)}
+                  Rs ${bill.balance.toFixed(2)}
                 </td>
               </tr>
               <tr>
@@ -571,7 +571,7 @@ const sendPaymentStatusEmail = async (guestEmail, bill) => {
             ` : `
               <div style="background: #fff3cd; padding: 15px; margin: 20px 0; border-left: 4px solid #ffc107;">
                 <h3>Partial Payment Received</h3>
-                <p>We have received your partial payment. The remaining balance of $${bill.balance.toFixed(2)} is still outstanding.</p>
+                <p>We have received your partial payment. The remaining balance of Rs ${bill.balance.toFixed(2)} is still outstanding.</p>
                 <p>Please contact us to arrange payment for the remaining amount.</p>
               </div>
             `}
@@ -626,7 +626,7 @@ const sendBillEmail = async (billData, pdfBuffer) => {
               <p><strong>Room:</strong> ${billData.roomNumber} (${billData.roomType})</p>
               <p><strong>Stay Period:</strong> ${new Date(billData.checkInDate).toLocaleDateString()} - ${new Date(billData.checkOutDate).toLocaleDateString()}</p>
               <p><strong>Total Nights:</strong> ${billData.totalNights}</p>
-              <p style="font-size: 18px; color: #006bb8;"><strong>Total Amount: $${billData.total.toFixed(2)}</strong></p>
+              <p style="font-size: 18px; color: #006bb8;"><strong>Total Amount: Rs ${billData.total.toFixed(2)}</strong></p>
               <p><strong>Payment Status:</strong> <span style="color: ${billData.paymentStatus === 'paid' ? '#28a745' : '#ffc107'}; font-weight: bold; text-transform: uppercase;">${billData.paymentStatus}</span></p>
             </div>
             
@@ -645,12 +645,12 @@ const sendBillEmail = async (billData, pdfBuffer) => {
                     <tr>
                       <td style="padding: 8px; border-bottom: 1px solid #f8f9fa;">${item.description}</td>
                       <td style="padding: 8px; text-align: center; border-bottom: 1px solid #f8f9fa;">${item.quantity}</td>
-                      <td style="padding: 8px; text-align: right; border-bottom: 1px solid #f8f9fa;">$${item.total.toFixed(2)}</td>
+                      <td style="padding: 8px; text-align: right; border-bottom: 1px solid #f8f9fa;">Rs ${item.total.toFixed(2)}</td>
                     </tr>
                   `).join('')}
                   <tr style="border-top: 2px solid #006bb8; font-weight: bold;">
                     <td colspan="2" style="padding: 10px;">Total Amount:</td>
-                    <td style="padding: 10px; text-align: right; color: #006bb8;">$${billData.total.toFixed(2)}</td>
+                    <td style="padding: 10px; text-align: right; color: #006bb8;">Rs ${billData.total.toFixed(2)}</td>
                   </tr>
                 </tbody>
               </table>
