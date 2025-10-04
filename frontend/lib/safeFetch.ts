@@ -1,4 +1,5 @@
 import { safeJsonParse, getErrorMessage } from './safeJsonParse';
+import Cookies from 'js-cookie';
 
 /**
  * Safe fetch wrapper that handles JSON parsing errors gracefully
@@ -40,15 +41,19 @@ export const safeFetch = async (url: string, options?: RequestInit): Promise<{
 };
 
 /**
- * Safe fetch for API calls with automatic error handling
+ * Safe fetch for API calls with automatic error handling and authentication
  */
 export const safeApiFetch = async (endpoint: string, options?: RequestInit) => {
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
   const url = endpoint.startsWith('http') ? endpoint : `${API_URL}${endpoint}`;
   
+  // Get authentication token
+  const token = Cookies.get('token');
+  
   return safeFetch(url, {
     headers: {
       'Content-Type': 'application/json',
+      ...(token && { 'Authorization': `Bearer ${token}` }),
       ...options?.headers
     },
     ...options

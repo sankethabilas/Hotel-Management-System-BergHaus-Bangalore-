@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
+import { safeApiFetch } from '@/lib/safeFetch';
 import { 
   MessageSquare, 
   Search, 
@@ -54,30 +55,21 @@ const ReplyHistoryPage = () => {
   const loadReplies = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5000/api/contact/messages', {
+      const result = await safeApiFetch('/contact/messages', {
         credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
       });
       
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      
-      if (data.success) {
+      if (result.success && result.data?.success) {
         // Filter only messages that have replies
-        const messages = data.data.messages || data.data || [];
+        const messages = result.data.data?.messages || result.data.data || [];
         const messagesWithReplies = messages.filter((msg: ReplyHistory) => msg.response);
         setReplies(messagesWithReplies);
         setFilteredReplies(messagesWithReplies);
       } else {
-        console.error('API Error:', data);
+        console.error('API Error:', result.error);
         toast({
           title: "Error",
-          description: data.message || "Failed to load reply history",
+          description: result.error || "Failed to load reply history",
           variant: "destructive"
         });
       }

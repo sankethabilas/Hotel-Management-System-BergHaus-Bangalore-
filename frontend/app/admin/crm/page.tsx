@@ -9,6 +9,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
+import { safeApiFetch } from '@/lib/safeFetch';
+import Cookies from 'js-cookie';
 import { 
   MessageSquare, 
   Search, 
@@ -66,30 +68,22 @@ const CRMPage = () => {
     try {
       setLoading(true);
       console.log('🔄 Loading contact messages from API...');
-      const response = await fetch('http://localhost:5000/api/contact/messages', {
+      
+      const result = await safeApiFetch('/contact/messages', {
         credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
       });
       
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      
-      if (data.success) {
-        const messages = data.data.messages || data.data || [];
+      if (result.success && result.data?.success) {
+        const messages = result.data.data?.messages || result.data.data || [];
         console.log('✅ Successfully loaded messages:', messages.length);
         console.log('📊 Sample message:', messages[0]);
         setMessages(messages);
         setFilteredMessages(messages);
       } else {
-        console.error('API Error:', data);
+        console.error('API Error:', result.error);
         toast({
           title: "Error",
-          description: data.message || "Failed to load contact messages",
+          description: result.error || "Failed to load contact messages",
           variant: "destructive"
         });
       }
@@ -140,18 +134,20 @@ const CRMPage = () => {
   // Mark message as read
   const markAsRead = async (messageId: string) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/contact/messages/${messageId}/status`, {
+      const result = await safeApiFetch(`/contact/messages/${messageId}/status`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ status: 'in-progress' })
+        body: JSON.stringify({ 
+          status: 'in-progress',
+          isRead: true 
+        })
       });
 
-      if (response.ok) {
+      if (result.success) {
         setMessages(prev => prev.map(msg => 
           msg._id === messageId ? { ...msg, isRead: true, status: 'in-progress' } : msg
         ));
+      } else {
+        console.error('Error marking message as read:', result.error);
       }
     } catch (error) {
       console.error('Error marking message as read:', error);
@@ -164,20 +160,15 @@ const CRMPage = () => {
 
     try {
       setIsReplying(true);
-      const response = await fetch(`http://localhost:5000/api/contact/messages/${selectedMessage._id}/response`, {
+      const result = await safeApiFetch(`/contact/messages/${selectedMessage._id}/response`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({ 
           response: replyText,
           respondedBy: 'admin' // In a real app, this would be the actual admin ID
         })
       });
 
-      const data = await response.json();
-
-      if (data.success) {
+      if (result.success) {
         toast({
           title: "Reply Sent",
           description: "Your reply has been sent to the guest via email",
@@ -202,7 +193,7 @@ const CRMPage = () => {
       } else {
         toast({
           title: "Error",
-          description: data.message || "Failed to send reply",
+          description: result.error || "Failed to send reply",
           variant: "destructive"
         });
       }
