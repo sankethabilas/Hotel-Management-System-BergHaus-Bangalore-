@@ -279,11 +279,11 @@ export default function BookingConfirmationPage() {
             <h3>Payment Summary</h3>
             <div class="info-row">
                 <span class="label">Room Rate (${booking.totalNights || 1} nights):</span>
-                <span>Rs {((booking.roomPrice || 0) * (booking.totalNights || 1)).toFixed(2)}</span>
+                <span>Rs ${((booking.roomPrice || 0) * (booking.totalNights || 1)).toFixed(2)}</span>
             </div>
             <div class="info-row">
                 <span class="label">Tax (10%):</span>
-                <span>Rs {(booking.taxAmount || 0).toFixed(2)}</span>
+                <span>Rs ${(booking.taxAmount || 0).toFixed(2)}</span>
             </div>
             <div class="info-row">
                 <span class="label">Payment Method:</span>
@@ -296,7 +296,7 @@ export default function BookingConfirmationPage() {
         </div>
 
         <div class="total">
-            Total Amount: Rs {(booking.totalAmount || 0).toFixed(2)}
+            Total Amount: Rs ${(booking.totalAmount || 0).toFixed(2)}
         </div>
 
         ${booking.specialRequests ? `
