@@ -6,77 +6,59 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Edit, Trash2, User, Mail, Phone, Calendar } from 'lucide-react';
-
-interface StaffMember {
-  _id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: string;
-  position: string;
-  department: string;
-  hireDate: string;
-  status: 'active' | 'inactive';
-  salary: number;
-  address: string;
-  emergencyContact: {
-    name: string;
-    phone: string;
-    relationship: string;
-  };
-}
+import { Staff } from '@/types/staff';
+import { staffAPI } from '@/lib/staffApi';
 
 export default function StaffDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const [staff, setStaff] = useState<StaffMember | null>(null);
+  const [staff, setStaff] = useState<Staff | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string>('');
 
   useEffect(() => {
-    loadStaffMember();
-  }, [params.id]);
+    if (params?.id) {
+      loadStaffMember();
+    }
+  }, [params?.id]);
 
   const loadStaffMember = async () => {
     try {
       setLoading(true);
+      setError('');
       
-      // Mock data - in a real app, this would fetch from API
-      const mockStaff: StaffMember = {
-        _id: params.id as string,
-        firstName: 'John',
-        lastName: 'Doe',
-        email: 'john.doe@berghaus.com',
-        phone: '+1 (555) 123-4567',
-        position: 'Front Desk Manager',
-        department: 'Front Office',
-        hireDate: '2023-01-15',
-        status: 'active',
-        salary: 45000,
-        address: '123 Main St, City, State 12345',
-        emergencyContact: {
-          name: 'Jane Doe',
-          phone: '+1 (555) 987-6543',
-          relationship: 'Spouse'
-        }
-      };
-      
-      setStaff(mockStaff);
+      if (!params?.id || typeof params.id !== 'string') {
+        setError('Invalid staff ID');
+        return;
+      }
+
+      const staffData = await staffAPI.getStaffById(params.id);
+      setStaff(staffData);
     } catch (error) {
       console.error('Error loading staff member:', error);
+      setError(error instanceof Error ? error.message : 'Failed to load staff member');
     } finally {
       setLoading(false);
     }
   };
 
   const handleEdit = () => {
-    // Navigate to edit page
-    router.push(`/admin/staff/edit/${params.id}`);
+    if (params?.id) {
+      router.push(`/admin/staff/staff/edit/${params.id}`);
+    }
   };
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (confirm('Are you sure you want to delete this staff member?')) {
-      // Delete staff member
-      console.log('Delete staff member:', params.id);
+      try {
+        if (params?.id) {
+          await staffAPI.deleteStaff(params.id);
+          router.push('/admin/staff');
+        }
+      } catch (error) {
+        console.error('Error deleting staff member:', error);
+        setError('Failed to delete staff member');
+      }
     }
   };
 
@@ -86,6 +68,22 @@ export default function StaffDetailPage() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading staff member...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-red-500 text-6xl mb-4">⚠️</div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Error Loading Staff Member</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <Button onClick={() => router.back()}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Go Back
+          </Button>
         </div>
       </div>
     );
@@ -123,9 +121,9 @@ export default function StaffDetailPage() {
               </Button>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">
-                  {staff.firstName} {staff.lastName}
+                  {staff.fullName}
                 </h1>
-                <p className="text-gray-600">{staff.position}</p>
+                <p className="text-gray-600">{staff.jobRole}</p>
               </div>
             </div>
             <div className="flex space-x-2">
@@ -156,12 +154,12 @@ export default function StaffDetailPage() {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-sm font-medium text-gray-500">First Name</label>
-                    <p className="text-gray-900">{staff.firstName}</p>
+                    <label className="text-sm font-medium text-gray-500">Full Name</label>
+                    <p className="text-gray-900">{staff.fullName}</p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-gray-500">Last Name</label>
-                    <p className="text-gray-900">{staff.lastName}</p>
+                    <label className="text-sm font-medium text-gray-500">Employee ID</label>
+                    <p className="text-gray-900">{staff.employeeId}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-500">Email</label>
@@ -178,12 +176,28 @@ export default function StaffDetailPage() {
                     </p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-gray-500">Position</label>
-                    <p className="text-gray-900">{staff.position}</p>
+                    <label className="text-sm font-medium text-gray-500">Job Role</label>
+                    <p className="text-gray-900">{staff.jobRole}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-500">Department</label>
-                    <p className="text-gray-900">{staff.department}</p>
+                    <p className="text-gray-900">{staff.department || 'Not specified'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Date of Birth</label>
+                    <p className="text-gray-900">{staff.dob ? new Date(staff.dob).toLocaleDateString() : 'Not specified'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Gender</label>
+                    <p className="text-gray-900">{staff.gender || 'Not specified'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">NIC/Passport</label>
+                    <p className="text-gray-900">{staff.nicPassport || 'Not specified'}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Address</label>
+                    <p className="text-gray-900">{staff.address || 'Not specified'}</p>
                   </div>
                 </div>
               </CardContent>
@@ -199,49 +213,64 @@ export default function StaffDetailPage() {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-sm font-medium text-gray-500">Hire Date</label>
-                    <p className="text-gray-900">{new Date(staff.hireDate).toLocaleDateString()}</p>
+                    <label className="text-sm font-medium text-gray-500">Join Date</label>
+                    <p className="text-gray-900">{staff.joinDate ? new Date(staff.joinDate).toLocaleDateString() : 'Not specified'}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-500">Status</label>
                     <div>
-                      <Badge variant={staff.status === 'active' ? 'default' : 'secondary'}>
-                        {staff.status}
+                      <Badge variant={staff.isActive ? 'default' : 'secondary'}>
+                        {staff.isActive ? 'Active' : 'Inactive'}
                       </Badge>
                     </div>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-500">Salary</label>
-                    <p className="text-gray-900">${staff.salary.toLocaleString()}</p>
+                    <p className="text-gray-900">Rs. {staff.salary?.toLocaleString() || 'Not specified'}</p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-gray-500">Address</label>
-                    <p className="text-gray-900">{staff.address}</p>
+                    <label className="text-sm font-medium text-gray-500">Overtime Rate</label>
+                    <p className="text-gray-900">Rs. {staff.overtimeRate?.toLocaleString() || 'Not specified'} per hour</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          {/* Emergency Contact */}
+          {/* Banking Information */}
           <div className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Emergency Contact</CardTitle>
+                <CardTitle>Banking Information</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <label className="text-sm font-medium text-gray-500">Name</label>
-                  <p className="text-gray-900">{staff.emergencyContact.name}</p>
+                  <label className="text-sm font-medium text-gray-500">Bank Account Number</label>
+                  <p className="text-gray-900">{staff.bankAccount || 'Not provided'}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-500">Phone</label>
-                  <p className="text-gray-900">{staff.emergencyContact.phone}</p>
+                  <label className="text-sm font-medium text-gray-500">Bank Name</label>
+                  <p className="text-gray-900">{staff.bankName || 'Not provided'}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-gray-500">Relationship</label>
-                  <p className="text-gray-900">{staff.emergencyContact.relationship}</p>
+                  <label className="text-sm font-medium text-gray-500">Branch</label>
+                  <p className="text-gray-900">{staff.branch || 'Not provided'}</p>
                 </div>
+                {staff.profilePic && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Profile Picture</label>
+                    <div className="mt-2">
+                      <img 
+                        src={staff.profilePic} 
+                        alt={staff.fullName}
+                        className="w-32 h-32 rounded-lg object-cover border"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
