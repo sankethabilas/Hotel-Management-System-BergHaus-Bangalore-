@@ -45,6 +45,7 @@ interface Order {
     email: string;
     phone: string;
     roomNumber?: string;
+    specialInstructions?: string;
   };
   items: OrderItem[];
   subtotal: number;
@@ -79,7 +80,9 @@ const StaffOrderManagement: React.FC = () => {
       const data = await response.json();
       
       if (data.success && data.data) {
-        setOrders(data.data);
+        // Filter out cancelled orders - they should disappear when customers cancel
+        const activeOrders = data.data.filter((order: Order) => order.status !== 'cancelled');
+        setOrders(activeOrders);
       } else {
         setError('Failed to load orders');
       }
@@ -263,6 +266,22 @@ const StaffOrderManagement: React.FC = () => {
                           Rs. {order.subtotal.toFixed(2)} + Rs. {order.tax.toFixed(2)} tax + Rs. {order.serviceCharge.toFixed(2)} service
                         </div>
                       </div>
+                      
+                      {/* Customer Message */}
+                      {order.customerInfo.specialInstructions && (
+                        <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-xs">
+                          <div className="font-medium text-blue-700 mb-1">💬 Customer Message:</div>
+                          <div className="text-blue-600 italic">"{order.customerInfo.specialInstructions}"</div>
+                        </div>
+                      )}
+                      
+                      {/* Staff Notes */}
+                      {order.notes && (
+                        <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs">
+                          <div className="font-medium text-yellow-700 mb-1">📝 Staff Notes:</div>
+                          <div className="text-yellow-600">{order.notes}</div>
+                        </div>
+                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
@@ -288,7 +307,6 @@ const StaffOrderManagement: React.FC = () => {
                         <option value="ready">🍽️ Ready</option>
                         <option value="delivered">🚚 Delivered</option>
                         <option value="completed">✅ Completed</option>
-                        <option value="cancelled">❌ Cancelled</option>
                       </select>
                     </td>
                   </tr>
