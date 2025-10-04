@@ -97,7 +97,7 @@ const StaffOrderManagement: React.FC = () => {
   const updateOrderStatus = async (orderId: string, status: string) => {
     try {
       const response = await fetch(`http://localhost:5000/api/orders/${orderId}/status`, {
-        method: 'PUT',
+        method: 'PATCH',
         headers: {
           'Content-Type': 'application/json'
         },
