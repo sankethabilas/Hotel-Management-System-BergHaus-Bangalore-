@@ -4,9 +4,60 @@ import Link from 'next/link';
 import Header from '@/components/layout/Header';
 import BannerSlideshow from '@/components/BannerSlideshow';
 import Footer from '@/components/footer';
+import Masonry from '@/components/Masonry';
 import { ShoppingCart, Clock, Star, Utensils } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { formatCurrency } from '@/utils/currency';
+
+interface MenuItem {
+  _id: string;
+  name: string;
+  description: string;
+  price: number;
+  category: string;
+  image?: string;
+  isAvailable: boolean;
+  isPopular: boolean;
+}
 
 export default function HomePage() {
+  const [featuredItems, setFeaturedItems] = useState<MenuItem[]>([]);
+  const [isLoadingItems, setIsLoadingItems] = useState(true);
+
+  useEffect(() => {
+    const fetchFeaturedItems = async () => {
+      try {
+        setIsLoadingItems(true);
+        const response = await fetch('http://localhost:5000/api/menu');
+        const data = await response.json();
+        
+        if (data.success && data.data) {
+          // Get featured items (popular or first 12 available items)
+          const featured = data.data
+            .filter((item: MenuItem) => item.isAvailable)
+            .slice(0, 12); // Show first 12 items
+          setFeaturedItems(featured);
+        }
+      } catch (error) {
+        console.error('Error fetching menu items:', error);
+      } finally {
+        setIsLoadingItems(false);
+      }
+    };
+
+    fetchFeaturedItems();
+  }, []);
+
+  // Convert menu items to masonry format
+  const masonryItems = featuredItems.map((item, index) => ({
+    id: item._id,
+    img: item.image ? `http://localhost:5000${item.image}` : '/placeholder-food.jpg',
+    url: `/guest/menu/${item._id}`,
+    height: 300 + (index % 3) * 100, // Varied heights for masonry effect
+    title: item.name,
+    price: formatCurrency(item.price)
+  }));
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-amber-50">
       <Header />
@@ -58,6 +109,47 @@ export default function HomePage() {
 
       {/* Banner Slideshow Section - Full Width */}
       <BannerSlideshow />
+
+      {/* Featured Food Items Section */}
+      <section className="py-20 bg-white">
+        <div className="container mx-auto px-6">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-gray-800 mb-4">Featured Dishes</h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Discover our most popular dishes crafted with love and the finest ingredients
+            </p>
+          </div>
+
+          {isLoadingItems ? (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading delicious dishes...</p>
+            </div>
+          ) : featuredItems.length > 0 ? (
+            <div className="mb-12">
+              <Masonry
+                items={masonryItems}
+                ease="power3.out"
+                duration={0.6}
+                stagger={0.05}
+                animateFrom="bottom"
+                scaleOnHover={true}
+                hoverScale={1.05}
+                blurToFocus={true}
+                colorShiftOnHover={false}
+              />
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <div className="text-6xl mb-4">🍽️</div>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No dishes available yet</h3>
+              <p className="text-gray-500">Our chefs are preparing something amazing for you!</p>
+            </div>
+          )}
+
+
+        </div>
+      </section>
 
       {/* Features Section Continued */}
       <section className="py-20">
