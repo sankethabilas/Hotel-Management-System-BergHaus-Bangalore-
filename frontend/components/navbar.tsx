@@ -120,7 +120,7 @@ export default function Navbar({ className }: NavbarProps) {
               href="/contact" 
               className="text-sm text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary transition-colors duration-200 font-medium"
             >
-              Contact
+              Contact Us
             </Link>
             {isAuthenticated ? (
               <Link 
@@ -268,7 +268,7 @@ export default function Navbar({ className }: NavbarProps) {
                 className="block px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary hover:bg-gray-50 dark:hover:bg-gray-600 rounded-md transition-colors duration-200"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Contact
+                Contact Us
               </Link>
               {isAuthenticated ? (
                 <Link
