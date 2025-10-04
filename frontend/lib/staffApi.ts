@@ -1,4 +1,5 @@
 import { Staff, StaffFormData, ApiResponse } from '@/types/staff';
+import { safeJsonParse, getErrorMessage } from './safeJsonParse';
 
 const API_BASE_URL = 'http://localhost:5000/api/staff';
 
@@ -35,13 +36,8 @@ class StaffAPI {
       const response = await fetch(url, config);
       
       if (!response.ok) {
-        let errorData;
-        try {
-          errorData = await response.json();
-          console.error('API Error Response:', errorData);
-        } catch {
-          errorData = { message: `HTTP error! status: ${response.status}` };
-        }
+        const errorData = await safeJsonParse(response);
+        console.error('API Error Response:', errorData);
         
         // Handle validation errors specifically
         if (errorData.errors && Array.isArray(errorData.errors)) {
@@ -49,21 +45,12 @@ class StaffAPI {
           throw new Error(`Validation failed: ${validationErrors}`);
         }
         
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        throw new Error(getErrorMessage(errorData) || `HTTP error! status: ${response.status}`);
       }
 
-      // Handle empty responses
-      const text = await response.text();
-      if (!text) {
-        return {} as T;
-      }
-      
-      try {
-        return JSON.parse(text);
-      } catch (parseError) {
-        console.error('JSON parse error:', parseError, 'Response text:', text);
-        throw new Error('Invalid JSON response from server');
-      }
+      // Parse response safely
+      const data = await safeJsonParse(response);
+      return data as T;
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
         throw new Error('Request timeout - server took too long to respond');

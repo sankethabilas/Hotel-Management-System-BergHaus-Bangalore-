@@ -11,6 +11,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { getSessionData, getAutoFillSuggestions } from '@/lib/sessionUtils';
+import { safeJsonParse, getErrorMessage } from '@/lib/safeJsonParse';
 import { 
   Star, 
   Smile, 
@@ -392,7 +393,7 @@ export default function FeedbackPage() {
         })
       });
 
-      const data = await response.json();
+      const data = await safeJsonParse(response);
 
       if (data.success) {
         setIsSubmitted(true);
@@ -425,7 +426,7 @@ export default function FeedbackPage() {
           setImages([]);
         }, 3000);
       } else {
-        throw new Error(data.message || 'Failed to submit feedback');
+        throw new Error(getErrorMessage(data) || 'Failed to submit feedback');
       }
     } catch (error: any) {
       console.error('Error submitting feedback:', error);

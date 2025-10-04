@@ -1,3 +1,5 @@
+import { safeJsonParse, getErrorMessage } from './safeJsonParse';
+
 const API_BASE_URL = 'http://localhost:5000/api/payments';
 
 export interface Payment {
@@ -101,27 +103,13 @@ class PaymentAPI {
       const response = await fetch(`${API_BASE_URL}${url}`, config);
       
       if (!response.ok) {
-        let errorData;
-        try {
-          errorData = await response.json();
-        } catch {
-          errorData = { message: `HTTP error! status: ${response.status}` };
-        }
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        const errorData = await safeJsonParse(response);
+        throw new Error(getErrorMessage(errorData) || `HTTP error! status: ${response.status}`);
       }
 
-      // Handle empty responses
-      const text = await response.text();
-      if (!text) {
-        return {};
-      }
-      
-      try {
-        return JSON.parse(text);
-      } catch (parseError) {
-        console.error('JSON parse error:', parseError, 'Response text:', text);
-        throw new Error('Invalid JSON response from server');
-      }
+      // Parse response safely
+      const data = await safeJsonParse(response);
+      return data;
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
         throw new Error('Request timeout - server took too long to respond');
