@@ -54,99 +54,166 @@ const generatePDFContent = (doc, bill) => {
   const total = pricing?.total || 0;
   
   const date = bill?.generatedAt || bill?.createdAt || new Date();
-  const formattedDate = new Date(date).toLocaleDateString();
-  const formattedTime = new Date(date).toLocaleTimeString();
+  const formattedDate = new Date(date).toLocaleDateString('en-GB');
+  const formattedTime = new Date(date).toLocaleTimeString('en-GB', { hour12: true });
 
-  // Header
-  doc.fontSize(24)
-     .fillColor('#2563eb')
-     .text('BERGHAUS HOTEL', 50, 50, { align: 'center' });
+  // Header - Hotel Name and Address
+  doc.fontSize(16)
+     .fillColor('#000')
+     .text('BERGHAUS BUNGALOW', 50, 50, { align: 'center' });
   
-  doc.fontSize(14)
-     .fillColor('#555')
-     .text('Food & Beverage Bill', 50, 80, { align: 'center' });
+  doc.fontSize(10)
+     .text('80/2 Netherville place, Demodara, Sri Lanka', 50, 70, { align: 'center' })
+     .text('888 - 888 (8888)', 50, 85, { align: 'center' });
+  
+  // Horizontal line
+  doc.moveTo(50, 110).lineTo(545, 110).stroke();
+  
+  // Date and Time
+  doc.fontSize(10)
+     .text(formattedDate, 50, 125)
+     .text(formattedTime, 400, 125);
   
   // Bill details
-  doc.fontSize(12)
-     .fillColor('#000')
-     .text(`Bill No: ${billNumber}`, 50, 120)
-     .text(`Order No: ${orderNumber}`, 50, 140)
-     .text(`Date: ${formattedDate}`, 50, 160)
-     .text(`Time: ${formattedTime}`, 50, 180);
+  doc.text(`CHECK: ${billNumber}`, 50, 145)
+     .text(`GUEST: ${customerName.substring(0, 2).toUpperCase()}`, 400, 145);
   
-  // Customer information
-  doc.text(`Customer: ${customerName}`, 300, 120)
-     .text(`Room: ${roomNumber}`, 300, 140)
-     .text(`Phone: ${phone}`, 300, 160)
-     .text(`Email: ${email}`, 300, 180);
+  // Horizontal line
+  doc.moveTo(50, 165).lineTo(545, 165).stroke();
   
-  // Items table header
-  let yPosition = 220;
-  doc.fontSize(10)
-     .fillColor('#000')
-     .text('Item', 50, yPosition)
-     .text('Qty', 300, yPosition)
-     .text('Unit Price', 350, yPosition)
-     .text('Total', 450, yPosition);
+  let yPosition = 180;
   
-  // Draw line under header
-  yPosition += 15;
-  doc.moveTo(50, yPosition).lineTo(550, yPosition).stroke();
-  yPosition += 10;
-  
-  // Items
+  // Items with proper formatting like the reference
   if (items && items.length > 0) {
-    items.forEach(item => {
-      const name = item?.name || 'Unknown Item';
+    items.forEach((item, index) => {
+      const name = (item?.name || 'Unknown Item').toUpperCase();
       const quantity = item?.quantity || 1;
       const unitPrice = item?.unitPrice || 0;
       const totalPrice = item?.totalPrice || 0;
       
-      doc.text(name, 50, yPosition)
-         .text(quantity.toString(), 300, yPosition)
-         .text(`Rs. ${unitPrice.toFixed(2)}`, 350, yPosition)
-         .text(`Rs. ${totalPrice.toFixed(2)}`, 450, yPosition);
+      // Item number and name
+      doc.fontSize(10)
+         .text(`${index + 1}`, 50, yPosition)
+         .text(name, 70, yPosition);
       
-      yPosition += 20;
+      // Price aligned to right
+      doc.text(`Rs.${totalPrice.toFixed(2)}`, 450, yPosition, { align: 'right' });
+      
+      yPosition += 15;
+      
+      // Add customizations/extras if any (like "EXTRA SPICES" in reference)
+      if (item.customization && (item.customization.modifications?.length > 0 || item.customization.specialInstructions)) {
+        const extras = [];
+        if (item.customization.modifications) {
+          extras.push(...item.customization.modifications);
+        }
+        if (item.customization.specialInstructions) {
+          extras.push(item.customization.specialInstructions);
+        }
+        
+        extras.forEach(extra => {
+          doc.fontSize(9)
+             .text(`    ${extra.toUpperCase()}`, 70, yPosition)
+             .text(`Rs.0.00`, 450, yPosition, { align: 'right' });
+          yPosition += 12;
+        });
+      }
+      
+      // Quantity and unit price details
+      if (quantity > 1) {
+        doc.fontSize(9)
+           .text(`    QTY: ${quantity} x Rs.${unitPrice.toFixed(2)}`, 70, yPosition);
+        yPosition += 12;
+      }
     });
-  } else {
-    doc.text('No items found', 50, yPosition);
-    yPosition += 20;
   }
   
-  // Totals section
-  yPosition += 20;
-  doc.text(`Subtotal: Rs. ${subtotal.toFixed(2)}`, 350, yPosition);
-  yPosition += 20;
-  doc.text(`Service Charge: Rs. ${serviceCharge.toFixed(2)}`, 350, yPosition);
-  yPosition += 20;
-  doc.text(`VAT: Rs. ${vat.toFixed(2)}`, 350, yPosition);
+  yPosition += 10;
+  
+  // Horizontal line before totals
+  doc.moveTo(50, yPosition).lineTo(545, yPosition).stroke();
+  yPosition += 15;
+  
+  // Totals section (right aligned like reference)
+  doc.fontSize(10);
+  
+  doc.text('Subtotal', 350, yPosition)
+     .text(`Rs.${subtotal.toFixed(2)}`, 450, yPosition, { align: 'right' });
+  yPosition += 15;
+  
+  if (serviceCharge > 0) {
+    doc.text('Service Charge', 350, yPosition)
+       .text(`Rs.${serviceCharge.toFixed(2)}`, 450, yPosition, { align: 'right' });
+    yPosition += 15;
+  }
+  
+  doc.text('Tax', 350, yPosition)
+     .text(`Rs.${vat.toFixed(2)}`, 450, yPosition, { align: 'right' });
+  yPosition += 15;
   
   if (discount > 0) {
-    yPosition += 20;
-    doc.text(`Discount: -Rs. ${discount.toFixed(2)}`, 350, yPosition);
+    doc.text('Discount', 350, yPosition)
+       .text(`-Rs.${discount.toFixed(2)}`, 450, yPosition, { align: 'right' });
+    yPosition += 15;
   }
   
-  yPosition += 20;
-  doc.fontSize(14)
-     .fillColor('#000')
-     .text(`TOTAL: Rs. ${total.toFixed(2)}`, 350, yPosition);
+  doc.fontSize(12)
+     .text('Total', 350, yPosition)
+     .text(`Rs.${total.toFixed(2)}`, 450, yPosition, { align: 'right' });
+  
+  yPosition += 25;
+  
+  // Payment details
+  doc.fontSize(10)
+     .text(`PAYMENT ID: ${orderNumber}`, 50, yPosition);
+  yPosition += 15;
+  
+  doc.text(`AUTHORIZATION: ${paymentMethod.toUpperCase()}`, 50, yPosition);
+  yPosition += 15;
+  
+  doc.text(`APPROVAL CODE: ${status.toUpperCase()}`, 50, yPosition);
+  yPosition += 15;
+  
+  doc.text(`CARD READER: ${paymentMethod.includes('card') ? 'CHIP/CONTACTLESS' : 'CASH'}`, 50, yPosition);
+  yPosition += 30;
+  
+  // Suggested gratuity section
+  doc.fontSize(10)
+     .text('SUGGESTED GRATUITY:', 50, yPosition);
+  yPosition += 15;
+  
+  const tip10 = total * 0.10;
+  const tip20 = total * 0.20;
+  const total10 = total + tip10;
+  const total20 = total + tip20;
+  
+  doc.text(`[ ] 10.00% = Rs.${tip10.toFixed(2)}    TOTAL: Rs.${total10.toFixed(2)}`, 50, yPosition);
+  yPosition += 15;
+  
+  doc.text(`[ ] 20.00% = Rs.${tip20.toFixed(2)}    TOTAL: Rs.${total20.toFixed(2)}`, 50, yPosition);
+  yPosition += 15;
+  
+  doc.text('[ ] Rs.__________    TOTAL: Rs.__________', 50, yPosition);
+  yPosition += 25;
+  
+  // Signature line
+  doc.text('X:________________________________', 50, yPosition);
+  yPosition += 10;
+  doc.fontSize(8)
+     .text('SIGNATURE', 200, yPosition);
   
   yPosition += 30;
-  doc.fontSize(12)
-     .text(`Payment Method: ${paymentMethod}`, 50, yPosition);
   
-  yPosition += 20;
-  doc.text(`Status: ${status.charAt(0).toUpperCase() + status.slice(1)}`, 50, yPosition);
-  
-  // Footer
-  yPosition += 40;
+  // Footer message
   doc.fontSize(10)
-     .fillColor('#777')
-     .text('Thank you for dining with us!', 50, yPosition, { align: 'center' });
+     .text('THANKS FOR SHOPPING WITH US', 50, yPosition, { align: 'center' });
   
-  yPosition += 20;
-  doc.text('BergHaus Hotel, Bangalore, Karnataka, India', 50, yPosition, { align: 'center' });
+  yPosition += 30;
+  
+  // Barcode placeholder (you can implement actual barcode generation if needed)
+  doc.fontSize(8)
+     .text('|||| ||| |||| ||| |||| ||| ||||', 50, yPosition, { align: 'center' })
+     .text(`${Date.now()}${billNumber}`, 50, yPosition + 15, { align: 'center' });
 };
 
 const createSimpleBillHTML = (bill) => {
@@ -194,140 +261,220 @@ const createSimpleBillHTML = (bill) => {
     <title>Bill - ${billNumber}</title>
     <style>
         body { 
-            font-family: Arial, sans-serif; 
+            font-family: 'Courier New', monospace; 
             margin: 0; 
             padding: 20px; 
-            font-size: 12px; 
-            color: #333; 
+            font-size: 10px; 
+            color: #000; 
             background: white;
+            line-height: 1.2;
         }
         .container { 
             width: 100%; 
-            max-width: 800px; 
+            max-width: 400px; 
             margin: 0 auto; 
-            border: 1px solid #eee; 
-            padding: 30px; 
+            border: none; 
+            padding: 10px; 
         }
         .header { 
             text-align: center; 
-            margin-bottom: 30px; 
-            border-bottom: 2px solid #2563eb;
-            padding-bottom: 20px;
+            margin-bottom: 15px; 
+            border-bottom: 1px solid #000;
+            padding-bottom: 10px;
         }
         .header h1 { 
             margin: 0; 
-            color: #2563eb; 
-            font-size: 24px; 
-        }
-        .header p { 
-            margin: 5px 0 0; 
+            color: #000; 
             font-size: 14px; 
-            color: #555; 
+            font-weight: bold;
         }
-        .bill-details, .customer-info, .totals { 
-            margin-bottom: 20px; 
-            border-top: 1px dashed #eee; 
-            padding-top: 15px; 
+        .header .address { 
+            margin: 3px 0; 
+            font-size: 9px; 
         }
-        .bill-details div, .customer-info div { 
-            margin-bottom: 5px; 
+        .date-time {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            font-size: 9px;
+            border-bottom: 1px solid #000;
+            padding-bottom: 5px;
         }
-        .bill-details strong, .customer-info strong { 
-            display: inline-block; 
-            width: 120px; 
+        .check-guest {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            font-size: 9px;
         }
-        .table-container { 
-            margin-bottom: 20px; 
+        .items {
+            margin: 15px 0;
+            font-size: 9px;
         }
-        table { 
-            width: 100%; 
-            border-collapse: collapse; 
+        .item-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
         }
-        th, td { 
-            padding: 10px; 
-            border: 1px solid #eee; 
-            text-align: left; 
+        .item-number {
+            width: 20px;
         }
-        th { 
-            background-color: #f8f8f8; 
-            font-weight: bold; 
+        .item-name {
+            flex: 1;
+            padding-left: 10px;
         }
-        .text-right { 
-            text-align: right; 
+        .item-price {
+            text-align: right;
+            min-width: 60px;
         }
-        .total-row { 
-            background-color: #e6f2ff; 
-            font-weight: bold; 
+        .item-extra {
+            padding-left: 30px;
+            font-size: 8px;
+            margin: 2px 0;
         }
-        .footer { 
-            text-align: center; 
-            margin-top: 30px; 
-            font-size: 10px; 
-            color: #777; 
+        .totals {
+            border-top: 1px solid #000;
+            padding-top: 10px;
+            margin-top: 15px;
         }
-        .status { 
-            display: inline-block; 
-            padding: 5px 10px; 
-            border-radius: 5px; 
-            font-weight: bold; 
-            color: white; 
-            background-color: #007bff;
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 5px 0;
+            font-size: 9px;
         }
-        .status.paid { background-color: #28a745; }
-        .status.refunded { background-color: #ffc107; color: #333; }
-        .status.cancelled { background-color: #dc3545; }
+        .final-total {
+            font-weight: bold;
+            font-size: 10px;
+            border-top: 1px solid #000;
+            padding-top: 5px;
+            margin-top: 5px;
+        }
+        .payment-details {
+            margin: 15px 0;
+            font-size: 8px;
+        }
+        .gratuity {
+            margin: 15px 0;
+            font-size: 8px;
+        }
+        .signature {
+            margin: 20px 0;
+            text-align: center;
+            font-size: 8px;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 9px;
+            border-top: 1px solid #000;
+            padding-top: 10px;
+        }
+        .barcode {
+            text-align: center;
+            margin-top: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            letter-spacing: 2px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>BERGHAUS HOTEL</h1>
-            <p>Food & Beverage Bill</p>
+            <h1>BERGHAUS BUNGALOW</h1>
+            <div class="address">80/2 Netherville place, Demodara, Sri Lanka</div>
+            <div class="address">888 - 888 (8888)</div>
         </div>
 
-        <div class="bill-details">
-            <div><strong>Bill No:</strong> ${billNumber}</div>
-            <div><strong>Order No:</strong> ${orderNumber}</div>
-            <div><strong>Date:</strong> ${formattedDate}</div>
-            <div><strong>Time:</strong> ${formattedTime}</div>
+        <div class="date-time">
+            <span>${formattedDate}</span>
+            <span>${formattedTime}</span>
         </div>
 
-        <div class="customer-info">
-            <div><strong>Customer:</strong> ${customerName}</div>
-            <div><strong>Room:</strong> ${roomNumber}</div>
-            <div><strong>Phone:</strong> ${phone}</div>
-            <div><strong>Email:</strong> ${email}</div>
+        <div class="check-guest">
+            <span>CHECK: ${billNumber}</span>
+            <span>GUEST: ${customerName.substring(0, 2).toUpperCase()}</span>
         </div>
 
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Item</th>
-                        <th style="text-align: right;">Qty</th>
-                        <th style="text-align: right;">Unit Price</th>
-                        <th style="text-align: right;">Total</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${itemsHTML}
-                </tbody>
-            </table>
+        <div class="items">
+            ${items && items.length > 0 ? items.map((item, index) => {
+              let itemHTML = `
+                <div class="item-row">
+                  <span class="item-number">${index + 1}</span>
+                  <span class="item-name">${(item?.name || 'Unknown Item').toUpperCase()}</span>
+                  <span class="item-price">Rs.${(item?.totalPrice || 0).toFixed(2)}</span>
+                </div>
+              `;
+              
+              // Add extras/customizations
+              if (item.customization) {
+                if (item.customization.modifications?.length > 0) {
+                  item.customization.modifications.forEach(mod => {
+                    itemHTML += `<div class="item-extra">${mod.toUpperCase()}</div>`;
+                  });
+                }
+                if (item.customization.specialInstructions) {
+                  itemHTML += `<div class="item-extra">${item.customization.specialInstructions.toUpperCase()}</div>`;
+                }
+              }
+              
+              return itemHTML;
+            }).join('') : '<div>No items found</div>'}
         </div>
 
         <div class="totals">
-            <div><strong>Subtotal:</strong> <span style="float: right;">Rs. ${subtotal.toFixed(2)}</span></div>
-            <div><strong>Service Charge:</strong> <span style="float: right;">Rs. ${serviceCharge.toFixed(2)}</span></div>
-            <div><strong>VAT:</strong> <span style="float: right;">Rs. ${vat.toFixed(2)}</span></div>
-            ${discount > 0 ? `<div><strong>Discount:</strong> <span style="float: right;">- Rs. ${discount.toFixed(2)}</span></div>` : ''}
-            <div class="total-row"><strong>TOTAL:</strong> <span style="float: right;">Rs. ${total.toFixed(2)}</span></div>
-            <div><strong>Payment Method:</strong> ${paymentMethod}</div>
-            <div><strong>Status:</strong> <span class="status ${status}">${status.charAt(0).toUpperCase() + status.slice(1)}</span></div>
+            <div class="total-row">
+                <span>Subtotal</span>
+                <span>Rs.${subtotal.toFixed(2)}</span>
+            </div>
+            ${serviceCharge > 0 ? `
+            <div class="total-row">
+                <span>Service Charge</span>
+                <span>Rs.${serviceCharge.toFixed(2)}</span>
+            </div>
+            ` : ''}
+            <div class="total-row">
+                <span>Tax</span>
+                <span>Rs.${vat.toFixed(2)}</span>
+            </div>
+            ${discount > 0 ? `
+            <div class="total-row">
+                <span>Discount</span>
+                <span>-Rs.${discount.toFixed(2)}</span>
+            </div>
+            ` : ''}
+            <div class="total-row final-total">
+                <span>Total</span>
+                <span>Rs.${total.toFixed(2)}</span>
+            </div>
+        </div>
+
+        <div class="payment-details">
+            <div>PAYMENT ID: ${orderNumber}</div>
+            <div>AUTHORIZATION: ${paymentMethod.toUpperCase()}</div>
+            <div>APPROVAL CODE: ${status.toUpperCase()}</div>
+            <div>CARD READER: ${paymentMethod.includes('card') ? 'CHIP/CONTACTLESS' : 'CASH'}</div>
+        </div>
+
+        <div class="gratuity">
+            <div style="margin-bottom: 5px;">SUGGESTED GRATUITY:</div>
+            <div>[ ] 10.00% = Rs.${(total * 0.10).toFixed(2)}    TOTAL: Rs.${(total * 1.10).toFixed(2)}</div>
+            <div>[ ] 20.00% = Rs.${(total * 0.20).toFixed(2)}    TOTAL: Rs.${(total * 1.20).toFixed(2)}</div>
+            <div>[ ] Rs.__________    TOTAL: Rs.__________</div>
+        </div>
+
+        <div class="signature">
+            <div>X:_______________________________</div>
+            <div style="margin-top: 5px;">SIGNATURE</div>
         </div>
 
         <div class="footer">
-            <p>Thank you for dining with us!</p>
-            <p>BergHaus Hotel, Bangalore, Karnataka, India</p>
+            <div>THANKS FOR SHOPPING WITH US</div>
+        </div>
+
+        <div class="barcode">
+            <div>|||| ||| |||| ||| |||| ||| ||||</div>
+            <div style="font-size: 8px; margin-top: 5px;">${Date.now()}${billNumber}</div>
         </div>
     </div>
 </body>

@@ -118,37 +118,7 @@ const StaffOrderManagement: React.FC = () => {
     }
   };
 
-  const generateBill = async (orderId: string) => {
-    try {
-      const response = await fetch(`http://localhost:5000/api/bills/generate/${orderId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          serviceChargePercentage: 10,
-          vatPercentage: 15,
-          discount: 0,
-          discountReason: '',
-          notes: ''
-        })
-      });
 
-      const data = await response.json();
-      
-      if (data.success) {
-        setSuccess(`Bill ${data.data.billNumber} generated successfully!`);
-        setTimeout(() => setSuccess(''), 3000);
-      } else {
-        setError(data.message || 'Failed to generate bill');
-        setTimeout(() => setError(''), 3000);
-      }
-    } catch (error: any) {
-      console.error('Error generating bill:', error);
-      setError('Failed to generate bill');
-      setTimeout(() => setError(''), 3000);
-    }
-  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -306,7 +276,7 @@ const StaffOrderManagement: React.FC = () => {
                         <div className="text-xs">{new Date(order.createdAt).toLocaleTimeString()}</div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <select
                         value={order.status}
                         onChange={(e) => updateOrderStatus(order._id, e.target.value)}
@@ -320,13 +290,6 @@ const StaffOrderManagement: React.FC = () => {
                         <option value="completed">✅ Completed</option>
                         <option value="cancelled">❌ Cancelled</option>
                       </select>
-                      <button
-                        onClick={() => generateBill(order._id)}
-                        className="bg-green-600 text-white px-3 py-1 rounded-md hover:bg-green-700 text-sm"
-                        title="Generate Bill"
-                      >
-                        📄 Bill
-                      </button>
                     </td>
                   </tr>
                 ))}

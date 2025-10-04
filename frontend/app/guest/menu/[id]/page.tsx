@@ -28,58 +28,20 @@ export default function MenuItemDetailPage() {
       setLoading(true);
       setError(null);
       
-      // In a real app, this would fetch from the API
-      // For now, we'll use mock data
-      const mockItem: MenuItem = {
-        _id: params.id as string,
-        name: 'Grilled Chicken with Herbs',
-        description: 'Tender grilled chicken breast marinated with fresh herbs and spices, served with seasonal vegetables and your choice of side.',
-        price: 18.99,
-        category: 'dinner',
-        mealType: 'dinner',
-        availableHours: {
-          start: '17:00',
-          end: '22:00'
-        },
-        image: '/menu/chicken.jpg',
-        isAvailable: true,
-        ingredients: ['Chicken breast', 'Fresh herbs', 'Olive oil', 'Garlic', 'Lemon'],
-        allergens: ['None'],
-        isVegetarian: false,
-        isVegan: false,
-        isGlutenFree: true,
-        spiceLevel: 'mild',
-        preparationTime: 25,
-        calories: 350,
-        isPopular: true,
-        discount: 0,
-        tags: ['healthy', 'protein', 'grilled'],
-        createdBy: 'admin',
-        dietaryInfo: {
-          vegetarian: false,
-          vegan: false,
-          glutenFree: true,
-          nutFree: true,
-          dairyFree: true,
-          halal: false,
-          kosher: false
-        },
-        customizationOptions: {
-          allowPortionSize: true,
-          allowModifications: true,
-          allowSpecialInstructions: true,
-          commonModifications: ['Extra spicy', 'No salt', 'Well done', 'Medium rare']
-        },
-        portionPricing: {
-          small: -3,
-          regular: 0,
-          large: 4
-        },
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
+      // Fetch the actual menu item from the API
+      const response = await fetch(`http://localhost:5000/api/menu/${params.id}`);
       
-      setMenuItem(mockItem);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch menu item: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.success && data.data) {
+        setMenuItem(data.data);
+      } else {
+        throw new Error('Menu item not found');
+      }
     } catch (err) {
       console.error('Error loading menu item:', err);
       setError('Failed to load menu item. Please try again later.');

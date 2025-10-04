@@ -87,9 +87,9 @@ export default function GuestOrdersPage() {
       
       if (data.success) {
         // Handle orders with null menuItem by providing fallback data
-        const validOrders = (data.data || []).map(order => ({
+        const validOrders = (data.data || []).map((order: any) => ({
           ...order,
-          items: order.items.map(item => {
+          items: order.items.map((item: any) => {
             if (!item.menuItem) {
               console.warn('Order item with null menuItem found:', item);
               // Provide fallback data for null menuItem
@@ -145,7 +145,7 @@ export default function GuestOrdersPage() {
       if (data.success) {
         // Refresh orders
         fetchOrders();
-        alert('Order cancelled successfully!');
+        alert('Order cancelled successfully! The cancelled order has been removed from your list.');
       } else {
         alert(data.message || 'Failed to cancel order');
       }
@@ -232,7 +232,10 @@ export default function GuestOrdersPage() {
     
     const matchesFilter = filterStatus === 'all' || order.status === filterStatus;
     
-    return matchesSearch && matchesFilter;
+    // Hide cancelled orders by default unless user specifically filters for them
+    const isNotCancelledOrSpecificallyFiltered = order.status !== 'cancelled' || filterStatus === 'cancelled';
+    
+    return matchesSearch && matchesFilter && isNotCancelledOrSpecificallyFiltered;
   });
 
   const canCancelOrder = (status: string) => {

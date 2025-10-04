@@ -396,27 +396,66 @@ const StaffMenuManagement: React.FC = () => {
               )}
             </div>
 
-            <div className="flex items-center space-x-4">
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  name="isAvailable"
-                  checked={formData.isAvailable}
-                  onChange={handleInputChange}
-                  className="mr-2"
-                />
-                Available
-              </label>
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  name="isPopular"
-                  checked={formData.isPopular}
-                  onChange={handleInputChange}
-                  className="mr-2"
-                />
-                Popular
-              </label>
+            <div className="space-y-4">
+              <div className="flex items-center space-x-4">
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    name="isAvailable"
+                    checked={formData.isAvailable}
+                    onChange={handleInputChange}
+                    className="mr-2"
+                  />
+                  Available
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    name="isPopular"
+                    checked={formData.isPopular}
+                    onChange={handleInputChange}
+                    className="mr-2"
+                  />
+                  Popular
+                </label>
+              </div>
+              
+              {/* Dietary Preferences */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Dietary Preferences</label>
+                <div className="flex items-center space-x-6">
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      name="isVegetarian"
+                      checked={formData.isVegetarian}
+                      onChange={handleInputChange}
+                      className="mr-2"
+                    />
+                    🥬 Vegetarian
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      name="isVegan"
+                      checked={formData.isVegan}
+                      onChange={handleInputChange}
+                      className="mr-2"
+                    />
+                    🌱 Vegan
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      name="isGlutenFree"
+                      checked={formData.isGlutenFree}
+                      onChange={handleInputChange}
+                      className="mr-2"
+                    />
+                    🌾 Gluten-Free
+                  </label>
+                </div>
+              </div>
             </div>
 
             <div className="flex justify-end space-x-4">
@@ -598,27 +637,66 @@ const StaffMenuManagement: React.FC = () => {
                                 </div>
                               </div>
                               
-                              <div className="flex items-center space-x-4">
-                                <label className="flex items-center">
-                                  <input
-                                    type="checkbox"
-                                    name="isAvailable"
-                                    checked={formData.isAvailable}
-                                    onChange={handleInputChange}
-                                    className="mr-2"
-                                  />
-                                  Available
-                                </label>
-                                <label className="flex items-center">
-                                  <input
-                                    type="checkbox"
-                                    name="isPopular"
-                                    checked={formData.isPopular}
-                                    onChange={handleInputChange}
-                                    className="mr-2"
-                                  />
-                                  Popular
-                                </label>
+                              <div className="space-y-4">
+                                <div className="flex items-center space-x-4">
+                                  <label className="flex items-center">
+                                    <input
+                                      type="checkbox"
+                                      name="isAvailable"
+                                      checked={formData.isAvailable}
+                                      onChange={handleInputChange}
+                                      className="mr-2"
+                                    />
+                                    Available
+                                  </label>
+                                  <label className="flex items-center">
+                                    <input
+                                      type="checkbox"
+                                      name="isPopular"
+                                      checked={formData.isPopular}
+                                      onChange={handleInputChange}
+                                      className="mr-2"
+                                    />
+                                    Popular
+                                  </label>
+                                </div>
+                                
+                                {/* Dietary Preferences */}
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700 mb-2">Dietary Preferences</label>
+                                  <div className="flex items-center space-x-6">
+                                    <label className="flex items-center">
+                                      <input
+                                        type="checkbox"
+                                        name="isVegetarian"
+                                        checked={formData.isVegetarian}
+                                        onChange={handleInputChange}
+                                        className="mr-2"
+                                      />
+                                      🥬 Vegetarian
+                                    </label>
+                                    <label className="flex items-center">
+                                      <input
+                                        type="checkbox"
+                                        name="isVegan"
+                                        checked={formData.isVegan}
+                                        onChange={handleInputChange}
+                                        className="mr-2"
+                                      />
+                                      🌱 Vegan
+                                    </label>
+                                    <label className="flex items-center">
+                                      <input
+                                        type="checkbox"
+                                        name="isGlutenFree"
+                                        checked={formData.isGlutenFree}
+                                        onChange={handleInputChange}
+                                        className="mr-2"
+                                      />
+                                      🌾 Gluten-Free
+                                    </label>
+                                  </div>
+                                </div>
                               </div>
                               
                               <div className="flex space-x-4">
