@@ -48,17 +48,17 @@ export default function PromotionAnalyticsPage() {
         
         // Calculate analytics
         const totalPromotions = promotionsData.length;
-        const activePromotions = promotionsData.filter(p => p.isActive).length;
-        const totalDiscounts = promotionsData.reduce((sum, p) => sum + p.usageCount, 0);
-        const averageDiscount = promotionsData.length > 0 
-          ? promotionsData.reduce((sum, p) => sum + p.discountPercentage, 0) / promotionsData.length 
+        const activePromotions = promotionsData.filter((p: any) => p.isActive).length;
+        const totalDiscounts = promotionsData.reduce((sum: number, p: any) => sum + p.usageCount, 0);
+        const averageDiscount = promotionsData.length > 0
+          ? promotionsData.reduce((sum: number, p: any) => sum + p.discountPercentage, 0) / promotionsData.length
           : 0;
         
         const mostUsedPromotion = promotionsData.length > 0 
-          ? promotionsData.reduce((max, p) => p.usageCount > max.usageCount ? p : max).name
+          ? promotionsData.reduce((max: any, p: any) => p.usageCount > max.usageCount ? p : max).name
           : 'None';
         
-        const revenueSaved = promotionsData.reduce((sum, p) => {
+        const revenueSaved = promotionsData.reduce((sum: number, p: any) => {
           // Estimate revenue saved based on usage count and average order value
           const estimatedOrderValue = 50; // Average order value
           const discountAmount = (estimatedOrderValue * p.discountPercentage) / 100;

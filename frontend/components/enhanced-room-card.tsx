@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -18,22 +18,26 @@ import {
   Share2,
   MapPin,
   Calendar,
-  Clock
+  Clock,
+  Camera,
+  Upload,
+  X,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { roomAPI } from '@/lib/api';
+import { getRoomImages, getRoomPrimaryImage, isFolderImage } from '@/lib/roomImageUtils';
 
 interface Room {
   id: string;
   name: string;
   description: string;
-  price: number;
-  originalPrice?: number;
   image: string;
   capacity: number;
   amenities: string[];
   rating: number;
   isPopular?: boolean;
-  discount?: number;
   images?: string[];
   location?: string;
 }
@@ -42,20 +46,71 @@ interface EnhancedRoomCardProps {
   room: Room;
   onSelect?: (room: Room) => void;
   onBook?: (room: Room) => void;
+  onImageUpdate?: (room: Room) => void;
   showBookButton?: boolean;
   showSelectButton?: boolean;
+  showImageUpload?: boolean;
+  isAdmin?: boolean;
 }
 
 export function EnhancedRoomCard({ 
   room, 
   onSelect, 
   onBook, 
+  onImageUpdate,
   showBookButton = true,
-  showSelectButton = false 
+  showSelectButton = false,
+  showImageUpload = false,
+  isAdmin = false
 }: EnhancedRoomCardProps) {
   const [isLiked, setIsLiked] = useState(false);
   const [isImageLoading, setIsImageLoading] = useState(true);
+  const [isUploading, setIsUploading] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [showNavigation, setShowNavigation] = useState(false);
   const { toast } = useToast();
+
+  // Define canNavigate early
+  const canNavigate = room.images && room.images.length > 1;
+  
+
+  // Navigation function
+  const navigateImage = useCallback((direction: 'prev' | 'next') => {
+    if (!room.images || room.images.length <= 1) return;
+    
+    if (direction === 'prev') {
+      setCurrentImageIndex(prev => 
+        prev === 0 ? room.images!.length - 1 : prev - 1
+      );
+    } else {
+      setCurrentImageIndex(prev => 
+        prev === room.images!.length - 1 ? 0 : prev + 1
+      );
+    }
+  }, [room.images, canNavigate]);
+
+  // Reset current image index when room images change
+  useEffect(() => {
+    setCurrentImageIndex(0);
+  }, [room.images]);
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!canNavigate) return;
+      
+      if (e.key === 'ArrowLeft') {
+        navigateImage('prev');
+      } else if (e.key === 'ArrowRight') {
+        navigateImage('next');
+      }
+    };
+
+    if (showNavigation) {
+      document.addEventListener('keydown', handleKeyDown);
+      return () => document.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [showNavigation, canNavigate, navigateImage]);
 
   const handleLike = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -106,19 +161,185 @@ export function EnhancedRoomCard({
     return null;
   };
 
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Clear the input so the same file can be selected again
+    event.target.value = '';
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Invalid file type",
+        description: "Please select an image file (JPEG, PNG, GIF, WebP).",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Please select an image smaller than 5MB.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setIsUploading(true);
+      console.log('Uploading image for room:', room.id, 'File:', file.name);
+      
+      const result = await roomAPI.uploadRoomImage(room.id, file);
+      console.log('Upload result:', result);
+      
+      if (result.success && onImageUpdate) {
+        onImageUpdate(result.data.room);
+        toast({
+          title: "Image Uploaded",
+          description: "Room image has been updated successfully.",
+        });
+      } else {
+        throw new Error(result.message || 'Upload failed');
+      }
+    } catch (error: any) {
+      console.error('Error uploading image:', error);
+      toast({
+        title: "Upload Failed",
+        description: error.message || "Failed to upload image. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleRemoveImage = async (imageIndex: number) => {
+    try {
+      const result = await roomAPI.removeRoomImage(room.id, imageIndex);
+      
+      if (result.success && onImageUpdate) {
+        onImageUpdate(result.data.room);
+        toast({
+          title: "Image Removed",
+          description: "Room image has been removed successfully.",
+        });
+        
+        // Adjust current image index if needed
+        if (currentImageIndex >= (room.images?.length || 1) - 1) {
+          setCurrentImageIndex(Math.max(0, (room.images?.length || 1) - 2));
+        }
+      }
+    } catch (error) {
+      console.error('Error removing image:', error);
+      toast({
+        title: "Remove Failed",
+        description: "Failed to remove image. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const getCurrentImage = () => {
+    if (room.images && room.images.length > 0) {
+      // Ensure currentImageIndex is within bounds
+      const safeIndex = Math.min(currentImageIndex, room.images.length - 1);
+      return room.images[safeIndex];
+    }
+    return room.image;
+  };
+
+  const getImageUrl = (imagePath: string) => {
+    if (!imagePath) return '/IMG-20250815-WA0007.jpg';
+    
+    // If it's already a full URL, return as is
+    if (imagePath.startsWith('http')) {
+      return imagePath;
+    }
+    
+    // If it's a folder image (from our organized folders), return as is for Next.js
+    if (isFolderImage(imagePath)) {
+      return imagePath;
+    }
+    
+    // If it's a local public image (starts with /), return as is for Next.js
+    if (imagePath.startsWith('/') && !imagePath.startsWith('/uploads/')) {
+      return imagePath;
+    }
+    
+    // If it's an uploaded image (from backend), construct the full URL
+    if (imagePath.startsWith('/uploads/') || imagePath.includes('uploads')) {
+      return `http://localhost:5000${imagePath.startsWith('/') ? imagePath : '/' + imagePath}`;
+    }
+    
+    // Default fallback
+    return '/IMG-20250815-WA0007.jpg';
+  };
+
   return (
     <Card className="group overflow-hidden hover:shadow-xl transition-all duration-300 hover:scale-[1.02] border-0 shadow-lg">
       <div className="relative">
-        <div className="relative h-48 overflow-hidden">
+        <div 
+          className="relative h-48 overflow-hidden"
+          onMouseEnter={() => setShowNavigation(true)}
+          onMouseLeave={() => setShowNavigation(false)}
+        >
           <Image
-            src={room.image}
+            src={getImageUrl(getCurrentImage())}
             alt={room.name}
             fill
             className={`object-cover transition-transform duration-300 group-hover:scale-110 ${
               isImageLoading ? 'blur-sm' : 'blur-0'
             }`}
             onLoad={() => setIsImageLoading(false)}
+            onError={(e) => {
+              console.error('Image failed to load:', {
+                src: getImageUrl(getCurrentImage()),
+                currentImage: getCurrentImage(),
+                roomImages: room.images,
+                roomImage: room.image,
+                error: e
+              });
+              setIsImageLoading(false);
+            }}
           />
+          
+          {/* Navigation Arrows */}
+          {canNavigate && showNavigation && (
+            <>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigateImage('prev');
+                }}
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigateImage('next');
+                }}
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </>
+          )}
+          
+          {/* Image Counter */}
+          {canNavigate && (
+            <div className="absolute bottom-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded-full">
+              {currentImageIndex + 1} / {room.images!.length}
+            </div>
+          )}
           
           {/* Overlay with actions */}
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300">
@@ -140,6 +361,56 @@ export function EnhancedRoomCard({
                 <Share2 className="w-4 h-4" />
               </Button>
             </div>
+
+            {/* Image upload controls for admin */}
+            {showImageUpload && isAdmin && (
+              <div className="absolute top-3 left-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <label className={`h-8 w-8 bg-white/90 hover:bg-white rounded-md flex items-center justify-center cursor-pointer transition-colors ${
+                  isUploading ? 'opacity-50 cursor-not-allowed' : ''
+                }`}>
+                  {isUploading ? (
+                    <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <Camera className="w-4 h-4" />
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                    disabled={isUploading}
+                  />
+                </label>
+                {room.images && room.images.length > 1 && (
+                  <Button
+                    size="icon"
+                    variant="secondary"
+                    className="h-8 w-8 bg-white/90 hover:bg-white"
+                    onClick={() => handleRemoveImage(currentImageIndex)}
+                    disabled={isUploading}
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                )}
+              </div>
+            )}
+
+            {/* Image navigation dots */}
+            {room.images && room.images.length > 1 && (
+              <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 flex gap-1">
+                {room.images.map((_, index) => (
+                  <button
+                    key={index}
+                    className={`w-2 h-2 rounded-full transition-all duration-200 ${
+                      index === currentImageIndex 
+                        ? 'bg-white' 
+                        : 'bg-white/50 hover:bg-white/75'
+                    }`}
+                    onClick={() => setCurrentImageIndex(index)}
+                  />
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Badges */}
@@ -148,11 +419,6 @@ export function EnhancedRoomCard({
               <Badge className="bg-hms-primary text-white">
                 <Star className="w-3 h-3 mr-1" />
                 Popular
-              </Badge>
-            )}
-            {room.discount && (
-              <Badge variant="destructive">
-                {room.discount}% OFF
               </Badge>
             )}
           </div>
@@ -171,13 +437,69 @@ export function EnhancedRoomCard({
                   <DialogTitle>{room.name}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-6">
-                  <div className="relative h-64 rounded-lg overflow-hidden">
+                  <div 
+                    className="relative h-64 rounded-lg overflow-hidden group"
+                    onMouseEnter={() => setShowNavigation(true)}
+                    onMouseLeave={() => setShowNavigation(false)}
+                  >
                     <Image
-                      src={room.image}
+                      src={getImageUrl(getCurrentImage())}
                       alt={room.name}
                       fill
                       className="object-cover"
                     />
+                    
+                    {/* Navigation Arrows in Quick View */}
+                    {canNavigate && showNavigation && (
+                      <>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigateImage('prev');
+                          }}
+                        >
+                          <ChevronLeft className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigateImage('next');
+                          }}
+                        >
+                          <ChevronRight className="w-4 h-4" />
+                        </Button>
+                      </>
+                    )}
+                    
+                    {/* Image Counter in Quick View */}
+                    {canNavigate && (
+                      <div className="absolute bottom-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded-full">
+                        {currentImageIndex + 1} / {room.images!.length}
+                      </div>
+                    )}
+                    
+                    {/* Image Dots in Quick View */}
+                    {canNavigate && (
+                      <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex gap-1">
+                        {room.images!.map((_, index) => (
+                          <button
+                            key={index}
+                            className={`w-2 h-2 rounded-full transition-all duration-200 ${
+                              index === currentImageIndex 
+                                ? 'bg-white' 
+                                : 'bg-white/50 hover:bg-white/75'
+                            }`}
+                            onClick={() => setCurrentImageIndex(index)}
+                          />
+                        ))}
+                      </div>
+                    )}
                   </div>
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
@@ -186,30 +508,18 @@ export function EnhancedRoomCard({
                         <span className="font-semibold">{room.rating}</span>
                         <span className="text-gray-500">(127 reviews)</span>
                       </div>
-                      <div className="text-right">
-                        <div className="text-2xl font-bold text-hms-primary">
-                          LKR {room.price.toLocaleString()}
-                        </div>
-                        {room.originalPrice && (
-                          <div className="text-sm text-gray-500 line-through">
-                            LKR {room.originalPrice.toLocaleString()}
-                          </div>
-                        )}
+                      <div className="flex items-center gap-2 text-gray-600">
+                        <Users className="w-4 h-4" />
+                        <span className="text-sm">Up to {room.capacity} guests</span>
                       </div>
                     </div>
                     <p className="text-gray-600">{room.description}</p>
-                    <div className="grid grid-cols-2 gap-4">
+                    {room.location && (
                       <div className="flex items-center gap-2">
-                        <Users className="w-4 h-4 text-gray-500" />
-                        <span className="text-sm">Up to {room.capacity} guests</span>
+                        <MapPin className="w-4 h-4 text-gray-500" />
+                        <span className="text-sm">{room.location}</span>
                       </div>
-                      {room.location && (
-                        <div className="flex items-center gap-2">
-                          <MapPin className="w-4 h-4 text-gray-500" />
-                          <span className="text-sm">{room.location}</span>
-                        </div>
-                      )}
-                    </div>
+                    )}
                     <div>
                       <h4 className="font-semibold mb-2">Amenities</h4>
                       <div className="flex flex-wrap gap-2">
@@ -247,21 +557,7 @@ export function EnhancedRoomCard({
           </div>
           <div className="flex items-center gap-1 text-sm text-gray-600">
             <Users className="w-4 h-4" />
-            <span>{room.capacity}</span>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="text-xl font-bold text-hms-primary">
-              LKR {room.price.toLocaleString()}
-            </div>
-            {room.originalPrice && (
-              <div className="text-sm text-gray-500 line-through">
-                LKR {room.originalPrice.toLocaleString()}
-              </div>
-            )}
-            <div className="text-xs text-gray-500">per night</div>
+            <span>{room.capacity} guests</span>
           </div>
         </div>
 

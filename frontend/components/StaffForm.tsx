@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Staff, StaffFormData } from '@/types/staff';
 import { staffAPI } from '@/lib/staffApi';
+import { StaffValidator } from '@/lib/staffValidation';
 
 interface StaffFormProps {
   staffId?: string;
@@ -81,11 +82,36 @@ export default function StaffForm({ staffId, isEdit = false, basePathPrefix = ''
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
     
+    let processedValue = value;
+    
+    // Apply input formatting based on field type
+    if (typeof value === 'string') {
+      switch (name) {
+        case 'phone':
+          processedValue = StaffValidator.formatPhoneInput(value);
+          break;
+        case 'nicPassport':
+          processedValue = StaffValidator.formatNicPassportInput(value);
+          break;
+        case 'bankAccount':
+          processedValue = StaffValidator.formatBankAccountInput(value);
+          break;
+        case 'salary':
+        case 'overtimeRate':
+          processedValue = StaffValidator.formatNumberInput(value);
+          break;
+        case 'fullName':
+        case 'jobRole':
+          processedValue = StaffValidator.formatNameInput(value);
+          break;
+      }
+    }
+    
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'number' ? Number(value) : 
+      [name]: type === 'number' ? Number(processedValue) : 
               type === 'checkbox' ? (e.target as HTMLInputElement).checked :
-              value
+              processedValue
     }));
   };
 
@@ -100,11 +126,17 @@ export default function StaffForm({ staffId, isEdit = false, basePathPrefix = ''
       } else {
         // Remove employeeId from formData when creating new staff (backend auto-generates it)
         const { employeeId, ...createData } = formData;
+        console.log('Submitting staff data:', createData);
         await staffAPI.createStaff(createData as StaffFormData);
       }
       router.push(`${basePathPrefix}/staff` || '/admin/staff');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save staff');
+      console.error('Staff creation error:', err);
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Failed to save staff');
+      }
     } finally {
       setLoading(false);
     }
@@ -124,58 +156,45 @@ export default function StaffForm({ staffId, isEdit = false, basePathPrefix = ''
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Navigation */}
-        <div className="flex items-center space-x-2 text-sm text-gray-600 mb-6">
-          <a href="/admin" className="hover:text-blue-600 transition-colors">
-            Admin Dashboard
-          </a>
-          <span>→</span>
-          <a href="/admin/staff" className="hover:text-blue-600 transition-colors">
-            Staff Management
-          </a>
-          <span>→</span>
-          <span className="text-gray-900 font-medium">
-            {isEdit ? 'Edit Staff' : 'Add Staff'}
-          </span>
+    <div className="h-full">
+      <div className="bg-white shadow sm:rounded-lg h-full flex flex-col">
+        <div className="px-6 py-5 border-b border-gray-200 flex-shrink-0">
+          <div className="flex justify-between items-center">
+            <h1 className="text-2xl font-bold text-gray-900">
+              {isEdit ? 'Edit Staff Member' : 'Staff Registration'}
+            </h1>
+            <button
+              onClick={() => router.push(basePathPrefix ? `${basePathPrefix}/staff` : '/admin/staff')}
+              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+            >
+              ← Back to Staff List
+            </button>
+          </div>
         </div>
 
-        <div className="bg-white shadow sm:rounded-lg">
-          <div className="px-4 py-5 sm:p-6">
-            <div className="flex justify-between items-center mb-6">
-              <h1 className="text-2xl font-bold text-gray-900">
-                {isEdit ? 'Edit Staff Member' : 'Add New Staff Member'}
-              </h1>
-              <button
-                onClick={() => router.push(`${basePathPrefix}/staff` || '/admin/staff')}
-                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                ← Back to Staff List
-              </button>
-            </div>
-
-            {error && (
-              <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
-                <div className="flex items-center">
-                  <div className="flex-shrink-0">
-                    <svg className="h-5 w-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                  <div className="ml-3">
-                    <h3 className="text-sm font-medium text-red-800">Error</h3>
-                    <div className="mt-2 text-sm text-red-700">{error}</div>
-                  </div>
-                </div>
+        {error && (
+          <div className="mx-6 mt-4 bg-red-50 border border-red-200 rounded-lg p-4 flex-shrink-0">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
               </div>
-            )}
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-red-800">Error</h3>
+                <div className="mt-2 text-sm text-red-700">{error}</div>
+              </div>
+            </div>
+          </div>
+        )}
 
-            <form onSubmit={handleSubmit} className="space-y-8">
+        {/* Scrollable Form Container */}
+        <div className="flex-1 overflow-y-auto px-6 py-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+          <form onSubmit={handleSubmit} className="space-y-8 max-w-5xl mx-auto">
               {/* Personal Information */}
               <div className="border-b border-gray-200 pb-8">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Personal Information</h3>
-                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                <h3 className="text-lg font-medium text-gray-900 mb-6">Personal Information</h3>
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                   {isEdit && (
                     <div>
                       <label htmlFor="employeeId" className="block text-sm font-medium text-gray-700 mb-2">
@@ -272,7 +291,7 @@ export default function StaffForm({ staffId, isEdit = false, basePathPrefix = ''
                     />
                   </div>
 
-                  <div className="sm:col-span-2">
+                  <div className="sm:col-span-2 lg:col-span-3">
                     <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                       Email *
                     </label>
@@ -288,7 +307,7 @@ export default function StaffForm({ staffId, isEdit = false, basePathPrefix = ''
                     />
                   </div>
 
-                  <div className="sm:col-span-2">
+                  <div className="sm:col-span-2 lg:col-span-3">
                     <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-2">
                       Address
                     </label>
@@ -307,8 +326,8 @@ export default function StaffForm({ staffId, isEdit = false, basePathPrefix = ''
 
               {/* Job Information */}
               <div className="border-b border-gray-200 pb-8">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Job Information</h3>
-                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                <h3 className="text-lg font-medium text-gray-900 mb-6">Job Information</h3>
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                   <div>
                     <label htmlFor="jobRole" className="block text-sm font-medium text-gray-700 mb-2">
                       Job Role *
@@ -320,7 +339,7 @@ export default function StaffForm({ staffId, isEdit = false, basePathPrefix = ''
                       required
                       value={formData.jobRole}
                       onChange={handleChange}
-                      placeholder="e.g., Front Desk Manager"
+                      placeholder="e.g., Receptionist, Chef, Housekeeper, Technician"
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
@@ -337,14 +356,10 @@ export default function StaffForm({ staffId, isEdit = false, basePathPrefix = ''
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
                       <option value="">Select Department</option>
-                      <option value="Front Office">Front Office</option>
+                      <option value="Kitchen">Kitchen</option>
                       <option value="Housekeeping">Housekeeping</option>
-                      <option value="Food & Beverage">Food & Beverage</option>
+                      <option value="Reception">Reception</option>
                       <option value="Maintenance">Maintenance</option>
-                      <option value="Security">Security</option>
-                      <option value="IT">IT</option>
-                      <option value="HR">HR</option>
-                      <option value="Management">Management</option>
                     </select>
                   </div>
 
@@ -416,8 +431,8 @@ export default function StaffForm({ staffId, isEdit = false, basePathPrefix = ''
 
               {/* Banking Information */}
               <div className="border-b border-gray-200 pb-8">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Banking Information</h3>
-                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                <h3 className="text-lg font-medium text-gray-900 mb-6">Banking Information</h3>
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                   <div>
                     <label htmlFor="bankAccount" className="block text-sm font-medium text-gray-700 mb-2">
                       Bank Account Number
@@ -517,6 +532,5 @@ export default function StaffForm({ staffId, isEdit = false, basePathPrefix = ''
           </div>
         </div>
       </div>
-    </div>
-  );
-}
+    );
+  }

@@ -16,13 +16,14 @@ import {
   ArrowRight
 } from 'lucide-react';
 import Link from 'next/link';
+import { getRoomPrimaryImage } from '@/lib/roomImageUtils';
 
 const roomTypes = [
   {
     id: '1',
     name: 'Double Room with Mountain View',
     description: 'Spacious double room with stunning mountain views, extra-large double bed, and modern amenities.',
-    image: '/IMG-20250815-WA0007.jpg',
+    image: getRoomPrimaryImage('Double'),
     bedType: '1 extra-large double bed',
     maxPersons: 2,
     originalPrice: 13608,
@@ -43,7 +44,7 @@ const roomTypes = [
     id: '2',
     name: 'Family Room with Mountain View',
     description: 'Perfect for families with bunk bed and large double bed, featuring mountain views and family amenities.',
-    image: '/IMG-20250815-WA0008.jpg',
+    image: getRoomPrimaryImage('Family'),
     bedType: '1 bunk bed and 1 large double bed',
     maxPersons: 4,
     originalPrice: 16632,
@@ -64,7 +65,7 @@ const roomTypes = [
     id: '3',
     name: 'Double or Twin Room',
     description: 'Flexible room configuration with two futon beds, mountain views, and outdoor spaces.',
-    image: '/IMG-20250815-WA0009.jpg',
+    image: getRoomPrimaryImage('Twin'),
     bedType: '2 futon beds',
     maxPersons: 2,
     originalPrice: 13608,
@@ -84,7 +85,7 @@ const roomTypes = [
     id: '4',
     name: 'Single Room with Mountain View',
     description: 'Perfect for solo travelers with large double bed and all the amenities you need.',
-    image: '/IMG-20250815-WA0010.jpg',
+    image: getRoomPrimaryImage('Single'),
     bedType: '1 large double bed',
     maxPersons: 1,
     originalPrice: 12247,

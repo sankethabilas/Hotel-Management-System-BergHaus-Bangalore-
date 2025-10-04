@@ -18,7 +18,7 @@ import {
   Phone,
   Plus,
   Minus,
-  DollarSign,
+  IndianRupee,
   Receipt,
   Download
 } from 'lucide-react';
@@ -375,28 +375,50 @@ export default function CheckInCheckOutPage() {
       });
 
       if (response.ok) {
-        const data = await response.json();
-        toast({
-          title: "Success",
-          description: "Custom charges added successfully",
-        });
-        
-        // Update the booking with new total
-        const updatedBooking = { 
-          ...paymentDialog.booking, 
-          totalAmount: data.data.newTotal,
-          customCharges: data.data.booking.customCharges 
-        };
-        setPaymentDialog(prev => ({ ...prev, booking: updatedBooking }));
-        setCustomCharges([]);
-        fetchAllBookings();
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const data = await response.json();
+          toast({
+            title: "Success",
+            description: "Custom charges added successfully",
+          });
+          
+          // Update the booking with new total
+          const updatedBooking = { 
+            ...paymentDialog.booking, 
+            totalAmount: data.data.newTotal,
+            customCharges: data.data.booking.customCharges 
+          };
+          setPaymentDialog(prev => ({ ...prev, booking: updatedBooking }));
+          setCustomCharges([]);
+          fetchAllBookings();
+        } else {
+          const text = await response.text();
+          console.error('Non-JSON response:', text);
+          toast({
+            title: "Error",
+            description: "Invalid response from server",
+            variant: "destructive",
+          });
+        }
       } else {
-        const errorData = await response.json();
-        toast({
-          title: "Error",
-          description: errorData.message || "Failed to add custom charges",
-          variant: "destructive",
-        });
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const errorData = await response.json();
+          toast({
+            title: "Error",
+            description: errorData.message || "Failed to add custom charges",
+            variant: "destructive",
+          });
+        } else {
+          const errorText = await response.text();
+          console.error('Error response:', errorText);
+          toast({
+            title: "Error",
+            description: `Server error: ${response.status}`,
+            variant: "destructive",
+          });
+        }
       }
     } catch (error) {
       console.error('Error adding custom charges:', error);
@@ -674,7 +696,7 @@ export default function CheckInCheckOutPage() {
                                 variant="outline"
                                 onClick={() => handlePaymentManagement(booking)}
                               >
-                                <DollarSign className="w-4 h-4 mr-2" />
+                                <IndianRupee className="w-4 h-4 mr-2" />
                                 Payment
                               </Button>
                             </>
@@ -705,89 +727,35 @@ export default function CheckInCheckOutPage() {
             <DialogTitle>
               {actionDialog.type === 'checkin' ? 'Check In Guest' : 'Check Out Guest'}
             </DialogTitle>
-            <DialogDescription>
-              {actionDialog.booking && (
-                <div className="space-y-4 mt-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="font-medium">Guest Information</p>
-                      <p><strong>Name:</strong> {actionDialog.booking.guestName}</p>
-                      <p><strong>Email:</strong> {actionDialog.booking.guestEmail}</p>
-                      {actionDialog.booking.guestPhone && (
-                        <p><strong>Phone:</strong> {actionDialog.booking.guestPhone}</p>
-                      )}
-                    </div>
-                    <div>
-                      <p className="font-medium">Booking Details</p>
-                      <p><strong>Reference:</strong> {actionDialog.booking.bookingReference}</p>
-                      <p><strong>Total:</strong> ${actionDialog.booking.totalAmount}</p>
-                      <p><strong>Guests:</strong> {actionDialog.booking.numberOfGuests}</p>
-                    </div>
-                  </div>
-
-                  <div>
-                    <p className="font-medium">Room Details</p>
-                    <p><strong>Room {actionDialog.booking.roomNumber}:</strong> {actionDialog.booking.roomType}</p>
-                  </div>
-
-                  {actionDialog.type === 'checkout' && (
-                    <div className="space-y-4">
+            <DialogDescription asChild>
+              <div className="space-y-4 mt-4">
+                {actionDialog.booking && (
+                  <>
+                    <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <p className="font-medium">Additional Charges</p>
-                          <Button size="sm" onClick={addAdditionalCharge} variant="outline">
-                            <Plus className="w-4 h-4 mr-1" />
-                            Add Charge
-                          </Button>
-                        </div>
-                        
-                        {additionalCharges.map((charge, index) => (
-                          <div key={index} className="grid grid-cols-12 gap-2 items-center">
-                            <Input
-                              placeholder="Description"
-                              value={charge.description}
-                              onChange={(e) => updateAdditionalCharge(index, 'description', e.target.value)}
-                              className="col-span-5"
-                            />
-                            <Input
-                              type="number"
-                              placeholder="Qty"
-                              value={charge.quantity}
-                              onChange={(e) => updateAdditionalCharge(index, 'quantity', parseInt(e.target.value) || 0)}
-                              className="col-span-2"
-                            />
-                            <Input
-                              type="number"
-                              step="0.01"
-                              placeholder="Price"
-                              value={charge.unitPrice}
-                              onChange={(e) => updateAdditionalCharge(index, 'unitPrice', parseFloat(e.target.value) || 0)}
-                              className="col-span-3"
-                            />
-                            <div className="col-span-1 text-sm font-medium">
-                              ${(charge.quantity * charge.unitPrice).toFixed(2)}
-                            </div>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => removeAdditionalCharge(index)}
-                              className="col-span-1"
-                            >
-                              <Minus className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        ))}
-                        
-                        {additionalCharges.length > 0 && (
-                          <div className="text-right font-medium">
-                            Additional Total: ${additionalCharges.reduce((sum, charge) => sum + (charge.quantity * charge.unitPrice), 0).toFixed(2)}
-                          </div>
+                        <div className="font-medium mb-2">Guest Information</div>
+                        <div><strong>Name:</strong> {actionDialog.booking.guestName}</div>
+                        <div><strong>Email:</strong> {actionDialog.booking.guestEmail}</div>
+                        {actionDialog.booking.guestPhone && (
+                          <div><strong>Phone:</strong> {actionDialog.booking.guestPhone}</div>
                         )}
                       </div>
+                      <div>
+                        <div className="font-medium mb-2">Booking Details</div>
+                        <div><strong>Reference:</strong> {actionDialog.booking.bookingReference}</div>
+                        <div><strong>Total:</strong> Rs {actionDialog.booking.totalAmount}</div>
+                        <div><strong>Guests:</strong> {actionDialog.booking.numberOfGuests}</div>
+                      </div>
                     </div>
-                  )}
-                </div>
-              )}
+
+                    <div>
+                      <div className="font-medium mb-2">Room Details</div>
+                      <div><strong>Room {actionDialog.booking.roomNumber}:</strong> {actionDialog.booking.roomType}</div>
+                    </div>
+
+                  </>
+                )}
+              </div>
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -806,20 +774,22 @@ export default function CheckInCheckOutPage() {
           <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto w-[95vw] sm:w-full">
           <DialogHeader>
             <DialogTitle>Payment & Billing Management</DialogTitle>
-            <DialogDescription>
-              {paymentDialog.booking && (
-                <div className="space-y-2 mt-4">
-                  <p><strong>Guest:</strong> {paymentDialog.booking.guestName}</p>
-                  <p><strong>Booking Reference:</strong> {paymentDialog.booking.bookingReference}</p>
-                  <p><strong>Room:</strong> {paymentDialog.booking.roomNumber} ({paymentDialog.booking.roomType})</p>
-                  <p><strong>Current Total:</strong> ${paymentDialog.booking.totalAmount}</p>
-                  <p><strong>Payment Status:</strong> 
-                    <Badge variant={paymentDialog.booking.paymentStatus === 'paid' ? 'default' : 'destructive'} className="ml-2">
-                      {paymentDialog.booking.paymentStatus}
-                    </Badge>
-                  </p>
-                </div>
-              )}
+            <DialogDescription asChild>
+              <div className="space-y-2 mt-4">
+                {paymentDialog.booking && (
+                  <>
+                    <div><strong>Guest:</strong> {paymentDialog.booking.guestName}</div>
+                    <div><strong>Booking Reference:</strong> {paymentDialog.booking.bookingReference}</div>
+                    <div><strong>Room:</strong> {paymentDialog.booking.roomNumber} ({paymentDialog.booking.roomType})</div>
+                    <div><strong>Current Total:</strong> Rs {paymentDialog.booking.totalAmount}</div>
+                    <div><strong>Payment Status:</strong> 
+                      <Badge variant={paymentDialog.booking.paymentStatus === 'paid' ? 'default' : 'destructive'} className="ml-2">
+                        {paymentDialog.booking.paymentStatus}
+                      </Badge>
+                    </div>
+                  </>
+                )}
+              </div>
             </DialogDescription>
           </DialogHeader>
           
@@ -911,7 +881,7 @@ export default function CheckInCheckOutPage() {
                       <div className="flex-1">
                         <p className="font-medium">{charge.description}</p>
                         <p className="text-sm text-gray-600">
-                          {charge.quantity} × ${charge.unitPrice} = ${(charge.quantity * charge.unitPrice).toFixed(2)}
+                          {charge.quantity} × Rs {charge.unitPrice} = Rs {(charge.quantity * charge.unitPrice).toFixed(2)}
                         </p>
                       </div>
                       <Button
@@ -925,7 +895,7 @@ export default function CheckInCheckOutPage() {
                   ))}
                   <div className="flex justify-between items-center pt-2 border-t">
                     <span className="font-medium">Additional Total:</span>
-                    <span className="font-bold">${customCharges.reduce((sum, charge) => sum + (charge.quantity * charge.unitPrice), 0).toFixed(2)}</span>
+                    <span className="font-bold">Rs {customCharges.reduce((sum, charge) => sum + (charge.quantity * charge.unitPrice), 0).toFixed(2)}</span>
                   </div>
                   <Button onClick={saveCustomCharges} className="w-full">
                     Save Custom Charges

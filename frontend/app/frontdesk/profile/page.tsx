@@ -18,6 +18,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { getProfileImageUrl, getUserInitials } from '@/utils/profileImage';
 
 export default function ProfilePage() {
   const { user, updateUser, uploadProfilePicture } = useAuth();
@@ -81,6 +82,12 @@ export default function ProfilePage() {
   const handleProfileImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      console.log('File selected for upload:', {
+        name: file.name,
+        size: file.size,
+        type: file.type
+      });
+      
       setProfileImageFile(file);
       
       // Create preview URL
@@ -99,8 +106,10 @@ export default function ProfilePage() {
     try {
       // Upload profile picture first if changed
       if (profileImageFile) {
+        console.log('Uploading profile picture...');
         const uploadSuccess = await uploadProfilePicture(profileImageFile);
         if (!uploadSuccess) {
+          console.log('Profile picture upload failed');
           toast({
             title: "Error",
             description: "Failed to upload profile picture",
@@ -109,6 +118,7 @@ export default function ProfilePage() {
           setLoading(false);
           return;
         }
+        console.log('Profile picture upload successful');
       }
 
       // Update profile data
@@ -136,29 +146,13 @@ export default function ProfilePage() {
     }
   };
 
-  const getUserInitials = () => {
-    if (!user) return 'U';
-    const firstName = user.firstName || '';
-    const lastName = user.lastName || '';
-    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase() || 'U';
+  const getUserInitialsForUser = () => {
+    return getUserInitials(user?.firstName, user?.lastName);
   };
 
-  const getProfileImageUrl = () => {
+  const getProfileImageUrlForUser = () => {
     if (previewUrl) return previewUrl;
-    if (!user) return undefined;
-    
-    // If user has a custom profile image (uploaded to backend)
-    if (user.profileImage && user.profileImage.startsWith('/uploads/')) {
-      return `http://localhost:5000${user.profileImage}`;
-    }
-    
-    // If user has a Google profile image (external URL)
-    if (user.profileImage && user.profileImage.startsWith('http')) {
-      return user.profileImage;
-    }
-    
-    // Fallback to undefined (will show initials)
-    return undefined;
+    return getProfileImageUrl(user?.profileImage);
   };
 
   return (
@@ -184,11 +178,11 @@ export default function ProfilePage() {
             <div className="flex items-center space-x-6">
               <Avatar className="h-24 w-24">
                 <AvatarImage 
-                  src={getProfileImageUrl()} 
+                  src={getProfileImageUrlForUser()} 
                   alt={`${user?.firstName} ${user?.lastName}`} 
                 />
                 <AvatarFallback className="bg-[#006bb8] text-white text-xl">
-                  {getUserInitials()}
+                  {getUserInitialsForUser()}
                 </AvatarFallback>
               </Avatar>
               <div>

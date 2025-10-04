@@ -4,6 +4,7 @@ import { getItems, updateItem, deleteItem } from "../../../../lib/inventoryApi";
 import AddItemForm from "../../../../components/AddItemForm";
 import EditItemForm from "../../../../components/EditItemForm";
 import Link from "next/link";
+import Navbar from "@/components/admin/Navbar";
 
 interface InventoryItem {
   _id: string;
@@ -64,20 +65,22 @@ export default function InventoryItemsPage() {
   });
 
   return (
-    <div className="p-4 sm:p-6">
-      {/* Header + Search + Filter + Add Buttons */}
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 space-y-3 sm:space-y-0">
-        <h1 className="text-lg sm:text-xl font-bold">Inventory Items</h1>
+    <div className="min-h-screen bg-gray-50">
+      <Navbar active="inventory" />
+      <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
+        {/* Header + Search + Filter + Add Buttons */}
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 space-y-3 sm:space-y-0">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900">Inventory Items</h1>
 
-        <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
-          {/* Search Input */}
-          <input
-            type="text"
-            placeholder="Search items by name..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="border p-2 rounded w-full sm:w-64 text-sm sm:text-base"
-          />
+          <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+            {/* Search Input */}
+            <input
+              type="text"
+              placeholder="Search items by name..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="border p-2 rounded w-full sm:w-64 text-sm sm:text-base"
+            />
 
           {/* Category Filter Dropdown */}
           <select
@@ -189,6 +192,7 @@ export default function InventoryItemsPage() {
       {/* Modals */}
       {showAdd && <AddItemForm onAdded={fetchItems} onClose={() => setShowAdd(false)} />}
       {editItem && <EditItemForm item={editItem} onUpdated={fetchItems} onClose={() => setEditItem(null)} />}
+      </div>
     </div>
   );
 }

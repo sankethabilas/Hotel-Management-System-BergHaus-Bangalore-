@@ -77,7 +77,8 @@ export default function StaffRequestForm({ onRequestSubmitted, onClose }: StaffR
       if (onClose) onClose();
     } catch (error) {
       console.error("Error submitting request:", error);
-      alert("Failed to submit request. Please try again.");
+      const errorMessage = error instanceof Error ? error.message : "Failed to submit request. Please try again.";
+      alert(`Error: ${errorMessage}`);
     } finally {
       setIsSubmitting(false);
     }

@@ -487,7 +487,7 @@ class PDFService {
     };
 
     const formatCurrency = (amount) => {
-      return `$${parseFloat(amount).toFixed(2)}`;
+      return `Rs ${parseFloat(amount).toFixed(2)}`;
     };
 
     return `

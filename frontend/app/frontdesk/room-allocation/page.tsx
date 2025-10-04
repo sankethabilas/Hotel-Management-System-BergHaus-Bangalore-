@@ -470,7 +470,7 @@ export default function RoomAllocationPage() {
                     <p><strong>Type:</strong> {room.type}</p>
                     <p><strong>Floor:</strong> {room.floor}</p>
                     <p><strong>Max Occupancy:</strong> {room.maxOccupancy}</p>
-                    <p><strong>Price:</strong> ${room.pricePerNight}/night</p>
+                    <p><strong>Price:</strong> Rs {room.pricePerNight}/night</p>
                     {room.amenities && room.amenities.length > 0 && (
                       <div>
                         <strong>Amenities:</strong>
@@ -536,7 +536,7 @@ export default function RoomAllocationPage() {
                       <SelectContent>
                         {availableRooms.map((room) => (
                           <SelectItem key={room._id} value={room._id}>
-                            Room {room.roomNumber} - {room.type} (Floor {room.floor}) - ${room.pricePerNight}/night
+                            Room {room.roomNumber} - {room.type} (Floor {room.floor}) - Rs {room.pricePerNight}/night
                           </SelectItem>
                         ))}
                       </SelectContent>

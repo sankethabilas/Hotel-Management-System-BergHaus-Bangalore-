@@ -287,11 +287,17 @@ const activateUser = async (req, res) => {
 // @access  Private
 const uploadProfilePicture = async (req, res) => {
   try {
+    console.log('Upload profile picture request received');
+    console.log('Request params:', req.params);
+    console.log('Request file:', req.file);
+    console.log('Request user:', req.user);
+    
     const userId = req.params.id;
     
     // Check if user exists
     const user = await User.findById(userId);
     if (!user) {
+      console.log('User not found:', userId);
       return res.status(404).json({
         success: false,
         message: 'User not found'
@@ -300,6 +306,7 @@ const uploadProfilePicture = async (req, res) => {
 
     // Check if user is authorized to update this profile
     if (req.user.userId.toString() !== userId && req.user.role !== 'admin') {
+      console.log('User not authorized to update profile');
       return res.status(403).json({
         success: false,
         message: 'Not authorized to update this profile'
@@ -307,6 +314,7 @@ const uploadProfilePicture = async (req, res) => {
     }
 
     if (!req.file) {
+      console.log('No file uploaded');
       return res.status(400).json({
         success: false,
         message: 'No file uploaded'
@@ -326,15 +334,34 @@ const uploadProfilePicture = async (req, res) => {
     user.profileImage = profileImageUrl;
     await user.save();
 
+    // Fetch the updated user to ensure we have the latest data
+    const updatedUser = await User.findById(userId).select('-password');
+    
     res.json({
       success: true,
       message: 'Profile picture uploaded successfully',
       data: {
-        user: user.toJSON()
+        user: updatedUser.toJSON()
       }
     });
   } catch (error) {
     console.error('Upload profile picture error:', error);
+    
+    // Handle multer errors specifically
+    if (error.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({
+        success: false,
+        message: 'File too large. Maximum size is 5MB.'
+      });
+    }
+    
+    if (error.code === 'LIMIT_UNEXPECTED_FILE') {
+      return res.status(400).json({
+        success: false,
+        message: 'Unexpected field name. Expected "profileImage".'
+      });
+    }
+    
     res.status(500).json({
       success: false,
       message: 'Server error',

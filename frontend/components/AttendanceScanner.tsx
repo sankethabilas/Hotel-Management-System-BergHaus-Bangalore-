@@ -50,24 +50,19 @@ export default function AttendanceScanner({ qrId }: AttendanceScannerProps) {
       return;
     }
 
-    if (!qrId) {
-      setMessage('QR code ID not found. Please scan a valid QR code.');
-      setMessageType('error');
-      return;
-    }
-
     try {
       setLoading(true);
       setMessage('');
 
-      const response = await fetch(`http://localhost:5000/api/attendance/scan/${qrId}`, {
+      const response = await fetch(`http://localhost:5000/api/attendance/mark`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           staffId: selectedStaff,
-          action: action
+          action: action,
+          location: 'BergHaus Bangalore Hotel'
         }),
       });
 

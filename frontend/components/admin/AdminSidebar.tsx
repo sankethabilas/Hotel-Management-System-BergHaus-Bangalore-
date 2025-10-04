@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ReactNode, memo, useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { LogOut, User } from "lucide-react";
 
 type NavItem = {
   href: string;
@@ -73,11 +75,66 @@ const INVENTORY_MANAGEMENT_ITEMS: DropdownItem[] = [
   },
 ];
 
+const CRM_MANAGEMENT_ITEMS: DropdownItem[] = [
+  { 
+    href: "/admin/crm", 
+    label: "Contact Messages",
+    icon: (
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+      </svg>
+    )
+  },
+  { 
+    href: "/admin/feedback", 
+    label: "Guest Feedback",
+    icon: (
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+      </svg>
+    )
+  },
+  { 
+    href: "/admin/crm/replies", 
+    label: "Reply History",
+    icon: (
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+      </svg>
+    )
+  },
+  { 
+    href: "/admin/crm/analytics", 
+    label: "CRM Analytics",
+    icon: (
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+      </svg>
+    )
+  },
+];
+
 const AdminSidebar = memo(function AdminSidebar() {
   const pathname = usePathname();
+  const { user, logout } = useAuth();
   const [isStaffDropdownOpen, setIsStaffDropdownOpen] = useState(false);
   const [isKitchenDropdownOpen, setIsKitchenDropdownOpen] = useState(false);
   const [isInventoryDropdownOpen, setIsInventoryDropdownOpen] = useState(false);
+  const [isCrmDropdownOpen, setIsCrmDropdownOpen] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+  const handleLogout = async () => {
+    setShowLogoutConfirm(true);
+  };
+
+  const confirmLogout = async () => {
+    setShowLogoutConfirm(false);
+    await logout();
+  };
+
+  const cancelLogout = () => {
+    setShowLogoutConfirm(false);
+  };
 
   // Check if any staff management item is active
   const isStaffManagementActive = STAFF_MANAGEMENT_ITEMS.some(item => 
@@ -94,9 +151,46 @@ const AdminSidebar = memo(function AdminSidebar() {
     pathname === item.href || pathname?.startsWith(item.href)
   );
 
+  // Check if any CRM management item is active
+  const isCrmManagementActive = CRM_MANAGEMENT_ITEMS.some(item => 
+    pathname === item.href || pathname?.startsWith(item.href)
+  );
+
   return (
-    <aside className="h-screen w-64 shrink-0 text-white bg-gradient-to-b from-blue-900 to-blue-800">
-      <div className="flex h-full flex-col">
+    <>
+      {/* Logout Confirmation Dialog */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                <LogOut className="w-5 h-5 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Confirm Logout</h3>
+                <p className="text-sm text-gray-600">Are you sure you want to logout?</p>
+              </div>
+            </div>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={cancelLogout}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmLogout}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 transition-colors"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <aside className="h-screen w-64 shrink-0 text-white bg-gradient-to-b from-blue-900 to-blue-800">
+        <div className="flex h-full flex-col">
         <div className="px-4 py-5 border-b border-white/15">
           <div className="text-lg font-semibold tracking-wide">BergHaus HMS</div>
           <div className="text-xs text-white/80">Admin Dashboard</div>
@@ -313,15 +407,111 @@ const AdminSidebar = memo(function AdminSidebar() {
                 </div>
               )}
             </div>
+
+            {/* CRM Management Dropdown */}
+            <div className="space-y-1">
+              <button
+                onClick={() => setIsCrmDropdownOpen(!isCrmDropdownOpen)}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  isCrmManagementActive 
+                    ? "bg-white/20 text-white" 
+                    : "text-white/90 hover:bg-white/10 hover:text-white"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <span className="inline-flex h-2.5 w-2.5 rounded-full"
+                    style={{ backgroundColor: isCrmManagementActive ? "#ffc973" : "#fee3b3" }}
+                  />
+                  <span>Customer Relationship Management</span>
+                </div>
+                <svg
+                  className={`w-4 h-4 transition-transform duration-200 ${
+                    isCrmDropdownOpen ? "rotate-180" : ""
+                  }`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 9l-7 7-7-7"
+                  />
+                </svg>
+              </button>
+
+              {/* Dropdown Items */}
+              {isCrmDropdownOpen && (
+                <div className="ml-6 space-y-1">
+                  {CRM_MANAGEMENT_ITEMS.map((item) => {
+                    const isActive = pathname === item.href || pathname?.startsWith(item.href);
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                          isActive 
+                            ? "bg-white/20 text-white" 
+                            : "text-white/80 hover:bg-white/10 hover:text-white"
+                        }`}
+                      >
+                        {item.icon ? (
+                          <span className="flex-shrink-0">
+                            {item.icon}
+                          </span>
+                        ) : (
+                          <span className="inline-flex h-2 w-2 rounded-full"
+                            style={{ backgroundColor: isActive ? "#ffc973" : "#fee3b3" }}
+                          />
+                        )}
+                        <span>{item.label}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
         </nav>
 
-        <div className="mt-auto px-4 py-4 border-t border-white/15 text-xs text-white/85">
-          <div className="font-medium">Berghaus Bungalow</div>
-          <div className="opacity-80">v1.0 Admin UI</div>
+        {/* User Info and Logout Section */}
+        <div className="mt-auto px-4 py-4 border-t border-white/15">
+          {/* User Info */}
+          <div className="flex items-center gap-3 px-3 py-3 mb-3 bg-white/10 rounded-lg">
+            <div className="flex-shrink-0">
+              <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                <User className="w-4 h-4 text-white" />
+              </div>
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-medium text-white truncate">
+                {user?.firstName ? `${user.firstName} ${user.lastName}` : 'Admin User'}
+              </div>
+              <div className="text-xs text-white/70 truncate">
+                {user?.email || 'admin@berghaus.com'}
+              </div>
+            </div>
+          </div>
+
+          {/* Logout Button */}
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-white/90 hover:bg-red-600/20 hover:text-white transition-colors group"
+          >
+            <LogOut className="w-4 h-4 group-hover:scale-110 transition-transform" />
+            <span>Logout</span>
+          </button>
+
+          {/* Footer */}
+          <div className="mt-4 text-xs text-white/85">
+            <div className="font-medium">Berghaus Bungalow</div>
+            <div className="opacity-80">v1.0 Admin UI</div>
+          </div>
         </div>
       </div>
     </aside>
+    </>
   );
 });
 

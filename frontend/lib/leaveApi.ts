@@ -20,6 +20,10 @@ class LeaveAPI {
   ): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`;
     
+    // Determine timeout based on the operation
+    const isDeleteOperation = options.method === 'DELETE';
+    const timeoutMs = isDeleteOperation ? 30000 : 10000; // 30 seconds for deletes, 10 for others
+    
     const config: RequestInit = {
       headers: {
         'Content-Type': 'application/json',
@@ -27,7 +31,7 @@ class LeaveAPI {
         ...options.headers,
       },
       // Add timeout to prevent hanging requests
-      signal: AbortSignal.timeout(10000), // 10 second timeout
+      signal: AbortSignal.timeout(timeoutMs),
       ...options,
     };
 
@@ -72,6 +76,22 @@ class LeaveAPI {
 
   // Get my leave requests (staff)
   async getMyLeaves(): Promise<ApiResponse<Leave[]>> {
+    // Get current staff ID from localStorage
+    if (typeof window !== 'undefined') {
+      const staffData = localStorage.getItem('staffData');
+      if (staffData) {
+        try {
+          const parsedStaffData = JSON.parse(staffData);
+          const staffId = parsedStaffData.id || parsedStaffData._id;
+          if (staffId) {
+            return this.request<ApiResponse<Leave[]>>(`/my-requests?staffId=${staffId}`);
+          }
+        } catch (error) {
+          console.error('Error parsing staff data:', error);
+        }
+      }
+    }
+    // Fallback to original behavior if no staff ID found
     return this.request<ApiResponse<Leave[]>>('/my-requests');
   }
 

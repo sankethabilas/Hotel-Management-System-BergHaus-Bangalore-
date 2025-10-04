@@ -37,7 +37,7 @@ export default function PromotionManagement() {
     name: '',
     description: '',
     discountPercentage: 10,
-    type: 'percentage' as const,
+    type: 'percentage' as 'percentage' | 'seasonal' | 'category' | 'time-based',
     categories: [] as string[],
     timeRanges: [{ startTime: '', endTime: '', days: [] as string[] }],
     seasonalDates: { startDate: '', endDate: '' },
@@ -270,7 +270,7 @@ export default function PromotionManagement() {
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Min Order:</span>
-                <span className="font-medium">${promotion.minOrderAmount}</span>
+                <span className="font-medium">Rs {promotion.minOrderAmount}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Usage:</span>

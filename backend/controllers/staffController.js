@@ -238,18 +238,41 @@ const staffLogin = async (req, res) => {
     if (!staff) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid credentials'
+        message: 'Invalid employee ID or staff member is inactive'
       });
     }
 
-    // Check password (default is employee ID)
-    const isPasswordValid = password === staff.password || 
-                           (staff.password === '' && password === employeeId);
+    // Password logic:
+    // 1. If staff hasn't changed password yet (password is hashed employeeId), use employeeId
+    // 2. If staff has changed password, use the new password
+    let isPasswordValid;
+    
+    // Check if password is hashed (starts with $2a$)
+    const isHashed = staff.password.startsWith('$2a$');
+    
+    if (isHashed) {
+      // Password is hashed, use bcrypt to compare
+      const bcrypt = require('bcryptjs');
+      isPasswordValid = await bcrypt.compare(password, staff.password);
+    } else {
+      // Password is plain text, compare directly
+      if (staff.password === employeeId) {
+        // Staff hasn't changed password yet, use Employee ID
+        isPasswordValid = password === employeeId;
+      } else {
+        // Staff has changed password, use the new password
+        isPasswordValid = password === staff.password;
+      }
+    }
 
     if (!isPasswordValid) {
+      const message = isHashed 
+        ? 'Invalid password. Use your Employee ID as password'
+        : 'Invalid password. Use your custom password';
+      
       return res.status(401).json({
         success: false,
-        message: 'Invalid credentials'
+        message
       });
     }
 
@@ -331,6 +354,84 @@ const getStaffDashboard = async (req, res) => {
   }
 };
 
+// Change staff password
+const changePassword = async (req, res) => {
+  try {
+    const staffId = req.user.id;
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+
+    // Validation
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Current password, new password, and confirm password are required'
+      });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'New password and confirm password do not match'
+      });
+    }
+
+    if (newPassword.length < 4) {
+      return res.status(400).json({
+        success: false,
+        message: 'New password must be at least 4 characters long'
+      });
+    }
+
+    // Check for uppercase letter and number
+    const hasUppercase = /[A-Z]/.test(newPassword);
+    const hasNumber = /[0-9]/.test(newPassword);
+    
+    if (!hasUppercase || !hasNumber) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password must contain at least one uppercase letter and one number'
+      });
+    }
+
+    // Find staff member
+    const staff = await Staff.findById(staffId);
+    if (!staff) {
+      return res.status(404).json({
+        success: false,
+        message: 'Staff member not found'
+      });
+    }
+
+    // Verify current password
+    // The current password should match whatever is stored in staff.password field
+    // (which could be the employeeId initially, or a custom password if changed)
+    const isCurrentPasswordValid = (currentPassword === staff.password);
+
+    if (!isCurrentPasswordValid) {
+      return res.status(401).json({
+        success: false,
+        message: 'Current password is incorrect'
+      });
+    }
+
+    // Update password
+    staff.password = newPassword;
+    await staff.save();
+
+    res.json({
+      success: true,
+      message: 'Password changed successfully'
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Failed to change password',
+      error: error.message
+    });
+  }
+};
+
 // Get staff by employee ID
 const getStaffByEmployeeId = async (req, res) => {
   try {
@@ -371,5 +472,6 @@ module.exports = {
   deleteStaff,
   staffLogin,
   getStaffDashboard,
+  changePassword,
   getStaffByEmployeeId
 };

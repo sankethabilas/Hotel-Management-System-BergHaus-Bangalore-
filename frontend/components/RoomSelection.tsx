@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Wifi, Car, Coffee, Dumbbell, Waves, Bed, Users, DollarSign } from 'lucide-react';
+import { Wifi, Car, Coffee, Dumbbell, Waves, Bed, Users } from 'lucide-react';
 
 interface Room {
   _id: string;
@@ -140,7 +140,7 @@ const RoomSelection: React.FC<RoomSelectionProps> = ({
                 </div>
                 <div className="text-right">
                   <div className="text-2xl font-bold text-[#006bb8]">
-                    ${room.pricing.pricePerNight}
+                    Rs {room.pricing.pricePerNight}
                   </div>
                   <div className="text-sm text-gray-500">per night</div>
                 </div>
@@ -177,16 +177,16 @@ const RoomSelection: React.FC<RoomSelectionProps> = ({
               <div className="bg-gray-50 p-3 rounded-lg">
                 <div className="text-sm space-y-1">
                   <div className="flex justify-between">
-                    <span>${room.pricing.pricePerNight} × {room.pricing.totalNights} nights</span>
-                    <span>${room.pricing.subtotal.toFixed(2)}</span>
+                    <span>Rs {room.pricing.pricePerNight} × {room.pricing.totalNights} nights</span>
+                    <span>Rs {room.pricing.subtotal.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Tax (10%)</span>
-                    <span>${room.pricing.tax.toFixed(2)}</span>
+                    <span>Rs {room.pricing.tax.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between font-semibold border-t pt-1">
                     <span>Total</span>
-                    <span>${room.pricing.total.toFixed(2)}</span>
+                    <span>Rs {room.pricing.total.toFixed(2)}</span>
                   </div>
                 </div>
               </div>
@@ -223,7 +223,7 @@ const RoomSelection: React.FC<RoomSelectionProps> = ({
               </div>
               <div className="text-right">
                 <div className="text-2xl font-bold text-[#006bb8]">
-                  ${calculateTotalPrice().toFixed(2)}
+                  Rs {calculateTotalPrice().toFixed(2)}
                 </div>
                 <div className="text-sm text-gray-500">Total amount</div>
               </div>

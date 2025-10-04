@@ -38,9 +38,17 @@ class StaffAPI {
         let errorData;
         try {
           errorData = await response.json();
+          console.error('API Error Response:', errorData);
         } catch {
           errorData = { message: `HTTP error! status: ${response.status}` };
         }
+        
+        // Handle validation errors specifically
+        if (errorData.errors && Array.isArray(errorData.errors)) {
+          const validationErrors = errorData.errors.map((err: any) => err.msg || err.message).join(', ');
+          throw new Error(`Validation failed: ${validationErrors}`);
+        }
+        
         throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
 
@@ -67,38 +75,38 @@ class StaffAPI {
 
   // Get all staff (admin only)
   async getAllStaff(): Promise<Staff[]> {
-    const response = await this.request<ApiResponse<Staff[]>>('/');
-    return response.data || [];
+    const response = await this.request<{success: boolean, staff: Staff[]}>('/');
+    return response.staff || [];
   }
 
   // Get active staff (public - for attendance scanner)
   async getActiveStaff(): Promise<Staff[]> {
-    const response = await this.request<ApiResponse<Staff[]>>('/active');
-    return response.data || [];
+    const response = await this.request<{success: boolean, staff: Staff[]}>('/active');
+    return response.staff || [];
   }
 
   // Get staff by ID
   async getStaffById(id: string): Promise<Staff> {
-    const response = await this.request<ApiResponse<Staff>>(`/${id}`);
-    return response.data!;
+    const response = await this.request<{success: boolean, staff: Staff}>(`/${id}`);
+    return response.staff!;
   }
 
   // Create new staff
   async createStaff(staffData: StaffFormData): Promise<Staff> {
-    const response = await this.request<ApiResponse<Staff>>('/', {
+    const response = await this.request<{success: boolean, staff: Staff}>('/', {
       method: 'POST',
       body: JSON.stringify(staffData),
     });
-    return response.data!;
+    return response.staff!;
   }
 
   // Update staff
   async updateStaff(id: string, staffData: StaffFormData): Promise<Staff> {
-    const response = await this.request<ApiResponse<Staff>>(`/${id}`, {
+    const response = await this.request<{success: boolean, staff: Staff}>(`/${id}`, {
       method: 'PUT',
       body: JSON.stringify(staffData),
     });
-    return response.data!;
+    return response.staff!;
   }
 
   // Delete staff

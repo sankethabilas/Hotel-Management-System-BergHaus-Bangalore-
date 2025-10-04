@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,10 @@ import RoomCard from '@/components/room-card';
 import { EnhancedRoomCard } from '@/components/enhanced-room-card';
 import FacilityCard, { iconMap } from '@/components/facility-card';
 import ReviewCarousel from '@/components/review-carousel';
+import FeedbackShowcase from '@/components/feedback-showcase';
+import { useAuth } from '@/contexts/AuthContext';
+import { roomAPI } from '@/lib/api';
+import { getRoomImages, getRoomPrimaryImage, getAllRoomImages, getRandomRoomImageWithSeed } from '@/lib/roomImageUtils';
 import { 
   Star, 
   Users, 
@@ -29,61 +33,54 @@ import {
   ArrowRight,
   CheckCircle,
   Mountain,
-  TreePine
+  TreePine,
+  MessageSquare
 } from 'lucide-react';
 
-// Sample data
-const rooms = [
+// Sample data with dynamic images
+const defaultRooms = [
   {
     id: '1',
     name: 'Double Room with Mountain View',
     description: 'Spacious double room with stunning mountain views, extra-large double bed, and modern amenities.',
-    price: 10478,
-    originalPrice: 13608,
-    image: '/IMG-20250815-WA0007.jpg',
+    image: getRoomPrimaryImage('Double'),
     capacity: 2,
     amenities: ['Mountain View', 'Balcony', 'Patio', 'Ensuite Bathroom', 'Flat-screen TV', 'Terrace'],
     rating: 9.4,
     isPopular: true,
-    discount: 23
+    images: getAllRoomImages('Double')
   },
   {
     id: '2',
     name: 'Family Room with Mountain View',
     description: 'Perfect for families with bunk bed and large double bed, featuring mountain views and family amenities.',
-    price: 12807,
-    originalPrice: 16632,
-    image: '/IMG-20250815-WA0008.jpg',
+    image: getRoomPrimaryImage('Family'),
     capacity: 4,
     amenities: ['Mountain View', 'Bunk Bed', 'Large Double Bed', 'Family Friendly', 'Flat-screen TV', 'Terrace'],
     rating: 9.2,
     isPopular: true,
-    discount: 23
+    images: getAllRoomImages('Family')
   },
   {
     id: '3',
     name: 'Double or Twin Room',
     description: 'Flexible room configuration with two futon beds, mountain views, and outdoor spaces.',
-    price: 10478,
-    originalPrice: 13608,
-    image: '/IMG-20250815-WA0009.jpg',
+    image: getRoomPrimaryImage('Twin'),
     capacity: 2,
     amenities: ['Mountain View', 'Twin Beds', 'Balcony', 'Patio', 'Ensuite Bathroom', 'Terrace'],
     rating: 9.6,
     isPopular: true,
-    discount: 23
+    images: getAllRoomImages('Twin')
   },
   {
     id: '4',
     name: 'Single Room with Mountain View',
     description: 'Perfect for solo travelers with large double bed and all the amenities you need.',
-    price: 9432,
-    originalPrice: 12247,
-    image: '/IMG-20250815-WA0010.jpg',
+    image: getRoomPrimaryImage('Single'),
     capacity: 1,
     amenities: ['Mountain View', 'Single Occupancy', 'Large Double Bed', 'Balcony', 'Patio', 'Terrace'],
     rating: 9.0,
-    discount: 23
+    images: getAllRoomImages('Single')
   }
 ];
 
@@ -184,6 +181,76 @@ const specialOffers = [
 ];
 
 export default function HomePage() {
+  const { user } = useAuth();
+  const [rooms, setRooms] = useState(defaultRooms);
+  const [loading, setLoading] = useState(false);
+
+  // Check if user is admin
+  const isAdmin = user?.role === 'admin';
+
+  // Load rooms from API on component mount
+  useEffect(() => {
+    const loadRooms = async () => {
+      try {
+        setLoading(true);
+        const response = await roomAPI.getAllRooms();
+        if (response.success && response.data) {
+          // Transform API data to match our interface
+          const transformedRooms = response.data.map((room: any) => {
+            // Map room types to proper names
+            const roomNameMap: { [key: string]: string } = {
+              'Double': 'Double Room with Mountain View',
+              'Family': 'Family Room with Mountain View',
+              'Twin': 'Double or Twin Room',
+              'Single': 'Single Room with Mountain View',
+              'Suite': 'Family Room with Mountain View'
+            };
+            
+            // Get images using our dynamic image utility
+            const roomImages = getRoomImages(room.roomType, room.images);
+            // Use a more dynamic approach - if no API images, use random from folder
+            const primaryImage = room.images?.[0] || getRandomRoomImageWithSeed(room.roomType, parseInt(room._id.slice(-2), 16) || 0);
+            
+            return {
+              id: room._id,
+              name: roomNameMap[room.roomType] || `${room.roomType || 'Standard'} Room with Mountain View`,
+              description: room.description || `Comfortable ${(room.roomType || 'standard').toLowerCase()} room`,
+              image: primaryImage,
+              capacity: room.capacity || 1,
+              amenities: room.amenities || [],
+              rating: 9.0, // Default rating
+              isPopular: room.status === 'available',
+              images: roomImages
+            };
+          });
+          setRooms(transformedRooms);
+        }
+      } catch (error) {
+        console.error('Error loading rooms:', error);
+        // Keep default rooms if API fails
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadRooms();
+  }, []);
+
+  const handleRoomImageUpdate = (updatedRoom: any) => {
+    console.log('Updating room image:', updatedRoom);
+    setRooms(prevRooms => 
+      prevRooms.map(room => 
+        room.id === updatedRoom._id 
+          ? {
+              ...room,
+              image: updatedRoom.images && updatedRoom.images.length > 0 ? updatedRoom.images[0] : '/IMG-20250815-WA0007.jpg',
+              images: updatedRoom.images || []
+            }
+          : room
+      )
+    );
+  };
+
   return (
     <div className="min-h-screen">
       <Navbar />
@@ -266,16 +333,33 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {rooms.map((room) => (
-              <EnhancedRoomCard 
-                key={room.id} 
-                room={room}
-                onBook={(room) => {
-                  // Handle booking action
-                  window.location.href = `/availability?roomId=${room.id}`;
-                }}
-              />
-            ))}
+            {loading ? (
+              // Loading skeleton
+              Array.from({ length: 4 }).map((_, index) => (
+                <div key={index} className="animate-pulse">
+                  <div className="bg-gray-200 h-48 rounded-lg mb-4"></div>
+                  <div className="space-y-2">
+                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                    <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              rooms.map((room) => (
+                <EnhancedRoomCard 
+                  key={room.id} 
+                  room={room}
+                  onBook={(room) => {
+                    // Handle booking action
+                    window.location.href = `/availability?roomId=${room.id}`;
+                  }}
+                  onImageUpdate={handleRoomImageUpdate}
+                  showImageUpload={isAdmin}
+                  isAdmin={isAdmin}
+                />
+              ))
+            )}
           </div>
 
           <div className="text-center mt-12">
@@ -344,6 +428,48 @@ export default function HomePage() {
           <ReviewCarousel />
         </div>
       </section>
+
+      {/* Feedback Section */}
+      <section className="py-20 bg-gradient-to-r from-hms-primary to-hms-secondary">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div className="mb-8">
+            <Badge className="bg-white text-hms-primary font-semibold mb-4">
+              Share Your Experience
+            </Badge>
+            <h2 className="text-4xl font-bold text-white mb-6">
+              Help Us Improve
+            </h2>
+            <p className="text-xl text-white/90 max-w-2xl mx-auto">
+              Your feedback is invaluable to us. Share your experience and help us create 
+              even better stays for future guests.
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/feedback">
+              <Button 
+                size="lg" 
+                className="bg-white text-hms-primary hover:bg-white/90 px-8 py-4 text-lg font-semibold"
+              >
+                <MessageSquare className="w-5 h-5 mr-2" />
+                Share Feedback
+              </Button>
+            </Link>
+            <Link href="/contact">
+              <Button 
+                size="lg" 
+                variant="outline" 
+                className="border-white text-white hover:bg-white hover:text-hms-primary px-8 py-4 text-lg font-semibold"
+              >
+                Contact Us
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Guest Feedback Showcase */}
+      <FeedbackShowcase />
 
       {/* Hotel Surroundings Preview */}
       <section className="py-20 bg-white">

@@ -20,7 +20,7 @@ const app = express();
 //   },
 // }));
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: ['http://localhost:3000', 'http://localhost:3001'],
   credentials: true
 }));
 
@@ -101,6 +101,8 @@ app.use('/api/promotions', require('./routes/promotions'));
 app.use('/api/reports', require('./routes/reports'));
 app.use('/api/inventory', require('./routes/inventoryRoutes'));
 app.use('/api/staff-requests', require('./routes/staffRequestRoutes'));
+app.use('/api/contact', require('./routes/contact'));
+app.use('/api/feedback', require('./routes/feedback'));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
