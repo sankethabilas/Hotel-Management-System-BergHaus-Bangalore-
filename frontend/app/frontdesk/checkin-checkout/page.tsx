@@ -753,53 +753,6 @@ export default function CheckInCheckOutPage() {
                       <div><strong>Room {actionDialog.booking.roomNumber}:</strong> {actionDialog.booking.roomType}</div>
                     </div>
 
-                    {actionDialog.type === 'checkout' && (
-                      <div className="space-y-4">
-                        {additionalCharges.map((charge, index) => (
-                          <div key={index} className="grid grid-cols-12 gap-2 items-center">
-                            <Input
-                              placeholder="Description"
-                              value={charge.description}
-                              onChange={(e) => updateAdditionalCharge(index, 'description', e.target.value)}
-                              className="col-span-5"
-                            />
-                            <Input
-                              type="number"
-                              placeholder="Qty"
-                              value={charge.quantity}
-                              onChange={(e) => updateAdditionalCharge(index, 'quantity', parseInt(e.target.value) || 0)}
-                              className="col-span-2"
-                            />
-                            <Input
-                              type="number"
-                              step="0.01"
-                              placeholder="Price"
-                              value={charge.unitPrice}
-                              onChange={(e) => updateAdditionalCharge(index, 'unitPrice', parseFloat(e.target.value) || 0)}
-                              className="col-span-3"
-                            />
-                            <div className="col-span-1 text-sm font-medium">
-                              Rs {(charge.quantity * charge.unitPrice).toFixed(2)}
-                            </div>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => removeAdditionalCharge(index)}
-                              className="col-span-1"
-                            >
-                              <Minus className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        ))}
-                        
-                        {additionalCharges.length > 0 && (
-                          <div className="text-right font-medium">
-                            Additional Total: Rs {additionalCharges.reduce((sum, charge) => sum + (charge.quantity * charge.unitPrice), 0).toFixed(2)}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
                   </>
                 )}
               </div>
