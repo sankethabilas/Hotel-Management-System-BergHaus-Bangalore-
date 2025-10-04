@@ -609,6 +609,67 @@ const ContactUsPage = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Feedback Section */}
+            <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-sm">
+              <CardHeader className="bg-gradient-to-r from-[#ffc973] to-[#fee3b3] text-gray-800 rounded-t-xl p-8">
+                <CardTitle className="flex items-center text-2xl lg:text-3xl">
+                  <Star className="mr-3 h-8 w-8" />
+                  Share Your Feedback
+                </CardTitle>
+                <p className="text-lg text-gray-700 mt-2">
+                  Help us improve by sharing your experience with Berghaus Bungalow
+                </p>
+              </CardHeader>
+              <CardContent className="p-8">
+                <div className="text-center space-y-6">
+                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6">
+                    <h3 className="text-xl font-semibold text-gray-800 mb-4">
+                      We Value Your Opinion
+                    </h3>
+                    <p className="text-gray-600 mb-6">
+                      Your feedback helps us enhance our services and create better experiences for all our guests. 
+                      Share your thoughts about your stay, dining experience, or any suggestions you might have.
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                      <Button
+                        onClick={() => window.open('/feedback', '_blank')}
+                        className="bg-gradient-to-r from-[#006bb8] to-[#2fa0df] hover:from-[#0056a3] hover:to-[#1e8bc4] text-white font-bold py-3 px-8 rounded-xl transition-all duration-200 transform hover:scale-105 text-lg h-12"
+                      >
+                        <Star className="mr-3 h-5 w-5" />
+                        Submit Feedback
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => window.open('/feedback', '_blank')}
+                        className="border-2 border-[#006bb8] text-[#006bb8] hover:bg-[#006bb8] hover:text-white font-bold py-3 px-8 rounded-xl transition-all duration-200 transform hover:scale-105 text-lg h-12"
+                      >
+                        <MessageSquare className="mr-3 h-5 w-5" />
+                        Rate Your Experience
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+                    <div className="text-center p-4 bg-gray-50 rounded-lg">
+                      <div className="text-3xl mb-2">⭐</div>
+                      <h4 className="font-semibold text-gray-800 mb-2">Rate Your Stay</h4>
+                      <p className="text-sm text-gray-600">Share ratings for different aspects of your experience</p>
+                    </div>
+                    <div className="text-center p-4 bg-gray-50 rounded-lg">
+                      <div className="text-3xl mb-2">💬</div>
+                      <h4 className="font-semibold text-gray-800 mb-2">Leave Comments</h4>
+                      <p className="text-sm text-gray-600">Tell us what you loved or what we can improve</p>
+                    </div>
+                    <div className="text-center p-4 bg-gray-50 rounded-lg">
+                      <div className="text-3xl mb-2">📸</div>
+                      <h4 className="font-semibold text-gray-800 mb-2">Share Photos</h4>
+                      <p className="text-sm text-gray-600">Upload photos from your stay (optional)</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </div>

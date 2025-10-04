@@ -122,12 +122,6 @@ export default function Navbar({ className }: NavbarProps) {
             >
               Contact
             </Link>
-            <Link 
-              href="/feedback" 
-              className="text-sm text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary transition-colors duration-200 font-medium"
-            >
-              Feedback
-            </Link>
             {isAuthenticated ? (
               <Link 
                 href="/reservations" 
@@ -275,13 +269,6 @@ export default function Navbar({ className }: NavbarProps) {
                 onClick={() => setIsMenuOpen(false)}
               >
                 Contact
-              </Link>
-              <Link
-                href="/feedback"
-                className="block px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary hover:bg-gray-50 dark:hover:bg-gray-600 rounded-md transition-colors duration-200"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Feedback
               </Link>
               {isAuthenticated ? (
                 <Link
