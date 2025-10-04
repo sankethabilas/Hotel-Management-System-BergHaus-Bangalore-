@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   BarChart3, 
   TrendingUp, 
-  DollarSign, 
+  IndianRupee, 
   ShoppingCart, 
   AlertTriangle,
   Calendar,
@@ -251,10 +251,10 @@ export default function Reports() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="bg-green-50 p-4 rounded-lg">
                   <div className="flex items-center">
-                    <DollarSign className="w-8 h-8 text-green-600" />
+                    <IndianRupee className="w-8 h-8 text-green-600" />
                     <div className="ml-3">
                       <p className="text-sm font-medium text-green-600">Total Revenue</p>
-                      <p className="text-2xl font-bold text-green-900">${salesData.summary.totalRevenue}</p>
+                      <p className="text-2xl font-bold text-green-900">Rs {salesData.summary.totalRevenue}</p>
                     </div>
                   </div>
                 </div>

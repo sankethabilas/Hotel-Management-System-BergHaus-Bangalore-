@@ -26,7 +26,7 @@ import {
   Eye,
   UserCheck,
   UserX,
-  DollarSign
+  IndianRupee
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -405,7 +405,7 @@ export default function FrontdeskDashboard() {
                   <p><strong>Check-in:</strong> {new Date(actionDialog.booking.checkInDate).toLocaleDateString()}</p>
                   <p><strong>Check-out:</strong> {new Date(actionDialog.booking.checkOutDate).toLocaleDateString()}</p>
                   <p><strong>Guests:</strong> {actionDialog.booking.numberOfGuests}</p>
-                  <p><strong>Total:</strong> ${actionDialog.booking.totalAmount}</p>
+                  <p><strong>Total:</strong> Rs {actionDialog.booking.totalAmount}</p>
                 </div>
               )}
             </DialogDescription>

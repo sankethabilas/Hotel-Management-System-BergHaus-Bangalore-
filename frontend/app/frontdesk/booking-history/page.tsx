@@ -36,7 +36,8 @@ import {
   Calendar,
   User,
   Bed,
-  DollarSign
+  IndianRupee,
+  X
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
@@ -81,6 +82,15 @@ export default function BookingHistoryPage() {
   useEffect(() => {
     filterHistory();
   }, [bookingHistory, searchQuery, statusFilter]);
+
+  // Handle search query from URL parameters
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const searchParam = urlParams.get('search');
+    if (searchParam) {
+      setSearchQuery(searchParam);
+    }
+  }, []);
 
   const fetchBookingHistory = async () => {
     try {
@@ -287,6 +297,16 @@ export default function BookingHistoryPage() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
               />
+              {searchQuery && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-full sm:w-48">
@@ -311,6 +331,11 @@ export default function BookingHistoryPage() {
             <div className="flex items-center">
               <History className="w-5 h-5 mr-2" />
               Completed Bookings ({filteredHistory.length})
+              {searchQuery && (
+                <Badge variant="secondary" className="ml-2">
+                  Search: "{searchQuery}"
+                </Badge>
+              )}
             </div>
             {loading && (
               <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-[#006bb8]"></div>
@@ -354,7 +379,7 @@ export default function BookingHistoryPage() {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="font-medium">${booking.totalAmount}</div>
+                        <div className="font-medium">Rs {booking.totalAmount}</div>
                       </TableCell>
                       <TableCell>{getPaymentStatusBadge(booking.paymentStatus)}</TableCell>
                       <TableCell>
@@ -458,12 +483,12 @@ export default function BookingHistoryPage() {
                   
                   <div>
                     <h3 className="font-semibold text-[#006bb8] flex items-center mb-2">
-                      <DollarSign className="w-4 h-4 mr-2" />
+                      <IndianRupee className="w-4 h-4 mr-2" />
                       Payment Information
                     </h3>
                     <div className="space-y-1 text-sm">
-                      <p><strong>Total Amount:</strong> ${selectedBooking.totalAmount}</p>
-                      <p><strong>Payment Status:</strong> {getPaymentStatusBadge(selectedBooking.paymentStatus)}</p>
+                      <p><strong>Total Amount:</strong> Rs {selectedBooking.totalAmount}</p>
+                      <div className="flex items-center gap-2"><strong>Payment Status:</strong> {getPaymentStatusBadge(selectedBooking.paymentStatus)}</div>
                     </div>
                   </div>
                 </div>
@@ -487,8 +512,8 @@ export default function BookingHistoryPage() {
                           <TableRow key={index}>
                             <TableCell>{charge.description}</TableCell>
                             <TableCell className="text-center">{charge.quantity}</TableCell>
-                            <TableCell className="text-right">${charge.unitPrice}</TableCell>
-                            <TableCell className="text-right">${(charge.quantity * charge.unitPrice).toFixed(2)}</TableCell>
+                            <TableCell className="text-right">Rs {charge.unitPrice}</TableCell>
+                            <TableCell className="text-right">Rs {(charge.quantity * charge.unitPrice).toFixed(2)}</TableCell>
                           </TableRow>
                         ))}
                       </TableBody>

@@ -69,9 +69,9 @@ const CalendarIcon = ({ className }: { className: string }) => (
   </svg>
 );
 
-const CurrencyDollarIcon = ({ className }: { className: string }) => (
+const CurrencyRupeeIcon = ({ className }: { className: string }) => (
   <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" />
   </svg>
 );
 
@@ -382,7 +382,7 @@ export default function StaffDashboard() {
                     <p className="text-sm text-green-600">+Rs. 15,500 overtime</p>
                   </div>
                   <div className="p-3 bg-yellow-100 rounded-lg">
-                    <CurrencyDollarIcon className="h-6 w-6 text-yellow-600" />
+                    <CurrencyRupeeIcon className="h-6 w-6 text-yellow-600" />
                   </div>
                 </div>
               </div>
@@ -446,7 +446,7 @@ export default function StaffDashboard() {
                       <button className="w-full bg-yellow-600 text-white rounded-lg p-4 hover:bg-yellow-700 transition-colors">
                         <div className="flex items-center space-x-3">
                           <div className="p-2 bg-yellow-500 rounded-lg">
-                            <CurrencyDollarIcon className="h-5 w-5" />
+                            <CurrencyRupeeIcon className="h-5 w-5" />
                           </div>
                           <div className="text-left">
                             <h3 className="font-semibold">Payment History</h3>
