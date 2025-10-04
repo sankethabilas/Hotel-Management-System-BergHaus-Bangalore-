@@ -193,4 +193,35 @@ export async function assignOfferToGuest(req, res) {
   res.json(saved)
 }
 
+export async function unassignOfferFromGuest(req, res) {
+  try {
+    const { guestId, offerId } = req.body || {}
+    
+    if (!guestId || !offerId) {
+      return res.status(400).json({ message: 'guestId and offerId are required' })
+    }
+    
+    const offer = await Offer.findById(offerId)
+    if (!offer) {
+      return res.status(404).json({ message: 'Offer not found' })
+    }
+    
+    const loyalty = await Loyalty.findOne({ guestId })
+    if (!loyalty) {
+      return res.status(404).json({ message: 'Loyalty record not found' })
+    }
+    
+    // Remove the offer from assignedOffers array
+    loyalty.assignedOffers = (loyalty.assignedOffers || []).filter(
+      id => String(id) !== String(offerId)
+    )
+    
+    const saved = await loyalty.save()
+    res.json(saved)
+  } catch (error) {
+    console.error('Error unassigning offer:', error)
+    res.status(500).json({ message: 'Error unassigning offer', error: error.message })
+  }
+}
+
 

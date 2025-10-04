@@ -4,7 +4,8 @@ import { loyaltyService } from '../../services/loyaltyService';
 
 const EnrollmentForm = ({
   onSubmit,
-  onCancel
+  onCancel,
+  enrolledMembers = []
 }) => {
   const [guests, setGuests] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -14,17 +15,22 @@ const EnrollmentForm = ({
   const [selectedGuest, setSelectedGuest] = useState(null);
   const [initialPoints, setInitialPoints] = useState(0);
 
-  // Fetch available guests on mount
+  // Fetch available guests on mount and when enrolled members change
   useEffect(() => {
     fetchGuests();
-  }, []);
+  }, [enrolledMembers]);
 
   const fetchGuests = async () => {
     try {
       setLoading(true);
       setError(null);
       const data = await loyaltyService.getAvailableGuests();
-      setGuests(data);
+      
+      // Filter out guests who are already enrolled in loyalty program
+      const enrolledUserIds = enrolledMembers.map(member => member.userId?._id || member.userId);
+      const availableGuests = data.filter(guest => !enrolledUserIds.includes(guest._id));
+      
+      setGuests(availableGuests);
     } catch (err) {
       setError(err.message);
       console.error('Error fetching guests:', err);
@@ -67,6 +73,36 @@ const EnrollmentForm = ({
     if (points >= 5000) return 'Platinum';
     if (points >= 2000) return 'Gold';
     return 'Silver';
+  };
+
+  const getTierBenefits = (tier) => {
+    const benefits = {
+      Silver: [
+        '5% discount on room bookings',
+        'Early check-in (subject to availability)',
+        'Welcome drink on arrival',
+        'Birthday special offer'
+      ],
+      Gold: [
+        '10% discount on room bookings',
+        'Free room upgrade (subject to availability)',
+        'Late check-out until 2 PM',
+        'Complimentary breakfast for 2',
+        'Priority customer support',
+        'Access to exclusive offers'
+      ],
+      Platinum: [
+        '15% discount on room bookings',
+        'Guaranteed room upgrade',
+        'Late check-out until 4 PM',
+        'Complimentary breakfast & dinner for 2',
+        'Airport transfer service',
+        'Access to VIP lounge',
+        'Personal concierge service',
+        'Exclusive seasonal packages'
+      ]
+    };
+    return benefits[tier] || [];
   };
   return (
     <div className="bg-white rounded-lg shadow">
@@ -197,18 +233,21 @@ const EnrollmentForm = ({
                 min="0"
                 step="100"
                 value={initialPoints}
-                onChange={(e) => setInitialPoints(parseInt(e.target.value) || 0)}
+                onChange={(e) => {
+                  const value = parseInt(e.target.value) || 0;
+                  setInitialPoints(Math.max(0, value)); // Ensure non-negative
+                }}
                 className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                 disabled={submitting}
               />
               <p className="mt-1 text-xs text-gray-500">
-                Welcome bonus points (e.g., 500 for sign-up bonus)
+                💡 Welcome bonus points (e.g., 500 for sign-up bonus). The tier preview updates automatically as you type!
               </p>
             </div>
 
             <div className="bg-gray-50 border border-gray-200 rounded-md p-4">
-              <h3 className="text-sm font-medium text-gray-900 mb-2">Tier Preview</h3>
-              <div className="flex items-center space-x-2">
+              <h3 className="text-sm font-medium text-gray-900 mb-3">Tier Preview</h3>
+              <div className="flex items-center space-x-2 mb-3">
                 <span className={`px-3 py-1 text-sm font-semibold rounded-full ${
                   calculateTier(initialPoints) === 'Platinum' ? 'bg-purple-100 text-purple-800' :
                   calculateTier(initialPoints) === 'Gold' ? 'bg-yellow-100 text-yellow-800' :
@@ -218,7 +257,23 @@ const EnrollmentForm = ({
                 </span>
                 <span className="text-sm text-gray-600">({initialPoints} points)</span>
               </div>
-              <p className="mt-2 text-xs text-gray-500">
+              
+              <div className="bg-white rounded border border-gray-200 p-3 mb-2">
+                <h4 className="text-xs font-semibold text-gray-700 mb-2">
+                  {calculateTier(initialPoints)} Tier Benefits:
+                </h4>
+                <ul className="space-y-1">
+                  {getTierBenefits(calculateTier(initialPoints)).map((benefit, index) => (
+                    <li key={index} className="text-xs text-gray-600 flex items-start">
+                      <span className="text-green-500 mr-2">✓</span>
+                      <span>{benefit}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <p className="text-xs text-gray-500 border-t border-gray-300 pt-2 mt-2">
+                <strong>Tier Thresholds:</strong><br />
                 • Silver: 0-1,999 points<br />
                 • Gold: 2,000-4,999 points<br />
                 • Platinum: 5,000+ points

@@ -11,14 +11,31 @@ const OffersList = ({
   onAssignOffer
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [filter, setFilter] = useState('all'); // all, active, inactive
+  const [filterStatus, setFilterStatus] = useState('all'); // all, active, inactive, expired
+  const [filterType, setFilterType] = useState('all'); // all, percentage, fixed, special
+
+  // Helper to determine actual status including expired
+  const getOfferStatus = (offer) => {
+    if (!offer) return 'inactive';
+    const now = new Date();
+    const endDate = new Date(offer.validUntil);
+    if (endDate < now) return 'expired';
+    return offer.status || 'inactive';
+  };
+
   const filteredOffers = offers.filter(offer => {
     if (!offer) return false; // Filter out null/undefined offers
-    if (filter === 'active') return offer.status === 'active';
-    if (filter === 'inactive') return offer.status === 'inactive';
-    return true;
-  }).filter(offer => {
-    if (!offer) return false; // Filter out null/undefined offers
+    
+    // Status filter
+    const offerStatus = getOfferStatus(offer);
+    if (filterStatus === 'active' && offerStatus !== 'active') return false;
+    if (filterStatus === 'inactive' && offerStatus !== 'inactive') return false;
+    if (filterStatus === 'expired' && offerStatus !== 'expired') return false;
+    
+    // Type filter
+    if (filterType !== 'all' && offer.discountType !== filterType) return false;
+    
+    // Search filter
     const title = offer.title || '';
     const description = offer.description || '';
     const search = searchTerm.toLowerCase();
@@ -81,10 +98,19 @@ const OffersList = ({
           <div className="flex items-center space-x-3">
             <div className="flex items-center">
               <FilterIcon className="h-5 w-5 text-gray-400 mr-2" />
-              <select className="border border-gray-300 rounded-md shadow-sm py-2 pl-3 pr-8 text-sm focus:outline-none focus:ring-gold focus:border-gold" value={filter} onChange={e => setFilter(e.target.value)}>
-                <option value="all">All Offers</option>
+              <select className="border border-gray-300 rounded-md shadow-sm py-2 pl-3 pr-8 text-sm focus:outline-none focus:ring-gold focus:border-gold" value={filterStatus} onChange={e => setFilterStatus(e.target.value)}>
+                <option value="all">All Status</option>
                 <option value="active">Active</option>
                 <option value="inactive">Inactive</option>
+                <option value="expired">Expired</option>
+              </select>
+            </div>
+            <div className="flex items-center">
+              <select className="border border-gray-300 rounded-md shadow-sm py-2 pl-3 pr-8 text-sm focus:outline-none focus:ring-gold focus:border-gold" value={filterType} onChange={e => setFilterType(e.target.value)}>
+                <option value="all">All Types</option>
+                <option value="percentage">Percentage</option>
+                <option value="fixed">Fixed Amount</option>
+                <option value="special">Special</option>
               </select>
             </div>
             <button onClick={onCreateOffer} className="bg-navy-blue hover:bg-navy-blue-dark text-white py-2 px-4 rounded-md text-sm">
@@ -100,8 +126,13 @@ const OffersList = ({
                 <h3 className="text-lg font-semibold text-gray-900">
                   {offer?.title || 'Untitled Offer'}
                 </h3>
-                <span className={`px-2 py-1 inline-flex text-xs leading-4 font-semibold rounded-full ${offer.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                  {offer.status === 'active' ? 'Active' : 'Inactive'}
+                <span className={`px-2 py-1 inline-flex text-xs leading-4 font-semibold rounded-full ${
+                  getOfferStatus(offer) === 'active' ? 'bg-green-100 text-green-800' :
+                  getOfferStatus(offer) === 'expired' ? 'bg-yellow-100 text-yellow-800' :
+                  'bg-red-100 text-red-800'
+                }`}>
+                  {getOfferStatus(offer) === 'active' ? 'Active' :
+                   getOfferStatus(offer) === 'expired' ? 'Expired' : 'Inactive'}
                 </span>
               </div>
               <p className="mt-2 text-sm text-gray-600">{offer?.description || 'No description'}</p>

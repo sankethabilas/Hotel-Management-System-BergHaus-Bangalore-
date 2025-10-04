@@ -5,7 +5,8 @@ import {
   getOfferById,
   updateOffer,
   deleteOffer,
-  assignOfferToGuest 
+  assignOfferToGuest,
+  unassignOfferFromGuest
 } from '../controllers/offerController.js'
 
 const router = Router()
@@ -13,6 +14,7 @@ const router = Router()
 router.post('/', createOffer)
 router.get('/', getAllOffers)
 router.post('/assign', assignOfferToGuest) // Must come before /:id routes
+router.post('/unassign', unassignOfferFromGuest) // Must come before /:id routes
 router.get('/:id', getOfferById)
 router.put('/:id', updateOffer)
 router.delete('/:id', deleteOffer)

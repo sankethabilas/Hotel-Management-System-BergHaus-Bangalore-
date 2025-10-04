@@ -54,7 +54,7 @@ export const feedbackService = {
   // Respond to feedback
   respondToFeedback: async (id, responseData) => {
     try {
-      const response = await api.post(`/feedback/${id}/respond`, responseData);
+      const response = await api.post(`/feedback/${id}/response`, responseData);
       return response.data;
     } catch (error) {
       throw new Error(error.response?.data?.message || 'Failed to respond to feedback');
