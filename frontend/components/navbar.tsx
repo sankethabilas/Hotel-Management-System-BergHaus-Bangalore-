@@ -8,6 +8,7 @@ import { Menu, X, User, LogOut, MessageSquare } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { ThemeToggle } from '@/components/theme-toggle';
 import MessagesDropdown from '@/components/messages-dropdown';
+import RoomsDropdown from '@/components/rooms-dropdown';
 import { getProfileImageUrl, getUserInitials } from '@/utils/profileImage';
 
 interface NavbarProps {
@@ -17,6 +18,7 @@ interface NavbarProps {
 export default function Navbar({ className }: NavbarProps) {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const [isMessagesOpen, setIsMessagesOpen] = React.useState(false);
+  const [isRoomsOpen, setIsRoomsOpen] = React.useState(false);
   const [unreadCount, setUnreadCount] = React.useState(0);
   const { user, isAuthenticated, logout, loading } = useAuth();
 
@@ -92,12 +94,19 @@ export default function Navbar({ className }: NavbarProps) {
             >
               Home
             </Link>
-            <Link 
-              href="/rooms" 
-              className="text-sm text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary transition-colors duration-200 font-medium"
-            >
-              Rooms
-            </Link>
+            <div className="relative">
+              <button
+                onMouseEnter={() => setIsRoomsOpen(true)}
+                onMouseLeave={() => setIsRoomsOpen(false)}
+                className="text-sm text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary transition-colors duration-200 font-medium"
+              >
+                Rooms
+              </button>
+              <RoomsDropdown 
+                isOpen={isRoomsOpen} 
+                onClose={() => setIsRoomsOpen(false)} 
+              />
+            </div>
             <Link 
               href="/facilities" 
               className="text-sm text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary transition-colors duration-200 font-medium"
@@ -235,13 +244,34 @@ export default function Navbar({ className }: NavbarProps) {
               >
                 Home
               </Link>
-              <Link
-                href="/rooms"
-                className="block px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary hover:bg-gray-50 dark:hover:bg-gray-600 rounded-md transition-colors duration-200"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Rooms
-              </Link>
+              <div className="relative">
+                <button
+                  className="block w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary hover:bg-gray-50 dark:hover:bg-gray-600 rounded-md transition-colors duration-200"
+                  onClick={() => {
+                    setIsRoomsOpen(!isRoomsOpen);
+                    setIsMenuOpen(false);
+                  }}
+                >
+                  Rooms
+                </button>
+                {isRoomsOpen && (
+                  <div className="ml-4 mt-2 space-y-1">
+                    <div className="text-xs text-gray-500 dark:text-gray-400 px-3 py-1">
+                      Hover over "Rooms" in desktop view to see room previews
+                    </div>
+                    <Link
+                      href="/rooms"
+                      className="block px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:text-hms-primary dark:hover:text-hms-secondary hover:bg-gray-50 dark:hover:bg-gray-600 rounded-md transition-colors duration-200"
+                      onClick={() => {
+                        setIsRoomsOpen(false);
+                        setIsMenuOpen(false);
+                      }}
+                    >
+                      View All Rooms
+                    </Link>
+                  </div>
+                )}
+              </div>
               <Link
                 href="/facilities"
                 className="block px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary hover:bg-gray-50 dark:hover:bg-gray-600 rounded-md transition-colors duration-200"

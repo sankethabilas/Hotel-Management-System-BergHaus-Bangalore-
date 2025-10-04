@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Star, Users, Wifi, Car } from 'lucide-react';
+import { Star, Users, Wifi, Car, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface RoomCardProps {
   id: string;
@@ -17,6 +17,7 @@ interface RoomCardProps {
   amenities: string[];
   rating: number;
   isPopular?: boolean;
+  images?: string[];
 }
 
 export default function RoomCard({ 
@@ -27,18 +28,84 @@ export default function RoomCard({
   capacity, 
   amenities, 
   rating,
-  isPopular = false
+  isPopular = false,
+  images = []
 }: RoomCardProps) {
+  const [currentImageIndex, setCurrentImageIndex] = React.useState(0);
+  const [showNavigation, setShowNavigation] = React.useState(false);
+
+  const getCurrentImage = () => {
+    if (images && images.length > 0) {
+      const safeIndex = Math.min(currentImageIndex, images.length - 1);
+      return images[safeIndex];
+    }
+    return image;
+  };
+
+  const navigateImage = (direction: 'prev' | 'next') => {
+    if (!images || images.length <= 1) return;
+    
+    if (direction === 'prev') {
+      setCurrentImageIndex(prev => 
+        prev === 0 ? images!.length - 1 : prev - 1
+      );
+    } else {
+      setCurrentImageIndex(prev => 
+        prev === images!.length - 1 ? 0 : prev + 1
+      );
+    }
+  };
+
+  const canNavigate = images && images.length > 1;
   return (
     <Card className="group overflow-hidden border-0 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-105 bg-white">
       <div className="relative">
-        <div className="relative h-64 overflow-hidden">
+        <div 
+          className="relative h-64 overflow-hidden"
+          onMouseEnter={() => setShowNavigation(true)}
+          onMouseLeave={() => setShowNavigation(false)}
+        >
           <Image
-            src={image}
+            src={getCurrentImage()}
             alt={name}
             fill
             className="object-cover group-hover:scale-110 transition-transform duration-500"
           />
+          
+          {/* Navigation Arrows */}
+          {canNavigate && showNavigation && (
+            <>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigateImage('prev');
+                }}
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigateImage('next');
+                }}
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </>
+          )}
+          
+          {/* Image Counter */}
+          {canNavigate && (
+            <div className="absolute bottom-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded-full">
+              {currentImageIndex + 1} / {images!.length}
+            </div>
+          )}
           {isPopular && (
             <Badge className="absolute top-4 left-4 bg-hms-accent text-hms-primary font-semibold">
               Most Popular

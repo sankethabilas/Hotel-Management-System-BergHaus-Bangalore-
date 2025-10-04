@@ -16,6 +16,7 @@ import ReviewCarousel from '@/components/review-carousel';
 import FeedbackShowcase from '@/components/feedback-showcase';
 import { useAuth } from '@/contexts/AuthContext';
 import { roomAPI } from '@/lib/api';
+import { getRoomImages, getRoomPrimaryImage, getAllRoomImages, getRandomRoomImageWithSeed } from '@/lib/roomImageUtils';
 import { 
   Star, 
   Users, 
@@ -36,50 +37,50 @@ import {
   MessageSquare
 } from 'lucide-react';
 
-// Sample data
+// Sample data with dynamic images
 const defaultRooms = [
   {
     id: '1',
     name: 'Double Room with Mountain View',
     description: 'Spacious double room with stunning mountain views, extra-large double bed, and modern amenities.',
-    image: '/IMG-20250815-WA0007.jpg',
+    image: getRoomPrimaryImage('Double'),
     capacity: 2,
     amenities: ['Mountain View', 'Balcony', 'Patio', 'Ensuite Bathroom', 'Flat-screen TV', 'Terrace'],
     rating: 9.4,
     isPopular: true,
-    images: ['/IMG-20250815-WA0007.jpg']
+    images: getAllRoomImages('Double')
   },
   {
     id: '2',
     name: 'Family Room with Mountain View',
     description: 'Perfect for families with bunk bed and large double bed, featuring mountain views and family amenities.',
-    image: '/IMG-20250815-WA0008.jpg',
+    image: getRoomPrimaryImage('Family'),
     capacity: 4,
     amenities: ['Mountain View', 'Bunk Bed', 'Large Double Bed', 'Family Friendly', 'Flat-screen TV', 'Terrace'],
     rating: 9.2,
     isPopular: true,
-    images: ['/IMG-20250815-WA0008.jpg']
+    images: getAllRoomImages('Family')
   },
   {
     id: '3',
     name: 'Double or Twin Room',
     description: 'Flexible room configuration with two futon beds, mountain views, and outdoor spaces.',
-    image: '/IMG-20250815-WA0009.jpg',
+    image: getRoomPrimaryImage('Twin'),
     capacity: 2,
     amenities: ['Mountain View', 'Twin Beds', 'Balcony', 'Patio', 'Ensuite Bathroom', 'Terrace'],
     rating: 9.6,
     isPopular: true,
-    images: ['/IMG-20250815-WA0009.jpg']
+    images: getAllRoomImages('Twin')
   },
   {
     id: '4',
     name: 'Single Room with Mountain View',
     description: 'Perfect for solo travelers with large double bed and all the amenities you need.',
-    image: '/IMG-20250815-WA0010.jpg',
+    image: getRoomPrimaryImage('Single'),
     capacity: 1,
     amenities: ['Mountain View', 'Single Occupancy', 'Large Double Bed', 'Balcony', 'Patio', 'Terrace'],
     rating: 9.0,
-    images: ['/IMG-20250815-WA0010.jpg']
+    images: getAllRoomImages('Single')
   }
 ];
 
@@ -196,29 +197,30 @@ export default function HomePage() {
         if (response.success && response.data) {
           // Transform API data to match our interface
           const transformedRooms = response.data.map((room: any) => {
-            // Handle images - if no images from API, use default public images
-            let images = room.images || [];
-            if (images.length === 0) {
-              // Use default public images based on room type
-              const defaultImages: { [key: string]: string[] } = {
-                'Single': ['/IMG-20250815-WA0010.jpg'],
-                'Double': ['/IMG-20250815-WA0007.jpg'],
-                'Suite': ['/IMG-20250815-WA0008.jpg'],
-                'Family': ['/IMG-20250815-WA0008.jpg']
-              };
-              images = defaultImages[room.roomType] || ['/IMG-20250815-WA0007.jpg'];
-            }
+            // Map room types to proper names
+            const roomNameMap: { [key: string]: string } = {
+              'Double': 'Double Room with Mountain View',
+              'Family': 'Family Room with Mountain View',
+              'Twin': 'Double or Twin Room',
+              'Single': 'Single Room with Mountain View',
+              'Suite': 'Family Room with Mountain View'
+            };
+            
+            // Get images using our dynamic image utility
+            const roomImages = getRoomImages(room.roomType, room.images);
+            // Use a more dynamic approach - if no API images, use random from folder
+            const primaryImage = room.images?.[0] || getRandomRoomImageWithSeed(room.roomType, parseInt(room._id.slice(-2), 16) || 0);
             
             return {
               id: room._id,
-              name: `${room.roomType || 'Standard'} Room - ${room.roomNumber || 'N/A'}`,
+              name: roomNameMap[room.roomType] || `${room.roomType || 'Standard'} Room with Mountain View`,
               description: room.description || `Comfortable ${(room.roomType || 'standard').toLowerCase()} room`,
-              image: images[0] || '/IMG-20250815-WA0007.jpg',
+              image: primaryImage,
               capacity: room.capacity || 1,
               amenities: room.amenities || [],
               rating: 9.0, // Default rating
               isPopular: room.status === 'available',
-              images: images
+              images: roomImages
             };
           });
           setRooms(transformedRooms);

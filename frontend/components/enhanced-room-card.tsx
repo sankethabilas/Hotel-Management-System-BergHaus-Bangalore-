@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,10 +21,13 @@ import {
   Clock,
   Camera,
   Upload,
-  X
+  X,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { roomAPI } from '@/lib/api';
+import { getRoomImages, getRoomPrimaryImage, isFolderImage } from '@/lib/roomImageUtils';
 
 interface Room {
   id: string;
@@ -64,12 +67,50 @@ export function EnhancedRoomCard({
   const [isImageLoading, setIsImageLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [showNavigation, setShowNavigation] = useState(false);
   const { toast } = useToast();
+
+  // Define canNavigate early
+  const canNavigate = room.images && room.images.length > 1;
+  
+
+  // Navigation function
+  const navigateImage = useCallback((direction: 'prev' | 'next') => {
+    if (!room.images || room.images.length <= 1) return;
+    
+    if (direction === 'prev') {
+      setCurrentImageIndex(prev => 
+        prev === 0 ? room.images!.length - 1 : prev - 1
+      );
+    } else {
+      setCurrentImageIndex(prev => 
+        prev === room.images!.length - 1 ? 0 : prev + 1
+      );
+    }
+  }, [room.images, canNavigate]);
 
   // Reset current image index when room images change
   useEffect(() => {
     setCurrentImageIndex(0);
   }, [room.images]);
+
+  // Keyboard navigation
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!canNavigate) return;
+      
+      if (e.key === 'ArrowLeft') {
+        navigateImage('prev');
+      } else if (e.key === 'ArrowRight') {
+        navigateImage('next');
+      }
+    };
+
+    if (showNavigation) {
+      document.addEventListener('keydown', handleKeyDown);
+      return () => document.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [showNavigation, canNavigate, navigateImage]);
 
   const handleLike = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -218,6 +259,11 @@ export function EnhancedRoomCard({
       return imagePath;
     }
     
+    // If it's a folder image (from our organized folders), return as is for Next.js
+    if (isFolderImage(imagePath)) {
+      return imagePath;
+    }
+    
     // If it's a local public image (starts with /), return as is for Next.js
     if (imagePath.startsWith('/') && !imagePath.startsWith('/uploads/')) {
       return imagePath;
@@ -235,7 +281,11 @@ export function EnhancedRoomCard({
   return (
     <Card className="group overflow-hidden hover:shadow-xl transition-all duration-300 hover:scale-[1.02] border-0 shadow-lg">
       <div className="relative">
-        <div className="relative h-48 overflow-hidden">
+        <div 
+          className="relative h-48 overflow-hidden"
+          onMouseEnter={() => setShowNavigation(true)}
+          onMouseLeave={() => setShowNavigation(false)}
+        >
           <Image
             src={getImageUrl(getCurrentImage())}
             alt={room.name}
@@ -255,6 +305,41 @@ export function EnhancedRoomCard({
               setIsImageLoading(false);
             }}
           />
+          
+          {/* Navigation Arrows */}
+          {canNavigate && showNavigation && (
+            <>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigateImage('prev');
+                }}
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigateImage('next');
+                }}
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </>
+          )}
+          
+          {/* Image Counter */}
+          {canNavigate && (
+            <div className="absolute bottom-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded-full">
+              {currentImageIndex + 1} / {room.images!.length}
+            </div>
+          )}
           
           {/* Overlay with actions */}
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300">
@@ -352,13 +437,69 @@ export function EnhancedRoomCard({
                   <DialogTitle>{room.name}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-6">
-                  <div className="relative h-64 rounded-lg overflow-hidden">
+                  <div 
+                    className="relative h-64 rounded-lg overflow-hidden group"
+                    onMouseEnter={() => setShowNavigation(true)}
+                    onMouseLeave={() => setShowNavigation(false)}
+                  >
                     <Image
                       src={getImageUrl(getCurrentImage())}
                       alt={room.name}
                       fill
                       className="object-cover"
                     />
+                    
+                    {/* Navigation Arrows in Quick View */}
+                    {canNavigate && showNavigation && (
+                      <>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigateImage('prev');
+                          }}
+                        >
+                          <ChevronLeft className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigateImage('next');
+                          }}
+                        >
+                          <ChevronRight className="w-4 h-4" />
+                        </Button>
+                      </>
+                    )}
+                    
+                    {/* Image Counter in Quick View */}
+                    {canNavigate && (
+                      <div className="absolute bottom-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded-full">
+                        {currentImageIndex + 1} / {room.images!.length}
+                      </div>
+                    )}
+                    
+                    {/* Image Dots in Quick View */}
+                    {canNavigate && (
+                      <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex gap-1">
+                        {room.images!.map((_, index) => (
+                          <button
+                            key={index}
+                            className={`w-2 h-2 rounded-full transition-all duration-200 ${
+                              index === currentImageIndex 
+                                ? 'bg-white' 
+                                : 'bg-white/50 hover:bg-white/75'
+                            }`}
+                            onClick={() => setCurrentImageIndex(index)}
+                          />
+                        ))}
+                      </div>
+                    )}
                   </div>
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
