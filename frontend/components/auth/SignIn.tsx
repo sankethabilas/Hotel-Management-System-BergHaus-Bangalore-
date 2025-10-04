@@ -114,25 +114,29 @@ export default function SignIn() {
 
   return (
     <div className="min-h-screen relative flex items-center justify-center p-4 overflow-hidden">
-      {/* Modern Background Pattern */}
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100"></div>
+      {/* Blurred Background Image */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{
+          backgroundImage: "url('/IMG-20250815-WA0004.jpg')",
+          filter: 'blur(8px)',
+          transform: 'scale(1.1)'
+        }}
+      ></div>
       
-      {/* Geometric Pattern Overlay */}
-      <div className="absolute inset-0 opacity-30">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgb(59,130,246)_1px,transparent_0)] bg-[length:24px_24px]"></div>
-        <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(59,130,246,0.1)_25%,rgba(59,130,246,0.1)_50%,transparent_50%,transparent_75%,rgba(59,130,246,0.1)_75%)] bg-[length:20px_20px]"></div>
+      {/* Dark Overlay for Better Contrast */}
+      <div className="absolute inset-0 bg-black/40"></div>
+      
+      {/* Subtle Pattern Overlay */}
+      <div className="absolute inset-0 opacity-20">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.3)_1px,transparent_0)] bg-[length:24px_24px]"></div>
       </div>
       
-      {/* Floating Elements */}
-      <div className="absolute top-20 left-20 w-32 h-32 bg-blue-200/20 rounded-full blur-xl animate-pulse"></div>
-      <div className="absolute bottom-20 right-20 w-40 h-40 bg-indigo-200/20 rounded-full blur-xl animate-pulse delay-1000"></div>
-      <div className="absolute top-1/2 left-10 w-24 h-24 bg-purple-200/20 rounded-full blur-xl animate-pulse delay-2000"></div>
-      
-      {/* Gradient Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-br from-white/80 via-blue-50/60 to-indigo-100/80"></div>
+      {/* Gradient Overlay for Better Form Visibility */}
+      <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-blue-50/30 to-indigo-100/40"></div>
 
       <div className="relative z-10 w-full max-w-md py-8">
-        <Card className="shadow-2xl border border-white/20 bg-white/95 backdrop-blur-md animate-slide-up ring-1 ring-black/5">
+        <Card className="shadow-2xl border border-white/30 bg-white/90 backdrop-blur-lg animate-slide-up ring-1 ring-white/20">
           <CardHeader className="text-center space-y-4 pb-8">
             {/* Logo */}
             <div className="flex justify-center mb-2">
