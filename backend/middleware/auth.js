@@ -222,7 +222,8 @@ const requireAdminOrFrontdesk = (req, res, next) => {
     console.log('User role not authorized:', req.user.role);
     return res.status(403).json({
       success: false,
-      message: 'Access denied. Admin, manager, or frontdesk role required.'
+      message: 'Access denied. This page is for staff members only. Please use the regular reservations page to view your bookings.',
+      redirectTo: '/reservations'
     });
   }
 

@@ -86,6 +86,12 @@ export default function ReservationsPage() {
 
   const { toast } = useToast();
 
+  // Check if user has the right role for this page
+  useEffect(() => {
+    // This is a frontdesk page, so we'll let the backend handle the role check
+    // and redirect if needed
+  }, []);
+
   useEffect(() => {
     fetchReservations();
   }, [statusFilter]);
@@ -141,6 +147,21 @@ export default function ReservationsPage() {
       } else {
         const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
         console.error('API Error:', errorData);
+        
+        // Check if this is a role-based access issue
+        if (response.status === 403 && errorData.redirectTo) {
+          toast({
+            title: "Access Denied",
+            description: errorData.message,
+            variant: "destructive",
+          });
+          // Redirect to the user reservations page
+          setTimeout(() => {
+            window.location.href = errorData.redirectTo;
+          }, 2000);
+          return;
+        }
+        
         toast({
           title: "Error",
           description: errorData.message || `Failed to load reservations (${response.status})`,
