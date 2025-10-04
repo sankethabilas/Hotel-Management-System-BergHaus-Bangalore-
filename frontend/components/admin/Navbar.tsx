@@ -44,15 +44,15 @@ export default function Navbar({ active }: NavbarProps) {
             <div className="hidden md:block ml-10">
               <div className="flex items-baseline space-x-4">
                 <Link
-                  href="/admin/dashboard"
+                  href="/admin/inventory"
                   className={linkClass("dashboard")}
                 >
                   Dashboard
                 </Link>
-                <Link href="/" className={linkClass("inventory")}>
+                <Link href="/admin/inventory/items" className={linkClass("inventory")}>
                   Inventory
                 </Link>
-                <Link href="/alerts" className={linkClass("alerts")}>
+                <Link href="/admin/alerts" className={linkClass("alerts")}>
                   Alerts
                 </Link>
               </div>
@@ -109,21 +109,21 @@ export default function Navbar({ active }: NavbarProps) {
         <div className="md:hidden">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-gray-50 border-t">
             <Link
-              href="/admin/dashboard"
+              href="/admin/inventory"
               className={mobileLinkClass("dashboard")}
               onClick={() => setIsMobileMenuOpen(false)}
             >
               Dashboard
             </Link>
             <Link
-              href="/"
+              href="/admin/inventory/items"
               className={mobileLinkClass("inventory")}
               onClick={() => setIsMobileMenuOpen(false)}
             >
               Inventory
             </Link>
             <Link
-              href="/alerts"
+              href="/admin/alerts"
               className={mobileLinkClass("alerts")}
               onClick={() => setIsMobileMenuOpen(false)}
             >
