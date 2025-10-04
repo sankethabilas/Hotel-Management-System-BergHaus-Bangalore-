@@ -111,6 +111,8 @@ export default function ReservationsPage() {
       // Authentication is handled by cookies automatically
       
       console.log('Fetching reservations with params:', params.toString());
+      console.log('Current URL:', window.location.href);
+      console.log('Cookies:', document.cookie);
       
       const response = await fetch(`/api/frontdesk/reservations?${params.toString()}`, {
         credentials: 'include',
@@ -120,6 +122,7 @@ export default function ReservationsPage() {
       });
       
       console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
       
       if (response.ok) {
         const data = await response.json();

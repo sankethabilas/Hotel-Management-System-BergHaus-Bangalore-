@@ -103,6 +103,10 @@ router.use(requireAdminOrFrontdesk);
 // GET /api/frontdesk/reservations - Get all reservations
 router.get('/reservations', async (req, res) => {
   try {
+    console.log('Reservations API called by user:', req.user);
+    console.log('User role:', req.user?.role);
+    console.log('Query params:', req.query);
+    
     const { status, checkInDate, checkOutDate, guestName, page = 1, limit = 50 } = req.query;
     
     // Build query - handle both old and new date field names

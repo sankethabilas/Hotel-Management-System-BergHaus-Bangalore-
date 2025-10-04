@@ -207,7 +207,11 @@ const requireFrontdesk = (req, res, next) => {
 
 // Admin or frontdesk access
 const requireAdminOrFrontdesk = (req, res, next) => {
+  console.log('requireAdminOrFrontdesk middleware - User:', req.user);
+  console.log('User role:', req.user?.role);
+  
   if (!req.user) {
+    console.log('No user found in request');
     return res.status(401).json({
       success: false,
       message: 'Authentication required'
@@ -215,12 +219,14 @@ const requireAdminOrFrontdesk = (req, res, next) => {
   }
 
   if (!['admin', 'frontdesk', 'manager'].includes(req.user.role)) {
+    console.log('User role not authorized:', req.user.role);
     return res.status(403).json({
       success: false,
       message: 'Access denied. Admin, manager, or frontdesk role required.'
     });
   }
 
+  console.log('User authorized, proceeding...');
   next();
 };
 
