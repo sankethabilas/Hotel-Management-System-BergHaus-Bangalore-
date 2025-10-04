@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import Header from '@/components/layout/Header';
 import BannerSlideshow from '@/components/BannerSlideshow';
+import Footer from '@/components/footer';
 import { ShoppingCart, Clock, Star, Utensils } from 'lucide-react';
 
 export default function HomePage() {
@@ -11,8 +12,22 @@ export default function HomePage() {
       <Header />
       
       {/* Welcome Hero Section */}
-      <section className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-20">
-        <div className="container mx-auto px-6 text-center">
+      <section className="relative text-white py-20 overflow-hidden">
+        {/* Background Image with Blur */}
+        <div className="absolute inset-0 z-0">
+          <div 
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat filter blur-sm"
+            style={{ 
+              backgroundImage: "url('/411067124 (1).jpg')",
+              transform: 'scale(1.1)' // Slightly scale up to avoid blur edge artifacts
+            }}
+          />
+          {/* Dark overlay for better text readability */}
+          <div className="absolute inset-0 bg-black bg-opacity-40" />
+        </div>
+        
+        {/* Content */}
+        <div className="container mx-auto px-6 text-center relative z-10">
           <h1 className="text-5xl font-bold mb-6">Welcome to BergHaus</h1>
           <p className="text-xl mb-8 max-w-3xl mx-auto">
             Experience exceptional dining with our premium food and beverage service. 
@@ -85,22 +100,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="bg-gray-900 text-white py-20">
-        <div className="container mx-auto px-6 text-center">
-          <h2 className="text-4xl font-bold mb-4">Ready to Order?</h2>
-          <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
-            Browse our extensive menu and place your order in just a few clicks
-          </p>
-          <Link
-            href="/guest/menu"
-            className="bg-primary hover:bg-primary-700 text-white font-semibold px-8 py-4 rounded-lg transition-colors inline-flex items-center text-lg"
-          >
-            <Utensils className="mr-3 h-6 w-6" />
-            Explore Menu
-          </Link>
-        </div>
-      </section>
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }
