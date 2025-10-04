@@ -7,6 +7,30 @@ const User = require('../models/User');
 const Bill = require('../models/Bill');
 const { sendCheckinEmail, sendCheckoutEmailWithAttachment } = require('../services/emailService');
 
+// Test route without authentication to check data
+router.get('/test-data', async (req, res) => {
+  try {
+    const reservationCount = await Reservation.countDocuments();
+    const roomCount = await Room.countDocuments();
+    const billCount = await Bill.countDocuments();
+    
+    res.json({
+      success: true,
+      data: {
+        totalReservations: reservationCount,
+        totalRooms: roomCount,
+        totalBills: billCount,
+        sampleReservations: await Reservation.find().limit(5).select('status checkInDate checkOutDate')
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 // Apply authentication middleware to all routes
 router.use(protect);
 router.use(requireAdminOrFrontdesk);

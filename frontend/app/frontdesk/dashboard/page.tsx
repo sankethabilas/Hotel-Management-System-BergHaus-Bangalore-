@@ -98,8 +98,24 @@ export default function FrontdeskDashboard() {
   const { toast } = useToast();
 
   useEffect(() => {
+    // Check if user is authenticated and has frontdesk role
+    if (!user) {
+      console.log('No user found, redirecting to login');
+      return;
+    }
+    
+    if (user.role !== 'frontdesk' && user.role !== 'admin') {
+      console.log('User does not have frontdesk access:', user.role);
+      toast({
+        title: "Access Denied",
+        description: "You don't have permission to access the frontdesk dashboard",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     fetchDashboardData();
-  }, []);
+  }, [user]);
 
   const fetchDashboardData = async () => {
     try {
@@ -107,12 +123,26 @@ export default function FrontdeskDashboard() {
       
       // Fetch dashboard stats
       const statsResponse = await fetch('/api/frontdesk/dashboard/stats', {
-        credentials: 'include'
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
       });
+      
+      console.log('Dashboard stats response status:', statsResponse.status);
       
       if (statsResponse.ok) {
         const statsData = await statsResponse.json();
+        console.log('Dashboard stats data:', statsData);
         setStats(statsData.data);
+      } else {
+        const errorData = await statsResponse.json();
+        console.error('Dashboard stats error:', errorData);
+        toast({
+          title: "Error",
+          description: `Failed to load dashboard stats: ${errorData.message || 'Unknown error'}`,
+          variant: "destructive",
+        });
       }
 
       // Fetch bookings
@@ -251,8 +281,25 @@ export default function FrontdeskDashboard() {
         </div>
       </div>
 
+      {/* Manual Refresh Button */}
+      <div className="flex justify-end mb-4">
+        <Button
+          onClick={fetchDashboardData}
+          disabled={loading}
+          variant="outline"
+          className="flex items-center gap-2"
+        >
+          {loading ? (
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#006bb8]"></div>
+          ) : (
+            <TrendingUp className="w-4 h-4" />
+          )}
+          Refresh Data
+        </Button>
+      </div>
+
       {/* Stats Cards */}
-      {stats && (
+      {stats ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 lg:gap-6">
           <Card className="border-l-4 border-l-[#006bb8]">
             <CardContent className="p-6">
@@ -309,6 +356,69 @@ export default function FrontdeskDashboard() {
                   <p className="text-sm font-medium text-gray-600">Room Occupancy</p>
                   <p className="text-2xl font-bold text-purple-600">{stats.roomOccupancy.rate}%</p>
                   <p className="text-xs text-gray-500">{stats.roomOccupancy.occupied}/{stats.roomOccupancy.total} rooms</p>
+                </div>
+                <Bed className="w-8 h-8 text-purple-500" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 lg:gap-6">
+          <Card className="border-l-4 border-l-[#006bb8]">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Today's Arrivals</p>
+                  <p className="text-2xl font-bold text-[#006bb8]">-</p>
+                </div>
+                <Calendar className="w-8 h-8 text-[#006bb8]" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-l-4 border-l-green-500">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Current Guests</p>
+                  <p className="text-2xl font-bold text-green-600">-</p>
+                </div>
+                <Users className="w-8 h-8 text-green-500" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-l-4 border-l-yellow-500">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Today's Departures</p>
+                  <p className="text-2xl font-bold text-yellow-600">-</p>
+                </div>
+                <Clock className="w-8 h-8 text-yellow-500" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-l-4 border-l-red-500">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Pending Payments</p>
+                  <p className="text-2xl font-bold text-red-600">-</p>
+                </div>
+                <CreditCard className="w-8 h-8 text-red-500" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-l-4 border-l-purple-500">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Room Occupancy</p>
+                  <p className="text-2xl font-bold text-purple-600">-</p>
+                  <p className="text-xs text-gray-500">-/- rooms</p>
                 </div>
                 <Bed className="w-8 h-8 text-purple-500" />
               </div>
