@@ -5,49 +5,53 @@ import Image from 'next/image';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface Banner {
-  id: string;
+  _id: string;
   title: string;
   description: string;
   image: string;
-  link?: string;
-  buttonText?: string;
+  type: 'deal' | 'promotion' | 'announcement' | 'feature';
+  isActive: boolean;
+  priority: number;
+  buttonText: string;
+  buttonLink: string;
+  startDate: Date;
+  endDate?: Date;
 }
 
-// Sample banner data - in a real app, this would come from an API
-const banners: Banner[] = [
-  {
-    id: '1',
-    title: 'Special Weekend Brunch',
-    description: 'Enjoy our signature brunch menu every weekend with live cooking stations',
-    image: '/banner-1.jpg',
-    link: '/guest/menu',
-    buttonText: 'View Menu'
-  },
-  {
-    id: '2',
-    title: 'Chef\'s Special Tonight',
-    description: 'Try our chef\'s recommended dish of the day with premium ingredients',
-    image: '/banner-2.jpg',
-    link: '/guest/menu',
-    buttonText: 'Order Now'
-  },
-  {
-    id: '3',
-    title: 'Happy Hour Drinks',
-    description: '50% off on selected beverages from 5 PM to 7 PM daily',
-    image: '/banner-3.jpg',
-    link: '/guest/menu',
-    buttonText: 'Explore Drinks'
-  }
-];
-
 export default function BannerSlideshow() {
+  const [banners, setBanners] = useState<Banner[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch banners from API
+  useEffect(() => {
+    const fetchBanners = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch('http://localhost:5000/api/banners');
+        const data = await response.json();
+        
+        if (data.success && data.data) {
+          // Filter active banners and sort by priority
+          const activeBanners = data.data
+            .filter((banner: Banner) => banner.isActive)
+            .sort((a: Banner, b: Banner) => b.priority - a.priority);
+          setBanners(activeBanners);
+        }
+      } catch (error) {
+        console.error('Error fetching banners:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchBanners();
+  }, []);
 
   // Auto-advance slides
   useEffect(() => {
-    if (!isAutoPlaying) return;
+    if (!isAutoPlaying || banners.length === 0) return;
 
     const interval = setInterval(() => {
       setCurrentIndex((prevIndex) => 
@@ -56,7 +60,7 @@ export default function BannerSlideshow() {
     }, 5000); // Change slide every 5 seconds
 
     return () => clearInterval(interval);
-  }, [isAutoPlaying]);
+  }, [isAutoPlaying, banners.length]);
 
   const goToPrevious = () => {
     setIsAutoPlaying(false);
@@ -73,6 +77,37 @@ export default function BannerSlideshow() {
     setCurrentIndex(index);
   };
 
+  // Don't render if loading or no banners
+  if (isLoading) {
+    return (
+      <div className="relative w-full h-96 md:h-[500px] overflow-hidden bg-gray-200 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading banners...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (banners.length === 0) {
+    return (
+      <div className="relative w-full h-96 md:h-[500px] overflow-hidden bg-gradient-to-r from-blue-600 to-blue-800 flex items-center justify-center">
+        <div className="text-center text-white px-6">
+          <h2 className="text-4xl md:text-6xl font-bold mb-4">Welcome to BergHaus</h2>
+          <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto">
+            Experience exceptional dining with our premium food and beverage service
+          </p>
+          <a
+            href="/guest/menu"
+            className="inline-block bg-white text-gray-900 font-semibold px-8 py-4 rounded-lg hover:bg-gray-100 transition-colors text-lg"
+          >
+            View Menu
+          </a>
+        </div>
+      </div>
+    );
+  }
+
   const currentBanner = banners[currentIndex];
 
   return (
@@ -80,7 +115,7 @@ export default function BannerSlideshow() {
       {/* Banner Image */}
       <div className="relative w-full h-full">
         <Image
-          src={currentBanner.image}
+          src={`http://localhost:5000${currentBanner.image}`}
           alt={currentBanner.title}
           fill
           className="object-cover"
@@ -102,9 +137,9 @@ export default function BannerSlideshow() {
             <p className="text-lg md:text-xl mb-8 max-w-2xl mx-auto">
               {currentBanner.description}
             </p>
-            {currentBanner.link && (
+            {currentBanner.buttonLink && (
               <a
-                href={currentBanner.link}
+                href={currentBanner.buttonLink}
                 className="inline-block bg-white text-gray-900 font-semibold px-8 py-4 rounded-lg hover:bg-gray-100 transition-colors text-lg"
               >
                 {currentBanner.buttonText}

@@ -45,15 +45,8 @@ const STAFF_MANAGEMENT_ITEMS: DropdownItem[] = [
 
 const KITCHEN_MANAGEMENT_ITEMS: DropdownItem[] = [
   { href: "/admin/banners", label: "Banner List" },
-  { href: "/admin/banners/create", label: "Create Banner" },
-  { href: "/admin/banners/settings", label: "Banner Settings" },
   { href: "/admin/promotions", label: "Promotion List" },
-  { href: "/admin/promotions/create", label: "Create Promotion" },
-  { href: "/admin/promotions/analytics", label: "Promotion Analytics" },
   { href: "/admin/reports", label: "Sales Reports" },
-  { href: "/admin/reports/waste", label: "Waste Analysis" },
-  { href: "/admin/reports/forecast", label: "Ingredient Forecast" },
-  { href: "/admin/reports/analytics", label: "Analytics Dashboard" },
 ];
 
 const INVENTORY_MANAGEMENT_ITEMS: DropdownItem[] = [
