@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { 
   Users, 
-  Bed, 
   Clock, 
   AlertTriangle, 
   CheckCircle, 
@@ -53,11 +52,6 @@ interface DashboardStats {
   currentGuests: number;
   todaysDepartures: number;
   pendingPayments: number;
-  roomOccupancy: {
-    occupied: number;
-    total: number;
-    rate: string;
-  };
 }
 
 interface Booking {
@@ -300,7 +294,7 @@ export default function FrontdeskDashboard() {
 
       {/* Stats Cards */}
       {stats ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 lg:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
           <Card className="border-l-4 border-l-[#006bb8]">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -348,22 +342,9 @@ export default function FrontdeskDashboard() {
               </div>
             </CardContent>
           </Card>
-
-          <Card className="border-l-4 border-l-purple-500">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Room Occupancy</p>
-                  <p className="text-2xl font-bold text-purple-600">{stats.roomOccupancy.rate}%</p>
-                  <p className="text-xs text-gray-500">{stats.roomOccupancy.occupied}/{stats.roomOccupancy.total} rooms</p>
-                </div>
-                <Bed className="w-8 h-8 text-purple-500" />
-              </div>
-            </CardContent>
-          </Card>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 lg:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
           <Card className="border-l-4 border-l-[#006bb8]">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -408,19 +389,6 @@ export default function FrontdeskDashboard() {
                   <p className="text-2xl font-bold text-red-600">-</p>
                 </div>
                 <CreditCard className="w-8 h-8 text-red-500" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-l-4 border-l-purple-500">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Room Occupancy</p>
-                  <p className="text-2xl font-bold text-purple-600">-</p>
-                  <p className="text-xs text-gray-500">-/- rooms</p>
-                </div>
-                <Bed className="w-8 h-8 text-purple-500" />
               </div>
             </CardContent>
           </Card>
