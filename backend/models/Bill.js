@@ -1,205 +1,216 @@
 const mongoose = require('mongoose');
 
 const billSchema = new mongoose.Schema({
-  billId: {
+  billNumber: {
     type: String,
+    required: true,
     unique: true,
-    required: true
+    index: true
   },
-  reservationId: {
+  orderId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'Reservation',
-    required: [true, 'Reservation ID is required']
+    ref: 'Order',
+    required: true,
+    index: true
   },
-  guestId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: false
-  },
-  guestName: {
+  orderNumber: {
     type: String,
-    required: [true, 'Guest name is required'],
-    trim: true
+    required: true,
+    index: true
   },
-  guestEmail: {
-    type: String,
-    required: [true, 'Guest email is required'],
-    trim: true,
-    lowercase: true
+  customerInfo: {
+    name: {
+      type: String,
+      required: true
+    },
+    email: {
+      type: String,
+      required: true
+    },
+    phone: {
+      type: String,
+      required: true
+    },
+    roomNumber: {
+      type: String,
+      required: false,
+      default: ''
+    }
   },
   items: [{
-    description: {
+    menuItemId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'MenuItem',
+      required: true
+    },
+    name: {
       type: String,
-      required: [true, 'Item description is required'],
-      trim: true
+      required: true
     },
     quantity: {
       type: Number,
-      required: [true, 'Quantity is required'],
-      min: [0, 'Quantity cannot be negative']
+      required: true,
+      min: 1
     },
     unitPrice: {
       type: Number,
-      required: [true, 'Unit price is required'],
-      min: [0, 'Unit price cannot be negative']
+      required: true,
+      min: 0
     },
     totalPrice: {
       type: Number,
-      required: [true, 'Total price is required'],
-      min: [0, 'Total price cannot be negative']
-    },
-    category: {
-      type: String,
-      enum: ['room', 'food', 'service', 'tax', 'other'],
-      default: 'other'
+      required: true,
+      min: 0
     }
   }],
-  subtotal: {
-    type: Number,
-    required: [true, 'Subtotal is required'],
-    min: [0, 'Subtotal cannot be negative']
-  },
-  tax: {
-    type: Number,
-    required: [true, 'Tax amount is required'],
-    min: [0, 'Tax cannot be negative'],
-    default: 0
-  },
-  taxRate: {
-    type: Number,
-    min: [0, 'Tax rate cannot be negative'],
-    max: [1, 'Tax rate cannot exceed 100%'],
-    default: 0.1 // 10% default tax rate
-  },
-  discount: {
-    type: Number,
-    min: [0, 'Discount cannot be negative'],
-    default: 0
-  },
-  total: {
-    type: Number,
-    required: [true, 'Total is required'],
-    min: [0, 'Total cannot be negative']
-  },
-  status: {
-    type: String,
-    enum: ['draft', 'pending', 'paid', 'partial', 'overdue', 'cancelled'],
-    default: 'pending'
+  pricing: {
+    subtotal: {
+      type: Number,
+      required: true,
+      min: 0
+    },
+    serviceCharge: {
+      type: Number,
+      default: 0,
+      min: 0
+    },
+    serviceChargePercentage: {
+      type: Number,
+      default: 10,
+      min: 0,
+      max: 100
+    },
+    vat: {
+      type: Number,
+      default: 0,
+      min: 0
+    },
+    vatPercentage: {
+      type: Number,
+      default: 15,
+      min: 0,
+      max: 100
+    },
+    discount: {
+      type: Number,
+      default: 0,
+      min: 0
+    },
+    discountReason: {
+      type: String,
+      default: ''
+    },
+    total: {
+      type: Number,
+      required: true,
+      min: 0
+    }
   },
   paymentMethod: {
     type: String,
-    enum: ['cash', 'card', 'bank_transfer', 'online', 'other'],
-    default: null
+    required: true,
+    enum: ['cash', 'card', 'online', 'room_charge']
   },
-  paidAmount: {
-    type: Number,
-    min: [0, 'Paid amount cannot be negative'],
-    default: 0
-  },
-  dueDate: {
-    type: Date,
-    required: true
-  },
-  paidDate: {
-    type: Date,
-    default: null
-  },
-  notes: {
+  status: {
     type: String,
-    trim: true
+    required: true,
+    enum: ['generated', 'paid', 'refunded', 'cancelled'],
+    default: 'generated'
   },
   generatedBy: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
+    ref: 'Admin',
+    required: false // Allow guest-generated bills
+  },
+  paidAt: {
+    type: Date
+  },
+  refundedAt: {
+    type: Date
+  },
+  refundReason: {
+    type: String
+  },
+  notes: {
+    type: String,
+    default: ''
   },
   pdfPath: {
     type: String,
-    default: null
+    default: ''
   }
 }, {
-  timestamps: true
+  timestamps: true,
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
 });
 
-// Generate bill ID before saving
-billSchema.pre('save', function(next) {
-  if (!this.billId) {
-    const timestamp = Date.now().toString().slice(-6);
-    const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-    this.billId = `BILL${timestamp}${random}`;
-  }
-  
-  // Calculate totals
-  this.subtotal = this.items.reduce((sum, item) => sum + item.totalPrice, 0);
-  this.tax = this.subtotal * this.taxRate;
-  this.total = this.subtotal + this.tax - this.discount;
-  
-  next();
+// Virtual for formatted bill number
+billSchema.virtual('formattedBillNumber').get(function() {
+  return `BILL-${this.billNumber}`;
 });
 
-// Indexes for efficient queries
-billSchema.index({ reservationId: 1 });
-billSchema.index({ guestId: 1 });
-billSchema.index({ billId: 1 });
-billSchema.index({ status: 1 });
-billSchema.index({ dueDate: 1 });
-billSchema.index({ createdAt: -1 });
-
-// Virtual for remaining balance
-billSchema.virtual('balance').get(function() {
-  return this.total - this.paidAmount;
-});
-
-// Virtual for payment status
-billSchema.virtual('paymentStatus').get(function() {
-  if (this.paidAmount === 0) return 'unpaid';
-  if (this.paidAmount >= this.total) return 'paid';
-  return 'partial';
-});
-
-// Method to add payment
-billSchema.methods.addPayment = function(amount, method = 'cash', notes = '') {
-  this.paidAmount += amount;
-  this.paymentMethod = method;
-  
-  if (this.paidAmount >= this.total) {
-    this.status = 'paid';
-    this.paidDate = new Date();
-  } else {
-    this.status = 'partial';
-  }
-  
-  if (notes) {
-    this.notes = this.notes ? `${this.notes}\n${notes}` : notes;
-  }
-  
-  return this.save();
-};
-
-// Method to add item
-billSchema.methods.addItem = function(description, quantity, unitPrice, category = 'other') {
-  const totalPrice = quantity * unitPrice;
-  this.items.push({
-    description,
-    quantity,
-    unitPrice,
-    totalPrice,
-    category
+// Virtual for formatted date
+billSchema.virtual('formattedDate').get(function() {
+  return this.createdAt.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
   });
+});
+
+// Virtual for formatted time
+billSchema.virtual('formattedTime').get(function() {
+  return this.createdAt.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit'
+  });
+});
+
+// Static method to generate bill number
+billSchema.statics.generateBillNumber = function() {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  const timestamp = Date.now().toString().slice(-6);
   
+  return `${year}${month}${day}${timestamp}`;
+};
+
+// Method to calculate totals
+billSchema.methods.calculateTotals = function() {
+  const subtotal = this.items.reduce((sum, item) => sum + item.totalPrice, 0);
+  
+  this.pricing.subtotal = subtotal;
+  this.pricing.serviceCharge = Math.round((subtotal * this.pricing.serviceChargePercentage) / 100);
+  this.pricing.vat = Math.round(((subtotal + this.pricing.serviceCharge) * this.pricing.vatPercentage) / 100);
+  
+  this.pricing.total = subtotal + this.pricing.serviceCharge + this.pricing.vat - this.pricing.discount;
+  
+  return this.pricing;
+};
+
+// Method to mark as paid
+billSchema.methods.markAsPaid = function() {
+  this.status = 'paid';
+  this.paidAt = new Date();
   return this.save();
 };
 
-// Static method to find bills by reservation
-billSchema.statics.findByReservation = function(reservationId) {
-  return this.find({ reservationId }).populate('reservationId guestId generatedBy');
+// Method to process refund
+billSchema.methods.processRefund = function(reason) {
+  this.status = 'refunded';
+  this.refundedAt = new Date();
+  this.refundReason = reason;
+  return this.save();
 };
 
-// Transform output
-billSchema.methods.toJSON = function() {
-  const billObject = this.toObject({ virtuals: true });
-  delete billObject.__v;
-  return billObject;
-};
+// Indexes for better query performance (billNumber and orderId already indexed above)
+billSchema.index({ 'customerInfo.email': 1 });
+billSchema.index({ 'customerInfo.roomNumber': 1 });
+billSchema.index({ status: 1, createdAt: -1 });
+billSchema.index({ createdAt: -1 });
 
 module.exports = mongoose.model('Bill', billSchema);

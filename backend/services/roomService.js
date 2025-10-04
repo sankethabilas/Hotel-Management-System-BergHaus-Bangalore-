@@ -261,6 +261,73 @@ class RoomService {
     const rooms = await Room.find(query).sort({ roomNumber: 1 });
     return rooms;
   }
+
+  /**
+   * Add image to room
+   * @param {string} roomId - Room ID
+   * @param {string} imageUrl - Image URL
+   * @returns {Promise<Object>} Updated room
+   */
+  async addRoomImage(roomId, imageUrl) {
+    const room = await Room.findById(roomId);
+    if (!room) {
+      throw new Error('Room not found');
+    }
+    
+    // Add image to the images array
+    room.images.push(imageUrl);
+    await room.save();
+    
+    return room;
+  }
+
+  /**
+   * Remove image from room
+   * @param {string} roomId - Room ID
+   * @param {number} imageIndex - Index of image to remove
+   * @returns {Promise<Object>} Updated room
+   */
+  async removeRoomImage(roomId, imageIndex) {
+    const room = await Room.findById(roomId);
+    if (!room) {
+      throw new Error('Room not found');
+    }
+    
+    if (imageIndex < 0 || imageIndex >= room.images.length) {
+      throw new Error('Invalid image index');
+    }
+    
+    // Remove image at the specified index
+    room.images.splice(imageIndex, 1);
+    await room.save();
+    
+    return room;
+  }
+
+  /**
+   * Set primary image for room (first image in array)
+   * @param {string} roomId - Room ID
+   * @param {number} imageIndex - Index of image to set as primary
+   * @returns {Promise<Object>} Updated room
+   */
+  async setPrimaryRoomImage(roomId, imageIndex) {
+    const room = await Room.findById(roomId);
+    if (!room) {
+      throw new Error('Room not found');
+    }
+    
+    if (imageIndex < 0 || imageIndex >= room.images.length) {
+      throw new Error('Invalid image index');
+    }
+    
+    // Move the selected image to the front of the array
+    const selectedImage = room.images[imageIndex];
+    room.images.splice(imageIndex, 1);
+    room.images.unshift(selectedImage);
+    await room.save();
+    
+    return room;
+  }
 }
 
 module.exports = new RoomService();

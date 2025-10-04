@@ -11,12 +11,9 @@ const {
   deletePayment
 } = require('../controllers/paymentController');
 
-const { protect, authorize } = require('../middleware/auth');
+// const { protect, authorize } = require('../middleware/auth'); // Disabled for admin dashboard access
 
-// Remove authentication for admin access - keeping for reference
-// router.use(protect);
-
-// Admin routes (authentication removed for admin functions)
+// Public routes for admin dashboard access
 router.get('/', getAllPayments);
 router.get('/stats', getPaymentStats);
 router.post('/', createPayment);

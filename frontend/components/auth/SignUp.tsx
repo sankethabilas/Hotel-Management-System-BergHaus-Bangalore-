@@ -14,7 +14,7 @@ import { Eye, EyeOff, Mail, Lock, User, ArrowRight, Loader2, CheckCircle } from 
 import { validateEmail, validatePassword } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { UserRole } from '@/types';
+import { UserRole } from '@/types/index';
 import GoogleAuthButton from '@/components/google-auth-button';
 
 interface SignUpFormData {

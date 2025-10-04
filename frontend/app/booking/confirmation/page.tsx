@@ -250,11 +250,11 @@ export default function BookingConfirmationPage() {
             <h3>Booking Details</h3>
             <div class="info-row">
                 <span class="label">Room Number:</span>
-                <span>${booking.roomNumber}</span>
+                <span>${booking.roomId.roomNumber}</span>
             </div>
             <div class="info-row">
                 <span class="label">Room Type:</span>
-                <span>${booking.roomType}</span>
+                <span>${booking.roomId.roomType}</span>
             </div>
             <div class="info-row">
                 <span class="label">Check-in:</span>

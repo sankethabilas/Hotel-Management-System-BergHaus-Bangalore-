@@ -10,7 +10,7 @@ import Navbar from '@/components/navbar';
 import Footer from '@/components/footer';
 import { BookingHistoryTable } from '@/components/booking-history-table';
 import { bookingAPI } from '@/lib/api';
-import { Booking } from '@/types';
+import { Booking } from '@/types/index';
 import { 
   Calendar,
   RefreshCw,
@@ -39,7 +39,7 @@ export default function ReservationsPage() {
     try {
       const response = await bookingAPI.getUserBookings();
       if (response.success) {
-        setBookings(response.data.bookings || []);
+        setBookings(response.data?.bookings || []);
       } else {
         toast({
           title: 'Error',

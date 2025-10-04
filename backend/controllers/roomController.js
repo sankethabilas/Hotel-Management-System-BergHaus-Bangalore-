@@ -301,6 +301,80 @@ class RoomController {
       });
     }
   }
+
+  /**
+   * Upload room image (admin only)
+   * POST /rooms/:id/upload-image
+   */
+  async uploadRoomImage(req, res) {
+    try {
+      // Check if user is admin
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied. Admin privileges required.'
+        });
+      }
+
+      const { id } = req.params;
+      
+      if (!req.file) {
+        return res.status(400).json({
+          success: false,
+          message: 'No image file provided'
+        });
+      }
+
+      const imageUrl = `/uploads/${req.file.filename}`;
+      const room = await roomService.addRoomImage(id, imageUrl);
+      
+      res.json({
+        success: true,
+        message: 'Room image uploaded successfully',
+        data: {
+          room: room,
+          imageUrl: imageUrl
+        }
+      });
+    } catch (error) {
+      console.error('Error uploading room image:', error);
+      res.status(400).json({
+        success: false,
+        message: error.message || 'Failed to upload room image'
+      });
+    }
+  }
+
+  /**
+   * Remove room image (admin only)
+   * DELETE /rooms/:id/images/:imageIndex
+   */
+  async removeRoomImage(req, res) {
+    try {
+      // Check if user is admin
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied. Admin privileges required.'
+        });
+      }
+
+      const { id, imageIndex } = req.params;
+      const room = await roomService.removeRoomImage(id, parseInt(imageIndex));
+      
+      res.json({
+        success: true,
+        message: 'Room image removed successfully',
+        data: room
+      });
+    } catch (error) {
+      console.error('Error removing room image:', error);
+      res.status(400).json({
+        success: false,
+        message: error.message || 'Failed to remove room image'
+      });
+    }
+  }
 }
 
 module.exports = new RoomController();

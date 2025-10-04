@@ -36,7 +36,7 @@ export default function PaymentDemoPage() {
       
       try {
         const createdPayment = await paymentAPI.createPayment(samplePayment);
-        setDemoResult(prev => prev + `✅ Payment created successfully! ID: ${createdPayment._id}\n\n`);
+        setDemoResult(prev => prev + `✅ Payment created successfully! ID: ${createdPayment.payment?._id || 'N/A'}\n\n`);
         
         // Test 2: Fetch all payments
         setDemoResult(prev => prev + '✅ Step 2: Fetching all payments...\n');
@@ -50,7 +50,7 @@ export default function PaymentDemoPage() {
         
         // Test 4: Update payment status
         setDemoResult(prev => prev + '✅ Step 4: Updating payment status...\n');
-        await paymentAPI.updatePaymentStatus(createdPayment._id, 'paid');
+        await paymentAPI.updatePaymentStatus(createdPayment.payment?._id || '', 'paid');
         setDemoResult(prev => prev + '✅ Payment status updated to "paid"\n\n');
         
         setDemoResult(prev => prev + '🎉 ALL TESTS PASSED! Payment system is working correctly.\n');

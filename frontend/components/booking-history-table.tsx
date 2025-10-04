@@ -17,7 +17,7 @@ import { ConfirmationDialog } from '@/components/ui/confirmation-dialog';
 import { ArrivalTimeEditor } from '@/components/ui/arrival-time-editor';
 import { useToast } from '@/hooks/use-toast';
 import { bookingAPI } from '@/lib/api';
-import { Booking, BookingStatus } from '@/types';
+import { Booking, BookingStatus } from '@/types/index';
 import { 
   Calendar, 
   Clock, 
@@ -101,7 +101,8 @@ export function BookingHistoryTable({ bookings, onRefresh, isLoading }: BookingH
 
     setIsProcessing(true);
     try {
-      await bookingAPI.cancelBooking(selectedBooking._id);
+      console.log('Attempting to cancel booking:', selectedBooking._id);
+      await bookingAPI.cancelBooking(selectedBooking._id, 'Cancelled by guest');
       toast({
         title: 'Booking Cancelled',
         description: 'Your booking has been cancelled successfully.',
@@ -111,9 +112,11 @@ export function BookingHistoryTable({ bookings, onRefresh, isLoading }: BookingH
       setCancelDialogOpen(false);
       setSelectedBooking(null);
     } catch (error: any) {
+      console.error('Cancel booking error:', error);
+      console.error('Error response:', error.response?.data);
       toast({
         title: 'Cancellation Failed',
-        description: error.response?.data?.message || 'Failed to cancel booking. Please try again.',
+        description: error.response?.data?.message || error.message || 'Failed to cancel booking. Please try again.',
         variant: 'destructive',
       });
     } finally {

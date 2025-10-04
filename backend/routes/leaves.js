@@ -10,9 +10,9 @@ const {
   deleteLeaveRequest
 } = require('../controllers/leaveController');
 
-const { protect, authorize } = require('../middleware/auth');
+// const { protect, authorize } = require('../middleware/auth'); // Disabled for admin dashboard access
 
-// Public routes (no authentication required for admin functions)
+// Public routes for admin dashboard access
 router.get('/statistics', getLeaveStatistics); // Get statistics (must be before /:id routes)
 router.get('/my-requests', getMyLeaveRequests); // Get user's own requests  
 router.get('/', getAllLeaveRequests); // Get all leave requests

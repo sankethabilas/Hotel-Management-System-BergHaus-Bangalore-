@@ -30,6 +30,7 @@ import {
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { getProfileImageUrl, getUserInitials } from '@/utils/profileImage';
 
 interface FrontdeskLayoutProps {
   children: React.ReactNode;
@@ -75,12 +76,6 @@ export default function FrontdeskLayout({ children }: FrontdeskLayoutProps) {
         href: '/frontdesk/checkin-checkout',
         icon: UserCheck,
         current: pathname === '/frontdesk/checkin-checkout'
-      },
-      {
-        name: 'Attendance',
-        href: '/frontdesk/attendance',
-        icon: UserCheck,
-        current: pathname === '/frontdesk/attendance'
       },
       {
         name: 'Booking History',
@@ -138,20 +133,12 @@ export default function FrontdeskLayout({ children }: FrontdeskLayoutProps) {
     }
   };
 
-  const getProfileImageUrl = (user: any) => {
-    if (user?.profileImage) {
-      return user.profileImage.startsWith('http') 
-        ? user.profileImage 
-        : `/uploads/profiles/${user.profileImage}`;
-    }
-    return null;
+  const getProfileImageUrlForUser = (user: any) => {
+    return getProfileImageUrl(user?.profileImage);
   };
 
-  const getUserInitials = (user: any) => {
-    if (user?.firstName && user?.lastName) {
-      return `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase();
-    }
-    return 'U';
+  const getUserInitialsForUser = (user: any) => {
+    return getUserInitials(user?.firstName, user?.lastName);
   };
 
   if (loading) {
@@ -237,11 +224,11 @@ export default function FrontdeskLayout({ children }: FrontdeskLayoutProps) {
                   <Button variant="ghost" className="relative h-9 w-9 rounded-full">
                     <Avatar className="h-9 w-9">
                       <AvatarImage 
-                        src={getProfileImageUrl(user)} 
+                        src={getProfileImageUrlForUser(user)} 
                         alt={`${user?.firstName} ${user?.lastName}`} 
                       />
                       <AvatarFallback className="bg-[#006bb8] text-white text-sm">
-                        {getUserInitials(user)}
+                        {getUserInitialsForUser(user)}
                       </AvatarFallback>
                     </Avatar>
                   </Button>
@@ -330,11 +317,11 @@ export default function FrontdeskLayout({ children }: FrontdeskLayoutProps) {
                         <div className="flex items-center space-x-3 mb-4">
                           <Avatar className="h-10 w-10">
                             <AvatarImage 
-                              src={getProfileImageUrl(user)} 
+                              src={getProfileImageUrlForUser(user)} 
                               alt={`${user?.firstName} ${user?.lastName}`} 
                             />
                             <AvatarFallback className="bg-[#006bb8] text-white">
-                              {getUserInitials(user)}
+                              {getUserInitialsForUser(user)}
                             </AvatarFallback>
                           </Avatar>
                           <div>

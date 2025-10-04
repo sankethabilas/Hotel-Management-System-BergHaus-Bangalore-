@@ -1,4 +1,4 @@
-// components/admin/BarChartComponent.jsx
+// components/admin/BarChartComponent.tsx
 "use client";
 
 import { Bar } from "react-chartjs-2";
@@ -13,7 +13,16 @@ import {
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 
-export default function BarChartComponent({ items = [] }) {
+interface ChartItem {
+  name: string;
+  quantity: number;
+}
+
+interface BarChartComponentProps {
+  items?: ChartItem[];
+}
+
+export default function BarChartComponent({ items = [] }: BarChartComponentProps) {
   const labels = items.map(it => it.name);
   const dataVals = items.map(it => Number(it.quantity || 0));
 

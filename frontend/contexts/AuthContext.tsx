@@ -4,8 +4,9 @@ import React, { createContext, useContext, useEffect, useState, ReactNode } from
 import { useRouter } from 'next/navigation';
 import { AuthService } from '@/lib/auth';
 import { usersAPI } from '@/lib/api';
-import { User } from '@/types';
+import { User } from '@/types/index';
 import { useToast } from '@/hooks/use-toast';
+import { getProfileImageUrl, getUserInitials } from '@/utils/profileImage';
 
 interface AuthContextType {
   user: User | null;
@@ -91,6 +92,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       
       if (result.success && result.user) {
         console.log('Login successful, setting user:', result.user);
+        console.log('User profileImage from login:', result.user.profileImage);
         setUser(result.user);
         toast({
           title: "Welcome back!",
@@ -243,23 +245,45 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const uploadProfilePicture = async (file: File): Promise<boolean> => {
     if (!user) {
+      console.error('No user found for profile picture upload');
       return false;
     }
     
     try {
       setLoading(true);
       const userId = user._id || (user as any).id;
+      console.log('Uploading profile picture for user:', userId);
+      console.log('User object:', user);
+      console.log('User _id:', user._id);
+      console.log('User id:', (user as any).id);
+      console.log('File details:', {
+        name: file.name,
+        size: file.size,
+        type: file.type
+      });
+      
       const result = await usersAPI.uploadProfilePicture(userId, file);
+      console.log('Upload result:', result);
       
       if (result.success && result.data?.user) {
         // Update user with the complete user object from backend
-        setUser(result.data.user);
+        console.log('Profile picture upload successful, updating user:', result.data.user);
+        console.log('Updated user profileImage:', result.data.user.profileImage);
+        
+        // Add a timestamp to the profile image URL to force refresh
+        const updatedUser = {
+          ...result.data.user,
+          profileImage: result.data.user.profileImage ? `${result.data.user.profileImage}?t=${Date.now()}` : result.data.user.profileImage
+        };
+        
+        setUser(updatedUser);
         toast({
           title: "Profile Picture Updated",
           description: "Your profile picture has been updated successfully.",
         });
         return true;
       } else {
+        console.error('Upload failed:', result.message);
         toast({
           title: "Upload Failed",
           description: result.message || "Failed to upload profile picture",
@@ -268,6 +292,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return false;
       }
     } catch (error) {
+      console.error('Upload error:', error);
       toast({
         title: "Upload Failed",
         description: "An error occurred while uploading your profile picture",

@@ -36,7 +36,7 @@ import {
   FileText,
   Shield
 } from 'lucide-react';
-import { User as UserType, UserRole } from '@/types';
+import { User as UserType, UserRole } from '@/types/index';
 
 interface NavigationProps {
   user: UserType | null;

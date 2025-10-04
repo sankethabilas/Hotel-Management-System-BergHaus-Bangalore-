@@ -43,7 +43,7 @@ export default function StaffList({ basePathPrefix = '' }: { basePathPrefix?: st
     s.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
     s.employeeId.toLowerCase().includes(searchTerm.toLowerCase()) ||
     s.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    s.department.toLowerCase().includes(searchTerm.toLowerCase())
+    (s.department || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading) {

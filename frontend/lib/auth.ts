@@ -8,7 +8,7 @@ import {
   UpdateUserData, 
   ChangePasswordData,
   ValidationResult 
-} from '@/types';
+} from '@/types/index';
 
 // Auth context and utilities
 export class AuthService {

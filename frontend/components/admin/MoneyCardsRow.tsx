@@ -1,10 +1,16 @@
-// components/admin/MoneyCardsRow.jsx
+// components/admin/MoneyCardsRow.tsx
+interface MoneyCardsRowProps {
+  currentMoneyAvailable: number;
+  totalInventoryValue: number;
+  daysLeftToMonthEnd: number;
+}
+
 export default function MoneyCardsRow({
   currentMoneyAvailable,
   totalInventoryValue,
   daysLeftToMonthEnd,
-}) {
-  const fmt = (v) => v.toLocaleString(undefined, { maximumFractionDigits: 2 });
+}: MoneyCardsRowProps) {
+  const fmt = (v: number) => v.toLocaleString(undefined, { maximumFractionDigits: 2 });
 
   const moneyCards = [
     {

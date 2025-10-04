@@ -36,7 +36,7 @@ export default function HRLeaveManagement() {
             employeeId: staffInfo.employeeId,
             fullName: staffInfo.fullName,
             email: staffInfo.email,
-            department: staffInfo.department,
+            department: staffInfo.department || '',
             jobRole: staffInfo.jobRole
           } : {
             // Fallback to leave record data if staff not found

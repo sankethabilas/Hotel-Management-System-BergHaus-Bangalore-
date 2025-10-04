@@ -14,6 +14,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { AuthService } from '@/lib/auth';
 import Navbar from '@/components/navbar';
 import Footer from '@/components/footer';
+import { getProfileImageUrl, getUserInitials } from '@/utils/profileImage';
 import { 
   User, 
   Mail, 
@@ -245,10 +246,20 @@ export default function ProfilePage() {
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      console.log('No file selected');
+      return;
+    }
+
+    console.log('File selected:', {
+      name: file.name,
+      size: file.size,
+      type: file.type
+    });
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
+      console.log('Invalid file type:', file.type);
       toast({
         title: "Invalid file type",
         description: "Please select an image file.",
@@ -259,6 +270,7 @@ export default function ProfilePage() {
 
     // Validate file size (5MB max)
     if (file.size > 5 * 1024 * 1024) {
+      console.log('File too large:', file.size);
       toast({
         title: "File too large",
         description: "Please select an image smaller than 5MB.",
@@ -269,16 +281,21 @@ export default function ProfilePage() {
 
     try {
       setUploading(true);
+      console.log('Starting profile picture upload...');
       const success = await uploadProfilePicture(file);
       
       if (!success) {
+        console.log('Upload failed');
         toast({
           title: "Upload failed",
           description: "Failed to upload profile picture. Please try again.",
           variant: "destructive",
         });
+      } else {
+        console.log('Upload successful');
       }
     } catch (error) {
+      console.error('Upload error:', error);
       toast({
         title: "Upload failed",
         description: "Failed to upload profile picture. Please try again.",
@@ -289,28 +306,12 @@ export default function ProfilePage() {
     }
   };
 
-  const getUserInitials = () => {
-    if (!user) return 'U';
-    const firstName = user.firstName || '';
-    const lastName = user.lastName || '';
-    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase() || 'U';
+  const getUserInitialsForUser = () => {
+    return getUserInitials(user?.firstName, user?.lastName);
   };
 
-  const getProfileImageUrl = () => {
-    if (!user) return undefined;
-    
-    // If user has a custom profile image (uploaded to backend)
-    if (user.profileImage && user.profileImage.startsWith('/uploads/')) {
-      return `http://localhost:5000${user.profileImage}`;
-    }
-    
-    // If user has a Google profile image (external URL)
-    if (user.profileImage && user.profileImage.startsWith('http')) {
-      return user.profileImage;
-    }
-    
-    // Fallback to undefined (will show initials)
-    return undefined;
+  const getProfileImageUrlForUser = () => {
+    return getProfileImageUrl(user?.profileImage);
   };
 
   const getRoleBadgeVariant = (role: string) => {
@@ -410,19 +411,19 @@ export default function ProfilePage() {
                   <div className="relative inline-block">
                     <Avatar className="h-32 w-32 mx-auto">
                       <AvatarImage 
-                        src={getProfileImageUrl()} 
+                        src={getProfileImageUrlForUser()} 
                         alt={`${user.firstName} ${user.lastName}`}
                         onError={(e) => {
                           console.error('Avatar image failed to load:', e);
                           console.log('User profileImage:', user.profileImage);
-                          console.log('Full image URL:', getProfileImageUrl());
+                          console.log('Full image URL:', getProfileImageUrlForUser());
                         }}
                         onLoad={() => {
                           console.log('Avatar image loaded successfully');
                         }}
                       />
                       <AvatarFallback className="bg-hms-primary text-white text-2xl">
-                        {getUserInitials()}
+                        {getUserInitialsForUser()}
                       </AvatarFallback>
                     </Avatar>
                     <label className="absolute bottom-0 right-0 bg-hms-primary text-white p-2 rounded-full cursor-pointer hover:bg-hms-primary/90 transition-colors">

@@ -1,6 +1,6 @@
 import { Staff, StaffFormData, ApiResponse } from '@/types/staff';
 
-const API_BASE_URL = '/api/staff';
+const API_BASE_URL = 'http://localhost:5000/api/staff';
 
 class StaffAPI {
   private getAuthHeaders(): Record<string, string> {
@@ -68,19 +68,19 @@ class StaffAPI {
   // Get all staff (admin only)
   async getAllStaff(): Promise<Staff[]> {
     const response = await this.request<ApiResponse<Staff[]>>('/');
-    return response.staff || [];
+    return response.data || [];
   }
 
   // Get active staff (public - for attendance scanner)
   async getActiveStaff(): Promise<Staff[]> {
     const response = await this.request<ApiResponse<Staff[]>>('/active');
-    return response.staff || [];
+    return response.data || [];
   }
 
   // Get staff by ID
   async getStaffById(id: string): Promise<Staff> {
     const response = await this.request<ApiResponse<Staff>>(`/${id}`);
-    return response.staff!;
+    return response.data!;
   }
 
   // Create new staff
@@ -89,7 +89,7 @@ class StaffAPI {
       method: 'POST',
       body: JSON.stringify(staffData),
     });
-    return response.staff!;
+    return response.data!;
   }
 
   // Update staff
@@ -98,7 +98,7 @@ class StaffAPI {
       method: 'PUT',
       body: JSON.stringify(staffData),
     });
-    return response.staff!;
+    return response.data!;
   }
 
   // Delete staff
@@ -106,13 +106,13 @@ class StaffAPI {
     const response = await this.request<ApiResponse<Staff>>(`/${id}`, {
       method: 'DELETE',
     });
-    return response.staff!;
+    return response.data!;
   }
 
   // Get staff by employee ID (for employee login)
   async getStaffByEmployeeId(employeeId: string): Promise<Staff> {
     const response = await this.request<ApiResponse<Staff>>(`/employee/${employeeId}`);
-    return response.staff!;
+    return response.data!;
   }
 }
 

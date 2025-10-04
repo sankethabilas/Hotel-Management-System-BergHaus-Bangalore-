@@ -1,4 +1,4 @@
-// components/admin/SupplierChartComponent.jsx
+// components/admin/SupplierChartComponent.tsx
 "use client";
 
 import { Bar } from "react-chartjs-2";
@@ -13,13 +13,17 @@ import {
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 
-/*
-  Props:
-    stats: [
-      { supplier: string, distinctItems: number, totalQuantity: number }
-    ]
-*/
-export default function SupplierChartComponent({ stats = [] }) {
+interface SupplierStat {
+  supplier: string;
+  distinctItems: number;
+  totalQuantity: number;
+}
+
+interface SupplierChartComponentProps {
+  stats?: SupplierStat[];
+}
+
+export default function SupplierChartComponent({ stats = [] }: SupplierChartComponentProps) {
   if (!stats.length) {
     return (
       <div className="text-sm text-gray-500">No supplier data available.</div>
@@ -47,9 +51,9 @@ export default function SupplierChartComponent({ stats = [] }) {
   const options = {
     responsive: true,
     maintainAspectRatio: false,
-    interaction: { mode: "index", intersect: false },
+    interaction: { mode: "index" as const, intersect: false },
     plugins: {
-      legend: { position: "top" },
+      legend: { position: "top" as const },
       tooltip: { enabled: true },
     },
     scales: {

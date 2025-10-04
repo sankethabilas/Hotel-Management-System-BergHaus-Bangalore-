@@ -116,8 +116,8 @@ export default function StaffProfileHeader({ staff }: StaffProfileHeaderProps) {
                       <p className="text-sm font-medium text-gray-900">
                         {staff.fullName}
                       </p>
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getDepartmentColor(staff.department)}`}>
-                        <span className="mr-1">{getDepartmentIcon(staff.department)}</span>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getDepartmentColor(staff.department || '')}`}>
+                        <span className="mr-1">{getDepartmentIcon(staff.department || '')}</span>
                         {staff.department}
                       </span>
                     </div>
@@ -165,8 +165,8 @@ export default function StaffProfileHeader({ staff }: StaffProfileHeaderProps) {
                           {staff.jobRole}
                         </p>
                         <div className="flex items-center mt-1 space-x-2">
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getDepartmentColor(staff.department)}`}>
-                            <span className="mr-1">{getDepartmentIcon(staff.department)}</span>
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getDepartmentColor(staff.department || '')}`}>
+                            <span className="mr-1">{getDepartmentIcon(staff.department || '')}</span>
                             {staff.department}
                           </span>
                         </div>
@@ -180,7 +180,7 @@ export default function StaffProfileHeader({ staff }: StaffProfileHeaderProps) {
                       <div className="flex justify-between mt-1">
                         <span>Join Date:</span>
                         <span className="font-medium">
-                          {new Date(staff.joinDate).toLocaleDateString()}
+                          {staff.joinDate ? new Date(staff.joinDate).toLocaleDateString() : 'N/A'}
                         </span>
                       </div>
                     </div>
@@ -239,8 +239,8 @@ export default function StaffProfileHeader({ staff }: StaffProfileHeaderProps) {
             <p className="text-sm font-medium text-gray-900">{staff.fullName}</p>
             <p className="text-xs text-gray-500">{staff.jobRole}</p>
           </div>
-          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getDepartmentColor(staff.department)}`}>
-            <span className="mr-1">{getDepartmentIcon(staff.department)}</span>
+          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getDepartmentColor(staff.department || '')}`}>
+            <span className="mr-1">{getDepartmentIcon(staff.department || '')}</span>
             {staff.department}
           </span>
         </div>

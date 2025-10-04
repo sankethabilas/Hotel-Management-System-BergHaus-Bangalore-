@@ -3,17 +3,21 @@
 import Link from "next/link";
 import { useState } from "react";
 
-export default function Navbar({ active }) {
+interface NavbarProps {
+  active: string;
+}
+
+export default function Navbar({ active }: NavbarProps) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const linkClass = (key) =>
+  const linkClass = (key: string) =>
     `px-3 py-2 rounded transition-colors duration-200 ${
       active === key
         ? "bg-blue-600 text-white"
         : "text-gray-700 hover:text-blue-600 hover:bg-gray-50"
     }`;
 
-  const mobileLinkClass = (key) =>
+  const mobileLinkClass = (key: string) =>
     `block px-3 py-2 rounded text-base font-medium transition-colors duration-200 ${
       active === key
         ? "bg-blue-600 text-white"
