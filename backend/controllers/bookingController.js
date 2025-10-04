@@ -273,6 +273,13 @@ const createBooking = async (req, res) => {
       specialRequests
     });
 
+    console.log('Creating booking with pricing:', {
+      roomPrice,
+      totalAmount,
+      taxAmount: tax,
+      totalNights: nights
+    });
+
     await booking.save({ session });
 
     // Update room availability (optional - mark as temporarily reserved)
@@ -366,6 +373,13 @@ const getBookingByReference = async (req, res) => {
         message: 'Booking not found'
       });
     }
+
+    console.log('Retrieved booking pricing data:', {
+      roomPrice: booking.roomPrice,
+      totalAmount: booking.totalAmount,
+      taxAmount: booking.taxAmount,
+      totalNights: booking.totalNights
+    });
 
     res.json({
       success: true,
