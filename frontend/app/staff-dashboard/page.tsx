@@ -3,6 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import { Staff } from '../../types/staff';
 import { Leave } from '../../types/leave';
+import { leaveAPI } from '@/lib/leaveApi';
+import { attendanceAPI } from '@/lib/attendanceApi';
+import { paymentAPI } from '@/lib/paymentApi';
 
 // Global styles to reduce scrollbar visibility
 const globalStyles = `
@@ -141,6 +144,158 @@ export default function StaffDashboard() {
   });
   const [passwordLoading, setPasswordLoading] = useState(false);
 
+  // Dashboard data states
+  const [hoursToday, setHoursToday] = useState({ hours: 0, status: 'Not started' });
+  const [leaveBalance, setLeaveBalance] = useState({ used: 0, total: 24, remaining: 24 });
+  const [monthlyEarnings, setMonthlyEarnings] = useState({ salary: 0, overtime: 0 });
+  const [tasksToday, setTasksToday] = useState({ completed: 0, total: 0, remaining: 0 });
+
+  // Fetch dashboard data functions
+  const fetchHoursToday = async () => {
+    try {
+      const staffData = JSON.parse(localStorage.getItem('staffData') || '{}');
+      console.log('Staff data for attendance:', staffData);
+      
+      if (staffData._id) {
+        console.log('Fetching today\'s attendance for staffId:', staffData._id);
+        
+        const response = await attendanceAPI.getTodayAttendance();
+        console.log('Today attendance API response:', response);
+        
+        if (response.success && response.attendance && response.attendance.length > 0) {
+          // Filter attendance records for the current staff member
+          const staffAttendance = response.attendance.find(record => {
+            // Handle both cases: staffId as string or as object with _id
+            const recordStaffId = typeof record.staffId === 'string' 
+              ? record.staffId 
+              : record.staffId._id;
+            return recordStaffId === staffData._id;
+          });
+          
+          console.log('Staff attendance record:', staffAttendance);
+          
+          if (staffAttendance) {
+            let hours = 0;
+            let status = 'Not started';
+            
+            if (staffAttendance.checkInTime && staffAttendance.checkOutTime) {
+              // Both check in and out - use calculated working hours
+              hours = staffAttendance.workingHours || 0;
+              status = 'Completed';
+            } else if (staffAttendance.checkInTime) {
+              // Only checked in - calculate current hours
+              const checkIn = new Date(staffAttendance.checkInTime);
+              const now = new Date();
+              hours = (now.getTime() - checkIn.getTime()) / (1000 * 60 * 60);
+              status = 'In progress';
+            }
+            
+            console.log('Calculated hours:', hours, 'status:', status);
+            
+            setHoursToday({ 
+              hours: Math.round(hours * 10) / 10, // Round to 1 decimal
+              status 
+            });
+          } else {
+            console.log('No attendance record found for this staff member today');
+            setHoursToday({ hours: 0, status: 'Not started' });
+          }
+        } else {
+          // No attendance records for today
+          console.log('No attendance records found for today');
+          setHoursToday({ hours: 0, status: 'Not started' });
+        }
+      } else {
+        console.log('No staff ID found in localStorage');
+      }
+    } catch (error) {
+      console.error('Error fetching today\'s hours:', error);
+      setHoursToday({ hours: 0, status: 'Not started' });
+    }
+  };
+
+  const fetchLeaveBalance = async () => {
+    try {
+      const staffData = JSON.parse(localStorage.getItem('staffData') || '{}');
+      if (staffData._id) {
+        const response = await leaveAPI.getMyLeaves();
+        
+        if (response.success && response.leaves) {
+          // Count approved leaves for this year
+          const currentYear = new Date().getFullYear();
+          const approvedLeaves = response.leaves.filter(leave => 
+            leave.status === 'approved' && 
+            new Date(leave.createdAt).getFullYear() === currentYear
+          );
+          
+          const totalDaysUsed = approvedLeaves.reduce((total, leave) => {
+            const startDate = new Date(leave.startDate);
+            const endDate = new Date(leave.endDate);
+            const daysDiff = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+            return total + daysDiff;
+          }, 0);
+          
+          const totalAllowed = 24; // Standard leave allowance
+          const remaining = totalAllowed - totalDaysUsed;
+          
+          setLeaveBalance({
+            used: totalDaysUsed,
+            total: totalAllowed,
+            remaining: Math.max(0, remaining)
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching leave balance:', error);
+    }
+  };
+
+  const fetchMonthlyEarnings = async () => {
+    try {
+      const staffData = JSON.parse(localStorage.getItem('staffData') || '{}');
+      if (staffData._id) {
+        const currentDate = new Date();
+        const currentYear = currentDate.getFullYear();
+        const currentMonth = currentDate.getMonth() + 1; // JavaScript months are 0-based
+        
+        const response = await paymentAPI.getPaymentsByStaff(staffData._id, { 
+          year: currentYear,
+          limit: 12 
+        });
+        
+        if (response.success && response.payments) {
+          // Find current month's payment
+          const currentMonthPayment = response.payments.find(payment => 
+            payment.paymentPeriod.month === currentMonth && 
+            payment.paymentPeriod.year === currentYear
+          );
+          
+          if (currentMonthPayment) {
+            setMonthlyEarnings({
+              salary: currentMonthPayment.baseSalary || 0,
+              overtime: currentMonthPayment.overtimePay || 0
+            });
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching monthly earnings:', error);
+    }
+  };
+
+  // Initialize dashboard data
+  const initializeDashboardData = async () => {
+    await Promise.all([
+      fetchHoursToday(),
+      fetchLeaveBalance(),
+      fetchMonthlyEarnings()
+    ]);
+    
+    // For tasks, we'll use a placeholder since no task management system exists yet
+    // This can be connected to a real task system later
+    setTasksToday({ completed: 0, total: 0, remaining: 0 });
+  };
+
   // Handle logout
   const handleLogout = () => {
     // Clear local storage
@@ -236,6 +391,9 @@ export default function StaffDashboard() {
 
       setStaffData(completeStaffData);
       console.log('Staff department:', completeStaffData.department);
+      
+      // Initialize dashboard data
+      initializeDashboardData();
     } catch (error) {
       console.error('Error parsing staff data:', error);
       // Redirect to login if data is corrupted
@@ -405,8 +563,12 @@ export default function StaffDashboard() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600 mb-1">Hours Today</p>
-                    <p className="text-2xl font-bold text-gray-900">8.5</p>
-                    <p className="text-sm text-green-600 font-medium">On track</p>
+                    <p className="text-2xl font-bold text-gray-900">{hoursToday.hours}</p>
+                    <p className={`text-sm font-medium ${
+                      hoursToday.status === 'Completed' ? 'text-green-600' : 
+                      hoursToday.status === 'In progress' ? 'text-blue-600' : 
+                      'text-gray-500'
+                    }`}>{hoursToday.status}</p>
                   </div>
                   <div className="p-3 bg-blue-100 rounded-lg">
                     <ClockIcon className="h-6 w-6 text-blue-600" />
@@ -419,7 +581,7 @@ export default function StaffDashboard() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600 mb-1">Leave Balance</p>
-                    <p className="text-2xl font-bold text-gray-900">18</p>
+                    <p className="text-2xl font-bold text-gray-900">{leaveBalance.remaining}/{leaveBalance.total}</p>
                     <p className="text-sm text-gray-500">days remaining</p>
                   </div>
                   <div className="p-3 bg-green-100 rounded-lg">
@@ -433,8 +595,17 @@ export default function StaffDashboard() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600 mb-1">This Month</p>
-                    <p className="text-2xl font-bold text-gray-900">Rs. 80,500</p>
-                    <p className="text-sm text-green-600">+Rs. 15,500 overtime</p>
+                    <p className="text-2xl font-bold text-gray-900">
+                      Rs. {monthlyEarnings.salary.toLocaleString()}
+                    </p>
+                    {monthlyEarnings.overtime > 0 && (
+                      <p className="text-sm text-green-600">
+                        +Rs. {monthlyEarnings.overtime.toLocaleString()} overtime
+                      </p>
+                    )}
+                    {monthlyEarnings.salary === 0 && (
+                      <p className="text-sm text-gray-500">No payment record</p>
+                    )}
                   </div>
                   <div className="p-3 bg-yellow-100 rounded-lg">
                     <CurrencyDollarIcon className="h-6 w-6 text-yellow-600" />
@@ -447,8 +618,12 @@ export default function StaffDashboard() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600 mb-1">Tasks Today</p>
-                    <p className="text-2xl font-bold text-gray-900">7/10</p>
-                    <p className="text-sm text-blue-600">3 remaining</p>
+                    <p className="text-2xl font-bold text-gray-900">{tasksToday.completed}/{tasksToday.total}</p>
+                    {tasksToday.total > 0 ? (
+                      <p className="text-sm text-blue-600">{tasksToday.remaining} remaining</p>
+                    ) : (
+                      <p className="text-sm text-gray-500">No tasks assigned</p>
+                    )}
                   </div>
                   <div className="p-3 bg-purple-100 rounded-lg">
                     <CheckCircleIcon className="h-6 w-6 text-purple-600" />
