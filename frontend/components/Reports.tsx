@@ -274,7 +274,7 @@ export default function Reports() {
                     <TrendingUp className="w-8 h-8 text-purple-600" />
                     <div className="ml-3">
                       <p className="text-sm font-medium text-purple-600">Avg Order Value</p>
-                      <p className="text-2xl font-bold text-purple-900">${salesData.summary.averageOrderValue}</p>
+                      <p className="text-2xl font-bold text-purple-900">Rs {salesData.summary.averageOrderValue}</p>
                     </div>
                   </div>
                 </div>
@@ -297,7 +297,7 @@ export default function Reports() {
                   {Object.entries(salesData.categoryBreakdown).map(([category, amount]) => (
                     <div key={category} className="text-center">
                       <p className="text-sm text-gray-600 capitalize">{category}</p>
-                      <p className="text-lg font-bold text-gray-900">${amount.toFixed(2)}</p>
+                      <p className="text-lg font-bold text-gray-900">Rs {amount.toFixed(2)}</p>
                     </div>
                   ))}
                 </div>
@@ -349,7 +349,7 @@ export default function Reports() {
                     <AlertTriangle className="w-8 h-8 text-red-600" />
                     <div className="ml-3">
                       <p className="text-sm font-medium text-red-600">Total Waste Value</p>
-                      <p className="text-2xl font-bold text-red-900">${wasteData.summary.totalWasteValue}</p>
+                      <p className="text-2xl font-bold text-red-900">Rs {wasteData.summary.totalWasteValue}</p>
                     </div>
                   </div>
                 </div>

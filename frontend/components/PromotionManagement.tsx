@@ -270,7 +270,7 @@ export default function PromotionManagement() {
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Min Order:</span>
-                <span className="font-medium">${promotion.minOrderAmount}</span>
+                <span className="font-medium">Rs {promotion.minOrderAmount}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600">Usage:</span>
