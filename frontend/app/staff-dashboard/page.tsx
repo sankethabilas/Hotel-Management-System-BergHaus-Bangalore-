@@ -320,6 +320,15 @@ export default function StaffDashboard() {
       return;
     }
 
+    // Check for uppercase letter and number
+    const hasUppercase = /[A-Z]/.test(passwordForm.newPassword);
+    const hasNumber = /[0-9]/.test(passwordForm.newPassword);
+    
+    if (!hasUppercase || !hasNumber) {
+      alert('Password must contain at least one uppercase letter and one number');
+      return;
+    }
+
     setPasswordLoading(true);
 
     try {
