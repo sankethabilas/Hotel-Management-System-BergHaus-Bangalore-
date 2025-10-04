@@ -787,8 +787,9 @@ export default function CheckInCheckOutPage() {
                       </div>
                     </div>
                   )}
-                </div>
-              )}
+                  </>
+                )}
+              </div>
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
