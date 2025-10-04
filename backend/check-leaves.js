@@ -1,6 +1,12 @@
 const mongoose = require('mongoose');
+require('dotenv').config();
 
-const uri = 'mongodb+srv://Sanketh:Gv5T0YzYqgFCI6th@cluster0.6vyj3nr.mongodb.net/hms_database?retryWrites=true&w=majority';
+const uri = process.env.MONGODB_URI;
+
+if (!uri) {
+  console.error('❌ MONGODB_URI environment variable is not defined. Please check your .env file.');
+  process.exit(1);
+}
 
 const LeaveSchema = new mongoose.Schema({}, { collection: 'leaves', strict: false });
 const Leave = mongoose.model('Leave', LeaveSchema);

@@ -243,20 +243,30 @@ const staffLogin = async (req, res) => {
     }
 
     // Password logic:
-    // 1. If staff hasn't changed password yet (password = employeeId), use employeeId
-    // 2. If staff has changed password (password != employeeId), use ONLY the new password
+    // 1. If staff hasn't changed password yet (password is hashed employeeId), use employeeId
+    // 2. If staff has changed password, use the new password
     let isPasswordValid;
     
-    if (staff.password === employeeId) {
-      // Staff hasn't changed password yet, use employee ID
-      isPasswordValid = password === employeeId;
+    // Check if password is hashed (starts with $2a$)
+    const isHashed = staff.password.startsWith('$2a$');
+    
+    if (isHashed) {
+      // Password is hashed, use bcrypt to compare
+      const bcrypt = require('bcryptjs');
+      isPasswordValid = await bcrypt.compare(password, staff.password);
     } else {
-      // Staff has changed password, use ONLY the new password
-      isPasswordValid = password === staff.password;
+      // Password is plain text, compare directly
+      if (staff.password === employeeId) {
+        // Staff hasn't changed password yet, use Employee ID
+        isPasswordValid = password === employeeId;
+      } else {
+        // Staff has changed password, use the new password
+        isPasswordValid = password === staff.password;
+      }
     }
 
     if (!isPasswordValid) {
-      const message = staff.password === employeeId 
+      const message = isHashed 
         ? 'Invalid password. Use your Employee ID as password'
         : 'Invalid password. Use your custom password';
       

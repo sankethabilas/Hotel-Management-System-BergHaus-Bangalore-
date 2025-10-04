@@ -44,10 +44,21 @@ app.use("/api/staff-requests", staffRequestRoutes);
 
 
 //database connect
-//KEaE9K4RSPu8dd1j
-//mongoose.connect("mongodb+srv://admin:sIeTivhp0roOe0Bx@cluster0.qp4mpdo.mongodb.net/")
-mongoose.connect("mongodb+srv://danidu:KEaE9K4RSPu8dd1j@cluster0.6vyj3nr.mongodb.net/hms_database")
-.then(()=> console.log("connected to mongodb"))
+require('dotenv').config();
+
+const mongoURI = process.env.MONGODB_URI;
+
+if (!mongoURI) {
+  console.error('❌ MONGODB_URI environment variable is not defined. Please check your .env file.');
+  process.exit(1);
+}
+
+// Don't log the full connection string for security
+const maskedURI = mongoURI.replace(/\/\/[^:]+:[^@]+@/, '//***:***@');
+console.log('🔗 Connecting to MongoDB:', maskedURI);
+
+mongoose.connect(mongoURI)
+.then(()=> console.log("✅ Connected to MongoDB"))
 .then(()=> {
     app.listen(5000, () => {
         console.log("Server running on port 5000");
