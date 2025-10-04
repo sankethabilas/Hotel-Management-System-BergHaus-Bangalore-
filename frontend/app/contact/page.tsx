@@ -50,6 +50,7 @@ const ContactUsPage = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAutoFilled, setIsAutoFilled] = useState(false);
+  const [errors, setErrors] = useState<{[key: string]: string}>({});
   const { toast } = useToast();
   const { user, isAuthenticated } = useAuth();
 
@@ -79,6 +80,54 @@ const ContactUsPage = () => {
       ...prev,
       [name]: value
     }));
+    
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
+  };
+
+  const validateField = (name: string, value: string): string => {
+    switch (name) {
+      case 'fullName':
+        if (!value.trim()) return 'Full name is required';
+        if (value.trim().length < 2) return 'Full name must be at least 2 characters long';
+        if (value.trim().length > 100) return 'Full name must be less than 100 characters';
+        if (!/^[a-zA-Z\s'-]+$/.test(value.trim())) return 'Full name can only contain letters, spaces, hyphens, and apostrophes';
+        return '';
+      
+      case 'email':
+        if (!value.trim()) return 'Email is required';
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())) return 'Please enter a valid email address';
+        if (value.trim().length > 100) return 'Email must be less than 100 characters';
+        return '';
+      
+      case 'phone':
+        if (value.trim()) {
+          const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
+          if (!phoneRegex.test(value.trim().replace(/[\s\-\(\)]/g, ''))) return 'Please enter a valid phone number';
+          if (value.trim().length > 20) return 'Phone number must be less than 20 characters';
+        }
+        return '';
+      
+      case 'subject':
+        if (!value.trim()) return 'Subject is required';
+        if (value.trim().length < 5) return 'Subject must be at least 5 characters long';
+        if (value.trim().length > 200) return 'Subject must be less than 200 characters';
+        return '';
+      
+      case 'message':
+        if (!value.trim()) return 'Message is required';
+        if (value.trim().length < 10) return 'Message must be at least 10 characters long';
+        if (value.trim().length > 2000) return 'Message must be less than 2000 characters';
+        return '';
+      
+      default:
+        return '';
+    }
   };
 
   const handleSelectChange = (value: string) => {
@@ -89,6 +138,7 @@ const ContactUsPage = () => {
   };
 
   const validateForm = (): boolean => {
+    // Full name validation
     if (!formData.fullName.trim()) {
       toast({
         title: "Validation Error",
@@ -98,6 +148,36 @@ const ContactUsPage = () => {
       return false;
     }
 
+    if (formData.fullName.trim().length < 2) {
+      toast({
+        title: "Validation Error",
+        description: "Full name must be at least 2 characters long",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    if (formData.fullName.trim().length > 100) {
+      toast({
+        title: "Validation Error",
+        description: "Full name must be less than 100 characters",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    // Name format validation (letters, spaces, hyphens, apostrophes only)
+    const nameRegex = /^[a-zA-Z\s'-]+$/;
+    if (!nameRegex.test(formData.fullName.trim())) {
+      toast({
+        title: "Validation Error",
+        description: "Full name can only contain letters, spaces, hyphens, and apostrophes",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    // Email validation
     if (!formData.email.trim()) {
       toast({
         title: "Validation Error",
@@ -107,8 +187,8 @@ const ContactUsPage = () => {
       return false;
     }
 
-    const emailRegex = /^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/;
-    if (!emailRegex.test(formData.email)) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email.trim())) {
       toast({
         title: "Validation Error",
         description: "Please enter a valid email address",
@@ -117,6 +197,38 @@ const ContactUsPage = () => {
       return false;
     }
 
+    if (formData.email.trim().length > 100) {
+      toast({
+        title: "Validation Error",
+        description: "Email must be less than 100 characters",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    // Phone validation (if provided)
+    if (formData.phone.trim()) {
+      const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
+      if (!phoneRegex.test(formData.phone.trim().replace(/[\s\-\(\)]/g, ''))) {
+        toast({
+          title: "Validation Error",
+          description: "Please enter a valid phone number",
+          variant: "destructive"
+        });
+        return false;
+      }
+
+      if (formData.phone.trim().length > 20) {
+        toast({
+          title: "Validation Error",
+          description: "Phone number must be less than 20 characters",
+          variant: "destructive"
+        });
+        return false;
+      }
+    }
+
+    // Subject validation
     if (!formData.subject.trim()) {
       toast({
         title: "Validation Error",
@@ -126,6 +238,25 @@ const ContactUsPage = () => {
       return false;
     }
 
+    if (formData.subject.trim().length < 5) {
+      toast({
+        title: "Validation Error",
+        description: "Subject must be at least 5 characters long",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    if (formData.subject.trim().length > 200) {
+      toast({
+        title: "Validation Error",
+        description: "Subject must be less than 200 characters",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    // Message validation
     if (!formData.message.trim()) {
       toast({
         title: "Validation Error",
@@ -135,6 +266,25 @@ const ContactUsPage = () => {
       return false;
     }
 
+    if (formData.message.trim().length < 10) {
+      toast({
+        title: "Validation Error",
+        description: "Message must be at least 10 characters long",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    if (formData.message.trim().length > 2000) {
+      toast({
+        title: "Validation Error",
+        description: "Message must be less than 2000 characters",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    // Reason for contact validation
     if (!formData.reasonForContact) {
       toast({
         title: "Validation Error",
@@ -452,10 +602,24 @@ const ContactUsPage = () => {
                       type="text"
                       value={formData.fullName}
                       onChange={handleInputChange}
+                      onBlur={(e) => {
+                        const error = validateField('fullName', e.target.value);
+                        setErrors(prev => ({ ...prev, fullName: error }));
+                      }}
                       placeholder="Enter your full name"
-                      className="h-10 text-sm px-3 border-2 border-gray-200 focus:border-[#006bb8] focus:ring-2 focus:ring-[#006bb8]/20 rounded-lg transition-all duration-200"
+                      className={`h-10 text-sm px-3 border-2 focus:ring-2 rounded-lg transition-all duration-200 ${
+                        errors.fullName 
+                          ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' 
+                          : 'border-gray-200 focus:border-[#006bb8] focus:ring-[#006bb8]/20'
+                      }`}
                       required
                     />
+                    {errors.fullName && (
+                      <p className="text-sm text-red-600 mt-1 flex items-center gap-1">
+                        <span className="w-1 h-1 bg-red-600 rounded-full"></span>
+                        {errors.fullName}
+                      </p>
+                    )}
                   </div>
 
                   {/* Email */}
@@ -469,10 +633,24 @@ const ContactUsPage = () => {
                       type="email"
                       value={formData.email}
                       onChange={handleInputChange}
+                      onBlur={(e) => {
+                        const error = validateField('email', e.target.value);
+                        setErrors(prev => ({ ...prev, email: error }));
+                      }}
                       placeholder="Enter your email address"
-                      className="h-10 text-sm px-3 border-2 border-gray-200 focus:border-[#006bb8] focus:ring-2 focus:ring-[#006bb8]/20 rounded-lg transition-all duration-200"
+                      className={`h-10 text-sm px-3 border-2 focus:ring-2 rounded-lg transition-all duration-200 ${
+                        errors.email 
+                          ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' 
+                          : 'border-gray-200 focus:border-[#006bb8] focus:ring-[#006bb8]/20'
+                      }`}
                       required
                     />
+                    {errors.email && (
+                      <p className="text-sm text-red-600 mt-1 flex items-center gap-1">
+                        <span className="w-1 h-1 bg-red-600 rounded-full"></span>
+                        {errors.email}
+                      </p>
+                    )}
                   </div>
 
                   {/* Phone */}
@@ -486,9 +664,23 @@ const ContactUsPage = () => {
                       type="tel"
                       value={formData.phone}
                       onChange={handleInputChange}
+                      onBlur={(e) => {
+                        const error = validateField('phone', e.target.value);
+                        setErrors(prev => ({ ...prev, phone: error }));
+                      }}
                       placeholder="Enter your phone number"
-                      className="h-10 text-sm px-3 border-2 border-gray-200 focus:border-[#006bb8] focus:ring-2 focus:ring-[#006bb8]/20 rounded-lg transition-all duration-200"
+                      className={`h-10 text-sm px-3 border-2 focus:ring-2 rounded-lg transition-all duration-200 ${
+                        errors.phone 
+                          ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' 
+                          : 'border-gray-200 focus:border-[#006bb8] focus:ring-[#006bb8]/20'
+                      }`}
                     />
+                    {errors.phone && (
+                      <p className="text-sm text-red-600 mt-1 flex items-center gap-1">
+                        <span className="w-1 h-1 bg-red-600 rounded-full"></span>
+                        {errors.phone}
+                      </p>
+                    )}
                   </div>
 
                   {/* Reason for Contact */}

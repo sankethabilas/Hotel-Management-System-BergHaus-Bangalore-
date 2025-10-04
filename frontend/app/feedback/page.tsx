@@ -128,6 +128,8 @@ export default function FeedbackPage() {
     amenities: 0
   });
 
+  const [errors, setErrors] = useState<{[key: string]: string}>({});
+
   const [images, setImages] = useState<File[]>([]);
 
   const categories = [
@@ -143,6 +145,38 @@ export default function FeedbackPage() {
       ...prev,
       [field]: value
     }));
+    
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors(prev => ({
+        ...prev,
+        [field]: ''
+      }));
+    }
+  };
+
+  const validateField = (name: string, value: string): string => {
+    switch (name) {
+      case 'name':
+        if (!value.trim()) return 'Name is required';
+        if (value.trim().length < 2) return 'Name must be at least 2 characters long';
+        if (value.trim().length > 50) return 'Name must be less than 50 characters';
+        if (!/^[a-zA-Z\s'-]+$/.test(value.trim())) return 'Name can only contain letters, spaces, hyphens, and apostrophes';
+        return '';
+      
+      case 'email':
+        if (!value.trim()) return 'Email is required';
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())) return 'Please enter a valid email address';
+        if (value.trim().length > 100) return 'Email must be less than 100 characters';
+        return '';
+      
+      case 'comments':
+        if (value && value.length > 2000) return 'Comments must be less than 2000 characters';
+        return '';
+      
+      default:
+        return '';
+    }
   };
 
   const handleRatingChange = (field: keyof RatingState, value: number) => {
@@ -174,6 +208,7 @@ export default function FeedbackPage() {
   };
 
   const validateForm = () => {
+    // Name validation
     if (!formData.name.trim()) {
       toast({
         title: "Validation Error",
@@ -183,6 +218,36 @@ export default function FeedbackPage() {
       return false;
     }
 
+    if (formData.name.trim().length < 2) {
+      toast({
+        title: "Validation Error",
+        description: "Name must be at least 2 characters long",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    if (formData.name.trim().length > 50) {
+      toast({
+        title: "Validation Error",
+        description: "Name must be less than 50 characters",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    // Name format validation (letters, spaces, hyphens, apostrophes only)
+    const nameRegex = /^[a-zA-Z\s'-]+$/;
+    if (!nameRegex.test(formData.name.trim())) {
+      toast({
+        title: "Validation Error",
+        description: "Name can only contain letters, spaces, hyphens, and apostrophes",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    // Email validation
     if (!formData.email.trim()) {
       toast({
         title: "Validation Error", 
@@ -192,6 +257,26 @@ export default function FeedbackPage() {
       return false;
     }
 
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email.trim())) {
+      toast({
+        title: "Validation Error",
+        description: "Please enter a valid email address",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    if (formData.email.trim().length > 100) {
+      toast({
+        title: "Validation Error",
+        description: "Email must be less than 100 characters",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    // Category validation
     if (!formData.category) {
       toast({
         title: "Validation Error",
@@ -201,11 +286,53 @@ export default function FeedbackPage() {
       return false;
     }
 
+    // Comments validation (if provided)
+    if (formData.comments && formData.comments.length > 2000) {
+      toast({
+        title: "Validation Error",
+        description: "Comments must be less than 2000 characters",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    // Rating validation
     const allRatings = Object.values(ratings);
     if (allRatings.some(rating => rating === 0)) {
       toast({
         title: "Validation Error",
         description: "Please provide ratings for all categories",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    // Check for minimum rating (at least 1 star for each category)
+    if (allRatings.some(rating => rating < 1 || rating > 5)) {
+      toast({
+        title: "Validation Error",
+        description: "All ratings must be between 1 and 5 stars",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    // Image validation
+    if (images.length > 5) {
+      toast({
+        title: "Validation Error",
+        description: "You can upload a maximum of 5 images",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    // Check individual image sizes
+    const oversizedImages = images.filter(img => img.size > 5 * 1024 * 1024);
+    if (oversizedImages.length > 0) {
+      toast({
+        title: "Validation Error",
+        description: "Some images are too large. Maximum size is 5MB per image",
         variant: "destructive"
       });
       return false;
@@ -422,9 +549,20 @@ export default function FeedbackPage() {
                     id="name"
                     value={formData.name}
                     onChange={(e) => handleInputChange('name', e.target.value)}
+                    onBlur={(e) => {
+                      const error = validateField('name', e.target.value);
+                      setErrors(prev => ({ ...prev, name: error }));
+                    }}
                     placeholder="Your full name"
                     required
+                    className={errors.name ? 'border-red-500 focus:border-red-500' : ''}
                   />
+                  {errors.name && (
+                    <p className="text-sm text-red-600 mt-1 flex items-center gap-1">
+                      <span className="w-1 h-1 bg-red-600 rounded-full"></span>
+                      {errors.name}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <Label htmlFor="email">Email *</Label>
@@ -433,9 +571,20 @@ export default function FeedbackPage() {
                     type="email"
                     value={formData.email}
                     onChange={(e) => handleInputChange('email', e.target.value)}
+                    onBlur={(e) => {
+                      const error = validateField('email', e.target.value);
+                      setErrors(prev => ({ ...prev, email: error }));
+                    }}
                     placeholder="your.email@example.com"
                     required
+                    className={errors.email ? 'border-red-500 focus:border-red-500' : ''}
                   />
+                  {errors.email && (
+                    <p className="text-sm text-red-600 mt-1 flex items-center gap-1">
+                      <span className="w-1 h-1 bg-red-600 rounded-full"></span>
+                      {errors.email}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -465,13 +614,26 @@ export default function FeedbackPage() {
                   id="comments"
                   value={formData.comments}
                   onChange={(e) => handleInputChange('comments', e.target.value)}
+                  onBlur={(e) => {
+                    const error = validateField('comments', e.target.value);
+                    setErrors(prev => ({ ...prev, comments: error }));
+                  }}
                   placeholder="Tell us more about your experience..."
                   rows={4}
                   maxLength={2000}
+                  className={errors.comments ? 'border-red-500 focus:border-red-500' : ''}
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  {formData.comments.length}/2000 characters
-                </p>
+                <div className="flex justify-between items-center mt-1">
+                  <p className="text-xs text-gray-500">
+                    {formData.comments.length}/2000 characters
+                  </p>
+                  {errors.comments && (
+                    <p className="text-sm text-red-600 flex items-center gap-1">
+                      <span className="w-1 h-1 bg-red-600 rounded-full"></span>
+                      {errors.comments}
+                    </p>
+                  )}
+                </div>
               </div>
 
               {/* Image Upload */}
