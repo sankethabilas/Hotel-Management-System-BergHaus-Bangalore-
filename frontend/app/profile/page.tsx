@@ -684,6 +684,7 @@ export default function ProfilePage() {
                             'border-gray-300 focus:border-hms-primary'
                           }`}
                           placeholder="Enter your current password"
+                          autoComplete="off"
                         />
                         {passwordErrors.currentPassword && (
                           <p className="text-sm text-red-600 animate-fade-in flex items-center gap-1 mt-1">
