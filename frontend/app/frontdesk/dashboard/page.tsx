@@ -90,6 +90,7 @@ export default function FrontdeskDashboard() {
 
   const { user } = useAuth();
   const { toast } = useToast();
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     // Check if user is authenticated and has frontdesk role
@@ -111,17 +112,43 @@ export default function FrontdeskDashboard() {
     fetchDashboardData();
   }, [user]);
 
+  // Helper function to retry API calls with exponential backoff
+  const retryApiCall = async (apiCall: () => Promise<Response>, maxRetries = 3, baseDelay = 1000) => {
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        const response = await apiCall();
+        
+        if (response.status === 429) {
+          // Rate limited - wait and retry
+          const delay = baseDelay * Math.pow(2, attempt);
+          console.log(`Rate limited. Retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries})`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          continue;
+        }
+        
+        return response;
+      } catch (error) {
+        if (attempt === maxRetries - 1) throw error;
+        const delay = baseDelay * Math.pow(2, attempt);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+    throw new Error('Max retries exceeded');
+  };
+
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
       
       // Fetch dashboard stats
-      const statsResponse = await fetch('/api/frontdesk/dashboard/stats', {
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
+      const statsResponse = await retryApiCall(() => 
+        fetch('/api/frontdesk/dashboard/stats', {
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        })
+      );
       
       console.log('Dashboard stats response status:', statsResponse.status);
       
@@ -139,39 +166,62 @@ export default function FrontdeskDashboard() {
         });
       }
 
-      // Fetch bookings
-      const bookingsResponse = await fetch('/api/bookings?limit=20&page=1', {
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      if (bookingsResponse.ok) {
-        const bookingsData = await bookingsResponse.json();
-        console.log('Dashboard bookings data:', bookingsData);
+      // Add a small delay before fetching bookings to avoid rate limiting
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Fetch bookings with retry logic
+      try {
+        const bookingsResponse = await retryApiCall(() => 
+          fetch('/api/bookings?limit=20&page=1', {
+            credentials: 'include',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          })
+        );
         
-        if (bookingsData.success && bookingsData.data && Array.isArray(bookingsData.data.bookings)) {
-          setBookings(bookingsData.data.bookings);
-          console.log('Successfully loaded', bookingsData.data.bookings.length, 'bookings');
-        } else if (bookingsData.success && Array.isArray(bookingsData.data)) {
-          // Fallback: data might be directly in data array
-          setBookings(bookingsData.data);
-          console.log('Fallback: loaded', bookingsData.data.length, 'bookings');
+        if (bookingsResponse.ok) {
+          const bookingsData = await bookingsResponse.json();
+          console.log('Dashboard bookings data:', bookingsData);
+          
+          if (bookingsData.success && bookingsData.data && Array.isArray(bookingsData.data.bookings)) {
+            setBookings(bookingsData.data.bookings);
+            console.log('Successfully loaded', bookingsData.data.bookings.length, 'bookings');
+          } else if (bookingsData.success && Array.isArray(bookingsData.data)) {
+            // Fallback: data might be directly in data array
+            setBookings(bookingsData.data);
+            console.log('Fallback: loaded', bookingsData.data.length, 'bookings');
+          } else {
+            console.error('Invalid bookings data structure:', bookingsData);
+            toast({
+              title: "Warning",
+              description: "Unexpected data format from server",
+              variant: "destructive",
+            });
+          }
         } else {
-          console.error('Invalid bookings data structure:', bookingsData);
-          toast({
-            title: "Warning",
-            description: "Unexpected data format from server",
-            variant: "destructive",
-          });
+          const errorText = await bookingsResponse.text();
+          console.error('Failed to fetch bookings:', bookingsResponse.status, errorText);
+          
+          if (bookingsResponse.status === 429) {
+            toast({
+              title: "Rate Limited",
+              description: "Too many requests. Bookings will load when available.",
+              variant: "destructive",
+            });
+          } else {
+            toast({
+              title: "Warning",
+              description: `Failed to load bookings: ${bookingsResponse.status}. Dashboard stats are still available.`,
+              variant: "destructive",
+            });
+          }
         }
-      } else {
-        const errorText = await bookingsResponse.text();
-        console.error('Failed to fetch bookings:', bookingsResponse.status, errorText);
+      } catch (bookingsError) {
+        console.error('Error fetching bookings (non-critical):', bookingsError);
         toast({
-          title: "Error",
-          description: `Failed to load bookings: ${bookingsResponse.status}`,
+          title: "Warning",
+          description: "Could not load recent bookings, but dashboard stats are available.",
           variant: "destructive",
         });
       }
@@ -184,6 +234,22 @@ export default function FrontdeskDashboard() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Debounced refresh function to prevent too many rapid API calls
+  const debouncedRefresh = async () => {
+    if (isRefreshing) {
+      console.log('Refresh already in progress, skipping...');
+      return;
+    }
+    
+    setIsRefreshing(true);
+    try {
+      await fetchDashboardData();
+    } finally {
+      // Add a small delay before allowing another refresh
+      setTimeout(() => setIsRefreshing(false), 2000);
     }
   };
 
@@ -278,17 +344,17 @@ export default function FrontdeskDashboard() {
       {/* Manual Refresh Button */}
       <div className="flex justify-end mb-4">
         <Button
-          onClick={fetchDashboardData}
-          disabled={loading}
+          onClick={debouncedRefresh}
+          disabled={loading || isRefreshing}
           variant="outline"
           className="flex items-center gap-2"
         >
-          {loading ? (
+          {(loading || isRefreshing) ? (
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#006bb8]"></div>
           ) : (
             <TrendingUp className="w-4 h-4" />
           )}
-          Refresh Data
+          {isRefreshing ? 'Refreshing...' : 'Refresh Data'}
         </Button>
       </div>
 
