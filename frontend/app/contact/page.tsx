@@ -11,6 +11,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import Navbar from '@/components/navbar';
+import { safeApiFetch } from '@/lib/safeFetch';
 import { 
   Phone, 
   Mail, 
@@ -107,9 +108,11 @@ const ContactUsPage = () => {
       
       case 'phone':
         if (value.trim()) {
-          const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
-          if (!phoneRegex.test(value.trim().replace(/[\s\-\(\)]/g, ''))) return 'Please enter a valid phone number';
-          if (value.trim().length > 20) return 'Phone number must be less than 20 characters';
+          // Remove all non-digit characters and check if only numbers
+          const digitsOnly = value.trim().replace(/\D/g, '');
+          if (!/^\d+$/.test(value.trim().replace(/\D/g, ''))) return 'Phone number must contain only numbers';
+          if (digitsOnly.length < 7) return 'Phone number must have at least 7 digits';
+          if (digitsOnly.length > 15) return 'Phone number must have no more than 15 digits';
         }
         return '';
       
@@ -208,20 +211,30 @@ const ContactUsPage = () => {
 
     // Phone validation (if provided)
     if (formData.phone.trim()) {
-      const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
-      if (!phoneRegex.test(formData.phone.trim().replace(/[\s\-\(\)]/g, ''))) {
+      // Remove all non-digit characters and check if only numbers
+      const digitsOnly = formData.phone.trim().replace(/\D/g, '');
+      if (!/^\d+$/.test(formData.phone.trim().replace(/\D/g, ''))) {
         toast({
           title: "Validation Error",
-          description: "Please enter a valid phone number",
+          description: "Phone number must contain only numbers",
           variant: "destructive"
         });
         return false;
       }
 
-      if (formData.phone.trim().length > 20) {
+      if (digitsOnly.length < 7) {
         toast({
           title: "Validation Error",
-          description: "Phone number must be less than 20 characters",
+          description: "Phone number must have at least 7 digits",
+          variant: "destructive"
+        });
+        return false;
+      }
+
+      if (digitsOnly.length > 15) {
+        toast({
+          title: "Validation Error",
+          description: "Phone number must have no more than 15 digits",
           variant: "destructive"
         });
         return false;
@@ -305,17 +318,12 @@ const ContactUsPage = () => {
     setIsSubmitting(true);
     
     try {
-      const response = await fetch('http://localhost:5000/api/contact/submit', {
+      const result = await safeApiFetch('/contact/submit', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify(formData)
       });
 
-      const data = await response.json();
-
-      if (data.success) {
+      if (result.success && result.data?.success) {
         toast({
           title: "Success!",
           description: "✅ Your message has been sent successfully. We will get back to you shortly.",
@@ -334,7 +342,7 @@ const ContactUsPage = () => {
       } else {
         toast({
           title: "Error",
-          description: data.message || "Failed to send message. Please try again.",
+          description: result.error || result.data?.message || "Failed to send message. Please try again.",
           variant: "destructive"
         });
       }
@@ -663,12 +671,27 @@ const ContactUsPage = () => {
                       name="phone"
                       type="tel"
                       value={formData.phone}
-                      onChange={handleInputChange}
+                      onChange={(e) => {
+                        // Only allow numbers
+                        const value = e.target.value.replace(/\D/g, '');
+                        setFormData(prev => ({
+                          ...prev,
+                          phone: value
+                        }));
+                        
+                        // Clear error when user starts typing
+                        if (errors.phone) {
+                          setErrors(prev => ({
+                            ...prev,
+                            phone: ''
+                          }));
+                        }
+                      }}
                       onBlur={(e) => {
                         const error = validateField('phone', e.target.value);
                         setErrors(prev => ({ ...prev, phone: error }));
                       }}
-                      placeholder="Enter your phone number"
+                      placeholder="Enter your phone number (7-15 digits)"
                       className={`h-10 text-sm px-3 border-2 focus:ring-2 rounded-lg transition-all duration-200 ${
                         errors.phone 
                           ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' 

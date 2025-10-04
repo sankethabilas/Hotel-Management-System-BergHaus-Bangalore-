@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { ThemeToggle } from '@/components/theme-toggle';
 import MessagesDropdown from '@/components/messages-dropdown';
 import RoomsDropdown from '@/components/rooms-dropdown';
+import { safeJsonParse } from '@/lib/safeJsonParse';
 import { getProfileImageUrl, getUserInitials } from '@/utils/profileImage';
 
 interface NavbarProps {
@@ -41,9 +42,11 @@ export default function Navbar({ className }: NavbarProps) {
       });
 
       if (response.ok) {
-        const data = await response.json();
-        const unreadMessages = data.data?.docs?.filter((msg: any) => !msg.isRead) || [];
-        setUnreadCount(unreadMessages.length);
+        const data = await safeJsonParse(response);
+        if (data.success) {
+          const unreadMessages = data.data?.docs?.filter((msg: any) => !msg.isRead) || [];
+          setUnreadCount(unreadMessages.length);
+        }
       }
     } catch (error) {
       console.error('Error fetching unread count:', error);

@@ -11,6 +11,7 @@ import {
   ChangePasswordData,
   UserQueryParams 
 } from '@/types/index';
+import { safeJsonParse, getErrorMessage } from './safeJsonParse';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -45,8 +46,28 @@ api.interceptors.response.use(
     console.log('API Response interceptor - Success:', response.status, response.config.url);
     return response;
   },
-  (error) => {
+  async (error) => {
     console.log('API Response interceptor - Error:', error.response?.status, error.config?.url, error.message);
+    
+    // Handle JSON parsing errors
+    if (error.response && error.response.data) {
+      try {
+        // Try to parse the response data as JSON
+        if (typeof error.response.data === 'string') {
+          const parsedData = JSON.parse(error.response.data);
+          error.response.data = parsedData;
+        }
+      } catch (parseError) {
+        console.warn('Non-JSON error response received:', error.response.data);
+        // Convert non-JSON error to a proper error format
+        error.response.data = {
+          success: false,
+          message: error.response.data || 'Server error occurred',
+          rawResponse: error.response.data
+        };
+      }
+    }
+    
     if (error.response?.status === 401) {
       console.log('401 Unauthorized - removing token and redirecting');
       // Token expired or invalid
