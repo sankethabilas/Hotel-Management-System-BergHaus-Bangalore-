@@ -382,6 +382,17 @@ const changePassword = async (req, res) => {
       });
     }
 
+    // Check for uppercase letter and number
+    const hasUppercase = /[A-Z]/.test(newPassword);
+    const hasNumber = /[0-9]/.test(newPassword);
+    
+    if (!hasUppercase || !hasNumber) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password must contain at least one uppercase letter and one number'
+      });
+    }
+
     // Find staff member
     const staff = await Staff.findById(staffId);
     if (!staff) {
@@ -392,9 +403,9 @@ const changePassword = async (req, res) => {
     }
 
     // Verify current password
-    // Current password could be either their employee ID (default) or their custom password
-    const isCurrentPasswordValid = (currentPassword === staff.employeeId) || 
-                                  (staff.password && currentPassword === staff.password);
+    // The current password should match whatever is stored in staff.password field
+    // (which could be the employeeId initially, or a custom password if changed)
+    const isCurrentPasswordValid = (currentPassword === staff.password);
 
     if (!isCurrentPasswordValid) {
       return res.status(401).json({

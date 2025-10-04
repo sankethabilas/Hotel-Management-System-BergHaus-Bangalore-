@@ -366,8 +366,8 @@ const validateStaffLogin = [
   body('password')
     .notEmpty()
     .withMessage('Password is required')
-    .isLength({ min: 6 })
-    .withMessage('Password must be at least 6 characters long')
+    .isLength({ min: 4 })
+    .withMessage('Password must be at least 4 characters long')
 ];
 
 // Password change validation
@@ -377,10 +377,8 @@ const validatePasswordChange = [
     .withMessage('Current password is required'),
 
   body('newPassword')
-    .isLength({ min: 6 })
-    .withMessage('New password must be at least 6 characters long')
-    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
-    .withMessage('New password must contain at least one lowercase letter, one uppercase letter, and one number'),
+    .isLength({ min: 4 })
+    .withMessage('New password must be at least 4 characters long'),
 
   body('confirmPassword')
     .notEmpty()
