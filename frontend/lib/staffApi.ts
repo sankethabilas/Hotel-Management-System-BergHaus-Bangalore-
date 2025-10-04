@@ -38,9 +38,17 @@ class StaffAPI {
         let errorData;
         try {
           errorData = await response.json();
+          console.error('API Error Response:', errorData);
         } catch {
           errorData = { message: `HTTP error! status: ${response.status}` };
         }
+        
+        // Handle validation errors specifically
+        if (errorData.errors && Array.isArray(errorData.errors)) {
+          const validationErrors = errorData.errors.map((err: any) => err.msg || err.message).join(', ');
+          throw new Error(`Validation failed: ${validationErrors}`);
+        }
+        
         throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
       }
 
