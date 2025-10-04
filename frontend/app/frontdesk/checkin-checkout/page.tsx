@@ -375,28 +375,50 @@ export default function CheckInCheckOutPage() {
       });
 
       if (response.ok) {
-        const data = await response.json();
-        toast({
-          title: "Success",
-          description: "Custom charges added successfully",
-        });
-        
-        // Update the booking with new total
-        const updatedBooking = { 
-          ...paymentDialog.booking, 
-          totalAmount: data.data.newTotal,
-          customCharges: data.data.booking.customCharges 
-        };
-        setPaymentDialog(prev => ({ ...prev, booking: updatedBooking }));
-        setCustomCharges([]);
-        fetchAllBookings();
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const data = await response.json();
+          toast({
+            title: "Success",
+            description: "Custom charges added successfully",
+          });
+          
+          // Update the booking with new total
+          const updatedBooking = { 
+            ...paymentDialog.booking, 
+            totalAmount: data.data.newTotal,
+            customCharges: data.data.booking.customCharges 
+          };
+          setPaymentDialog(prev => ({ ...prev, booking: updatedBooking }));
+          setCustomCharges([]);
+          fetchAllBookings();
+        } else {
+          const text = await response.text();
+          console.error('Non-JSON response:', text);
+          toast({
+            title: "Error",
+            description: "Invalid response from server",
+            variant: "destructive",
+          });
+        }
       } else {
-        const errorData = await response.json();
-        toast({
-          title: "Error",
-          description: errorData.message || "Failed to add custom charges",
-          variant: "destructive",
-        });
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const errorData = await response.json();
+          toast({
+            title: "Error",
+            description: errorData.message || "Failed to add custom charges",
+            variant: "destructive",
+          });
+        } else {
+          const errorText = await response.text();
+          console.error('Error response:', errorText);
+          toast({
+            title: "Error",
+            description: `Server error: ${response.status}`,
+            variant: "destructive",
+          });
+        }
       }
     } catch (error) {
       console.error('Error adding custom charges:', error);

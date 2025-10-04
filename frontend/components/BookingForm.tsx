@@ -325,8 +325,6 @@ const BookingForm: React.FC<BookingFormProps> = ({
                   <SelectContent>
                     <SelectItem value="card">Credit/Debit Card</SelectItem>
                     <SelectItem value="online">Online Payment</SelectItem>
-                    <SelectItem value="cash">Cash on Arrival</SelectItem>
-                    <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -361,7 +359,7 @@ const BookingForm: React.FC<BookingFormProps> = ({
           disabled={isSubmitting}
           className="flex-1"
         >
-          {isSubmitting ? 'Processing Booking...' : `Confirm Booking - $${calculateTotalPrice().toFixed(2)}`}
+          {isSubmitting ? 'Processing Booking...' : `Confirm Booking - Rs ${calculateTotalPrice().toFixed(2)}`}
         </Button>
       </div>
 

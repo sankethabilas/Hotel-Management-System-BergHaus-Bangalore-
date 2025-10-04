@@ -278,11 +278,11 @@ export default function BookingConfirmationPage() {
             <h3>Payment Summary</h3>
             <div class="info-row">
                 <span class="label">Room Rate (${booking.totalNights} nights):</span>
-                <span>$${(booking.roomPrice * booking.totalNights).toFixed(2)}</span>
+                <span>Rs {(booking.roomPrice * booking.totalNights).toFixed(2)}</span>
             </div>
             <div class="info-row">
                 <span class="label">Tax (10%):</span>
-                <span>$${booking.taxAmount.toFixed(2)}</span>
+                <span>Rs {booking.taxAmount.toFixed(2)}</span>
             </div>
             <div class="info-row">
                 <span class="label">Payment Method:</span>
@@ -295,7 +295,7 @@ export default function BookingConfirmationPage() {
         </div>
 
         <div class="total">
-            Total Amount: $${booking.totalAmount.toFixed(2)}
+            Total Amount: Rs {booking.totalAmount.toFixed(2)}
         </div>
 
         ${booking.specialRequests ? `
@@ -540,15 +540,15 @@ export default function BookingConfirmationPage() {
               <CardContent className="space-y-3">
                 <div className="flex justify-between">
                   <span>Room Rate ({booking.totalNights} nights)</span>
-                  <span>${(booking.roomPrice * booking.totalNights).toFixed(2)}</span>
+                  <span>Rs {(booking.roomPrice * booking.totalNights).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Tax (10%)</span>
-                  <span>${booking.taxAmount.toFixed(2)}</span>
+                  <span>Rs {booking.taxAmount.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between font-semibold text-lg border-t pt-2">
                   <span>Total</span>
-                  <span>${booking.totalAmount.toFixed(2)}</span>
+                  <span>Rs {booking.totalAmount.toFixed(2)}</span>
                 </div>
                 <div className="mt-3">
                   <Label className="text-sm font-medium text-gray-500">Payment Method</Label>
