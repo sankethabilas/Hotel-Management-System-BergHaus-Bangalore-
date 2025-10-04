@@ -8,7 +8,7 @@ export default function AdminEditStaffPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold">Edit Staff</h1>
-      {id && <StaffForm staffId={id} isEdit basePathPrefix="/admin/staff" />}
+      {id && <StaffForm staffId={id} isEdit basePathPrefix="/admin" />}
     </div>
   );
 }

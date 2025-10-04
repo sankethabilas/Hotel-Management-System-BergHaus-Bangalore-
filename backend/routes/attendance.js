@@ -3,6 +3,7 @@ const router = express.Router();
 const {
   generateQRCode,
   scanQRCode,
+  markAttendance,
   getAllAttendance,
   getTodayAttendance,
   getAttendanceStats
@@ -13,6 +14,7 @@ const {
 // Public routes for QR code generation and scanning
 router.get('/qr/generate', generateQRCode);
 router.post('/scan/:qrId', scanQRCode);
+router.post('/mark', markAttendance); // New direct attendance marking route
 
 // Public routes for admin dashboard access
 router.get('/', getAllAttendance);

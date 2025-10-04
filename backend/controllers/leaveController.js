@@ -9,10 +9,24 @@ const createLeaveRequest = async (req, res) => {
       startDate,
       endDate,
       reason,
-      emergencyContact
+      emergencyContact,
+      staffId // Allow passing staffId in the request body for testing
     } = req.body;
 
-    const staffId = req.user.id;
+    // Try to get staffId from authentication, or use provided staffId, or use a default
+    let currentStaffId = req.user?.id || staffId;
+    
+    if (!currentStaffId) {
+      // For testing purposes, use the first staff member found
+      const firstStaff = await Staff.findOne({ isActive: true });
+      if (!firstStaff) {
+        return res.status(400).json({
+          success: false,
+          message: 'No staff member found. Please ensure you are logged in or contact admin.'
+        });
+      }
+      currentStaffId = firstStaff._id;
+    }
 
     // Validate dates
     const start = new Date(startDate);
@@ -38,7 +52,7 @@ const createLeaveRequest = async (req, res) => {
     const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1;
 
     // Get staff details
-    const staff = await Staff.findById(staffId);
+    const staff = await Staff.findById(currentStaffId);
     if (!staff) {
       return res.status(404).json({
         success: false,
@@ -48,7 +62,7 @@ const createLeaveRequest = async (req, res) => {
 
     // Create leave request
     const leave = new Leave({
-      staffId,
+      staffId: currentStaffId,
       staffName: staff.fullName,
       staffEmail: staff.email,
       department: staff.department,
@@ -133,7 +147,21 @@ const getAllLeaveRequests = async (req, res) => {
 // Get staff's own leave requests
 const getMyLeaveRequests = async (req, res) => {
   try {
-    const staffId = req.user.id;
+    // Try to get staffId from authentication, or use the first staff member as fallback
+    let staffId = req.user?.id;
+    
+    if (!staffId) {
+      // For testing purposes, use the first staff member found
+      const firstStaff = await Staff.findOne({ isActive: true });
+      if (!firstStaff) {
+        return res.status(400).json({
+          success: false,
+          message: 'No staff member found. Please ensure you are logged in or contact admin.'
+        });
+      }
+      staffId = firstStaff._id;
+    }
+    
     const { page = 1, limit = 10, status } = req.query;
     
     let filter = { staffId };
@@ -157,6 +185,7 @@ const getMyLeaveRequests = async (req, res) => {
     });
 
   } catch (error) {
+    console.error('Error in getMyLeaveRequests:', error);
     res.status(500).json({
       success: false,
       message: 'Failed to fetch your leave requests',
@@ -178,14 +207,20 @@ const updateLeaveStatus = async (req, res) => {
       });
     }
 
+    const updateData = { 
+      status,
+      adminComments: adminComments || '',
+      reviewedAt: new Date()
+    };
+
+    // Only add reviewedBy if user is authenticated
+    if (req.user && req.user.id) {
+      updateData.reviewedBy = req.user.id;
+    }
+
     const leave = await Leave.findByIdAndUpdate(
       id,
-      { 
-        status,
-        adminComments: adminComments || '',
-        reviewedAt: new Date(),
-        reviewedBy: req.user.id
-      },
+      updateData,
       { new: true }
     ).populate('staffId', 'fullName email department');
 
@@ -215,7 +250,21 @@ const updateLeaveStatus = async (req, res) => {
 const cancelLeaveRequest = async (req, res) => {
   try {
     const { id } = req.params;
-    const staffId = req.user.id;
+    
+    // Get staffId from user authentication or use first available staff for testing
+    let staffId = req.user?.id;
+    
+    if (!staffId) {
+      // For testing purposes, use the first staff member found
+      const firstStaff = await Staff.findOne({ isActive: true });
+      if (!firstStaff) {
+        return res.status(400).json({
+          success: false,
+          message: 'No staff member found. Please ensure you are logged in.'
+        });
+      }
+      staffId = firstStaff._id;
+    }
 
     const leave = await Leave.findOne({ _id: id, staffId });
 
@@ -317,11 +366,45 @@ const getLeaveStatistics = async (req, res) => {
   }
 };
 
+// Delete leave request
+const deleteLeaveRequest = async (req, res) => {
+  try {
+    console.log('DELETE request received for ID:', req.params.id);
+    const { id } = req.params;
+
+    console.log('Attempting to delete leave with ID:', id);
+    const leave = await Leave.findByIdAndDelete(id);
+
+    if (!leave) {
+      console.log('Leave request not found:', id);
+      return res.status(404).json({
+        success: false,
+        message: 'Leave request not found'
+      });
+    }
+
+    console.log('Leave request deleted successfully:', id);
+    res.json({
+      success: true,
+      message: 'Leave request deleted successfully'
+    });
+
+  } catch (error) {
+    console.error('Error deleting leave request:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete leave request',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   createLeaveRequest,
   getAllLeaveRequests,
   getMyLeaveRequests,
   updateLeaveStatus,
   cancelLeaveRequest,
-  getLeaveStatistics
+  getLeaveStatistics,
+  deleteLeaveRequest
 };
