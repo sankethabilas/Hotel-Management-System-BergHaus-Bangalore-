@@ -2,14 +2,7 @@
 
 import { useState } from 'react';
 import { leaveAPI } from '@/lib/leaveApi';
-
-interface LeaveFormData {
-  leaveType: 'sick' | 'annual' | 'casual' | 'emergency' | 'maternity' | 'paternity' | 'unpaid' | 'other';
-  startDate: string;
-  endDate: string;
-  reason: string;
-  emergencyContact?: string;
-}
+import { LeaveFormData } from '@/types/leave';
 
 interface LeaveRequestFormProps {
   onSuccess?: () => void;
@@ -109,12 +102,39 @@ export default function LeaveRequestForm({ onSuccess, onCancel }: LeaveRequestFo
       return;
     }
 
+    // Get current staff data from localStorage
+    const staffData = localStorage.getItem('staffData');
+    if (!staffData) {
+      setError('Staff data not found. Please log in again.');
+      return;
+    }
+
+    let currentStaffId: string;
+    try {
+      const parsedStaffData = JSON.parse(staffData);
+      currentStaffId = parsedStaffData.id || parsedStaffData._id;
+      
+      if (!currentStaffId) {
+        setError('Staff ID not found. Please log in again.');
+        return;
+      }
+    } catch (error) {
+      setError('Invalid staff data. Please log in again.');
+      return;
+    }
+
     setLoading(true);
     setError('');
     setSuccess('');
 
     try {
-      await leaveAPI.createLeave(formData);
+      // Include staff ID in the form data
+      const leaveRequestData = {
+        ...formData,
+        staffId: currentStaffId
+      };
+      
+      await leaveAPI.createLeave(leaveRequestData);
       setSuccess('Leave request submitted successfully!');
       
       // Reset form

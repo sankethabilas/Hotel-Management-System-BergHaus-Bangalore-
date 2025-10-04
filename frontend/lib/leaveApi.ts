@@ -76,6 +76,22 @@ class LeaveAPI {
 
   // Get my leave requests (staff)
   async getMyLeaves(): Promise<ApiResponse<Leave[]>> {
+    // Get current staff ID from localStorage
+    if (typeof window !== 'undefined') {
+      const staffData = localStorage.getItem('staffData');
+      if (staffData) {
+        try {
+          const parsedStaffData = JSON.parse(staffData);
+          const staffId = parsedStaffData.id || parsedStaffData._id;
+          if (staffId) {
+            return this.request<ApiResponse<Leave[]>>(`/my-requests?staffId=${staffId}`);
+          }
+        } catch (error) {
+          console.error('Error parsing staff data:', error);
+        }
+      }
+    }
+    // Fallback to original behavior if no staff ID found
     return this.request<ApiResponse<Leave[]>>('/my-requests');
   }
 

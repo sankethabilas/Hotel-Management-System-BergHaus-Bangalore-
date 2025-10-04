@@ -147,8 +147,8 @@ const getAllLeaveRequests = async (req, res) => {
 // Get staff's own leave requests
 const getMyLeaveRequests = async (req, res) => {
   try {
-    // Try to get staffId from authentication, or use the first staff member as fallback
-    let staffId = req.user?.id;
+    // Try to get staffId from authentication, query params, or use the first staff member as fallback
+    let staffId = req.user?.id || req.query.staffId;
     
     if (!staffId) {
       // For testing purposes, use the first staff member found
