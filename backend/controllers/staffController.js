@@ -372,6 +372,17 @@ const changePassword = async (req, res) => {
       });
     }
 
+    // Check for uppercase letter and number
+    const hasUppercase = /[A-Z]/.test(newPassword);
+    const hasNumber = /[0-9]/.test(newPassword);
+    
+    if (!hasUppercase || !hasNumber) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password must contain at least one uppercase letter and one number'
+      });
+    }
+
     // Find staff member
     const staff = await Staff.findById(staffId);
     if (!staff) {
