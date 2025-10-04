@@ -705,36 +705,37 @@ export default function CheckInCheckOutPage() {
             <DialogTitle>
               {actionDialog.type === 'checkin' ? 'Check In Guest' : 'Check Out Guest'}
             </DialogTitle>
-            <DialogDescription>
-              {actionDialog.booking && (
-                <div className="space-y-4 mt-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <p className="font-medium">Guest Information</p>
-                      <p><strong>Name:</strong> {actionDialog.booking.guestName}</p>
-                      <p><strong>Email:</strong> {actionDialog.booking.guestEmail}</p>
-                      {actionDialog.booking.guestPhone && (
-                        <p><strong>Phone:</strong> {actionDialog.booking.guestPhone}</p>
-                      )}
-                    </div>
-                    <div>
-                      <p className="font-medium">Booking Details</p>
-                      <p><strong>Reference:</strong> {actionDialog.booking.bookingReference}</p>
-                      <p><strong>Total:</strong> Rs {actionDialog.booking.totalAmount}</p>
-                      <p><strong>Guests:</strong> {actionDialog.booking.numberOfGuests}</p>
-                    </div>
-                  </div>
-
-                  <div>
-                    <p className="font-medium">Room Details</p>
-                    <p><strong>Room {actionDialog.booking.roomNumber}:</strong> {actionDialog.booking.roomType}</p>
-                  </div>
-
-                  {actionDialog.type === 'checkout' && (
-                    <div className="space-y-4">
+            <DialogDescription asChild>
+              <div className="space-y-4 mt-4">
+                {actionDialog.booking && (
+                  <>
+                    <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <p className="font-medium">Additional Charges</p>
+                        <div className="font-medium mb-2">Guest Information</div>
+                        <div><strong>Name:</strong> {actionDialog.booking.guestName}</div>
+                        <div><strong>Email:</strong> {actionDialog.booking.guestEmail}</div>
+                        {actionDialog.booking.guestPhone && (
+                          <div><strong>Phone:</strong> {actionDialog.booking.guestPhone}</div>
+                        )}
+                      </div>
+                      <div>
+                        <div className="font-medium mb-2">Booking Details</div>
+                        <div><strong>Reference:</strong> {actionDialog.booking.bookingReference}</div>
+                        <div><strong>Total:</strong> Rs {actionDialog.booking.totalAmount}</div>
+                        <div><strong>Guests:</strong> {actionDialog.booking.numberOfGuests}</div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="font-medium mb-2">Room Details</div>
+                      <div><strong>Room {actionDialog.booking.roomNumber}:</strong> {actionDialog.booking.roomType}</div>
+                    </div>
+
+                    {actionDialog.type === 'checkout' && (
+                      <div className="space-y-4">
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="font-medium">Additional Charges</div>
                           <Button size="sm" onClick={addAdditionalCharge} variant="outline">
                             <Plus className="w-4 h-4 mr-1" />
                             Add Charge
@@ -806,20 +807,22 @@ export default function CheckInCheckOutPage() {
           <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto w-[95vw] sm:w-full">
           <DialogHeader>
             <DialogTitle>Payment & Billing Management</DialogTitle>
-            <DialogDescription>
-              {paymentDialog.booking && (
-                <div className="space-y-2 mt-4">
-                  <p><strong>Guest:</strong> {paymentDialog.booking.guestName}</p>
-                  <p><strong>Booking Reference:</strong> {paymentDialog.booking.bookingReference}</p>
-                  <p><strong>Room:</strong> {paymentDialog.booking.roomNumber} ({paymentDialog.booking.roomType})</p>
-                  <p><strong>Current Total:</strong> Rs {paymentDialog.booking.totalAmount}</p>
-                  <p><strong>Payment Status:</strong> 
-                    <Badge variant={paymentDialog.booking.paymentStatus === 'paid' ? 'default' : 'destructive'} className="ml-2">
-                      {paymentDialog.booking.paymentStatus}
-                    </Badge>
-                  </p>
-                </div>
-              )}
+            <DialogDescription asChild>
+              <div className="space-y-2 mt-4">
+                {paymentDialog.booking && (
+                  <>
+                    <div><strong>Guest:</strong> {paymentDialog.booking.guestName}</div>
+                    <div><strong>Booking Reference:</strong> {paymentDialog.booking.bookingReference}</div>
+                    <div><strong>Room:</strong> {paymentDialog.booking.roomNumber} ({paymentDialog.booking.roomType})</div>
+                    <div><strong>Current Total:</strong> Rs {paymentDialog.booking.totalAmount}</div>
+                    <div><strong>Payment Status:</strong> 
+                      <Badge variant={paymentDialog.booking.paymentStatus === 'paid' ? 'default' : 'destructive'} className="ml-2">
+                        {paymentDialog.booking.paymentStatus}
+                      </Badge>
+                    </div>
+                  </>
+                )}
+              </div>
             </DialogDescription>
           </DialogHeader>
           
