@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { getSessionData, getAutoFillSuggestions } from '@/lib/sessionUtils';
 import { 
   Star, 
   Smile, 
@@ -112,11 +113,16 @@ export default function FeedbackPage() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [ratingType, setRatingType] = useState<'stars' | 'smileys'>('stars');
   
+  // Get session data for auto-fill
+  const sessionData = getSessionData();
+  const autoFillSuggestions = getAutoFillSuggestions(sessionData);
+  
   const [formData, setFormData] = useState({
-    name: user?.fullName || '',
-    email: user?.email || '',
-    category: '',
-    comments: '',
+    name: autoFillSuggestions.name,
+    email: autoFillSuggestions.email,
+    phone: autoFillSuggestions.phone,
+    category: autoFillSuggestions.category,
+    comments: autoFillSuggestions.comments,
     anonymous: false
   });
 
@@ -131,6 +137,26 @@ export default function FeedbackPage() {
   const [errors, setErrors] = useState<{[key: string]: string}>({});
 
   const [images, setImages] = useState<File[]>([]);
+  const [isAutoFilled, setIsAutoFilled] = useState(false);
+
+  // Update form data when component mounts or session data changes
+  useEffect(() => {
+    const currentSessionData = getSessionData();
+    const currentSuggestions = getAutoFillSuggestions(currentSessionData);
+    
+    const hasAutoFillData = currentSuggestions.name || currentSuggestions.email || currentSuggestions.phone;
+    
+    setFormData(prev => ({
+      ...prev,
+      name: currentSuggestions.name || prev.name,
+      email: currentSuggestions.email || prev.email,
+      phone: currentSuggestions.phone || prev.phone,
+      category: currentSuggestions.category || prev.category,
+      comments: currentSuggestions.comments || prev.comments
+    }));
+    
+    setIsAutoFilled(!!hasAutoFillData);
+  }, []);
 
   const categories = [
     'Front Desk',
@@ -379,11 +405,14 @@ export default function FeedbackPage() {
         // Reset form after 3 seconds
         setTimeout(() => {
           setIsSubmitted(false);
+          const resetSessionData = getSessionData();
+          const resetSuggestions = getAutoFillSuggestions(resetSessionData);
           setFormData({
-            name: user?.fullName || '',
-            email: user?.email || '',
-            category: '',
-            comments: '',
+            name: resetSuggestions.name,
+            email: resetSuggestions.email,
+            phone: resetSuggestions.phone,
+            category: resetSuggestions.category,
+            comments: resetSuggestions.comments,
             anonymous: false
           });
           setRatings({
@@ -451,6 +480,12 @@ export default function FeedbackPage() {
             <p className="text-gray-600">
               Please take a moment to rate your experience with us
             </p>
+            {isAutoFilled && (
+              <p className="text-sm text-blue-600 mt-2 flex items-center">
+                <CheckCircle className="h-4 w-4 mr-1" />
+                Form auto-filled from your session data
+              </p>
+            )}
           </CardHeader>
           
           <CardContent>
