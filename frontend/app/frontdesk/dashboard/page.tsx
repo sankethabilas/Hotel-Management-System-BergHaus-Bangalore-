@@ -52,6 +52,7 @@ interface DashboardStats {
   currentGuests: number;
   todaysDepartures: number;
   pendingPayments: number;
+  totalBookings: number;
 }
 
 interface Booking {
@@ -360,7 +361,7 @@ export default function FrontdeskDashboard() {
 
       {/* Stats Cards */}
       {stats ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 lg:gap-6">
           <Card className="border-l-4 border-l-[#006bb8]">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -408,9 +409,21 @@ export default function FrontdeskDashboard() {
               </div>
             </CardContent>
           </Card>
+
+          <Card className="border-l-4 border-l-purple-500">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Total Bookings</p>
+                  <p className="text-2xl font-bold text-purple-600">{stats.totalBookings}</p>
+                </div>
+                <Calendar className="w-8 h-8 text-purple-500" />
+              </div>
+            </CardContent>
+          </Card>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 lg:gap-6">
           <Card className="border-l-4 border-l-[#006bb8]">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -455,6 +468,18 @@ export default function FrontdeskDashboard() {
                   <p className="text-2xl font-bold text-red-600">-</p>
                 </div>
                 <CreditCard className="w-8 h-8 text-red-500" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-l-4 border-l-purple-500">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Total Bookings</p>
+                  <p className="text-2xl font-bold text-purple-600">-</p>
+                </div>
+                <Calendar className="w-8 h-8 text-purple-500" />
               </div>
             </CardContent>
           </Card>
