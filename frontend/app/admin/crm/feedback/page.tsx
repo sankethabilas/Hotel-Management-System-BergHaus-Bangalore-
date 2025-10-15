@@ -1,12 +1,12 @@
 'use client';
 
-import FeedbackAnalytics from '@/components/analytics/FeedbackAnalytics';
+import FeedbackManagement from '@/components/feedback/FeedbackManagement';
 
-export default function AnalyticsPage() {
+export default function FeedbackPage() {
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto">
-        <FeedbackAnalytics />
+        <FeedbackManagement />
       </div>
     </div>
   );

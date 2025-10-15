@@ -27,7 +27,12 @@ const api: AxiosInstance = axios.create({
 // Request interceptor to add auth token
 api.interceptors.request.use(
   (config) => {
-    const token = Cookies.get('token');
+    // Check multiple sources for auth token
+    const token = Cookies.get('token') || 
+                  (typeof window !== 'undefined' ? localStorage.getItem('adminToken') : null) ||
+                  (typeof window !== 'undefined' ? localStorage.getItem('staffToken') : null) ||
+                  (typeof window !== 'undefined' ? localStorage.getItem('authToken') : null);
+    
     console.log('API Request interceptor - Token:', token ? 'Present' : 'Missing');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;

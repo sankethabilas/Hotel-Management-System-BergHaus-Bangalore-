@@ -20,14 +20,17 @@ const app = express();
 //   },
 // }));
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3001'],
+  origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002'],
   credentials: true
 }));
 
-// Rate limiting
+// Rate limiting - More generous for development
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
+  max: 1000, // limit each IP to 1000 requests per windowMs (increased for dev)
+  message: 'Too many requests from this IP, please try again later.',
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
 });
 app.use(limiter);
 
@@ -103,6 +106,15 @@ app.use('/api/inventory', require('./routes/inventoryRoutes'));
 app.use('/api/staff-requests', require('./routes/staffRequestRoutes'));
 app.use('/api/contact', require('./routes/contact'));
 app.use('/api/feedback', require('./routes/feedback'));
+
+// Routes - Customer Relationship Management (CRM)
+app.use('/api/dashboard', require('./routes/dashboardRoutes'));
+app.use('/api/analytics', require('./routes/analyticsRoutes'));
+app.use('/api/guest-history', require('./routes/guestHistoryRoutes'));
+app.use('/api/loyalty', require('./routes/loyaltyRoutes'));
+app.use('/api/notifications', require('./routes/notificationRoutes'));
+app.use('/api/offers', require('./routes/offerRoutes'));
+// Note: /api/feedback is already registered above with proper authentication
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

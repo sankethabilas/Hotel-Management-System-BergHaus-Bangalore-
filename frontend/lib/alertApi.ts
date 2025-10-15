@@ -8,7 +8,26 @@ const API = axios.create({
   }
 });
 
-// Add request interceptor for better error handling
+// Add request interceptor to include auth token
+API.interceptors.request.use(
+  (config) => {
+    const token = typeof window !== 'undefined' ? (
+      localStorage.getItem('adminToken') || 
+      localStorage.getItem('staffToken') || 
+      localStorage.getItem('authToken')
+    ) : null;
+    
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Add response interceptor for better error handling
 API.interceptors.response.use(
   (response) => response,
   (error) => {
