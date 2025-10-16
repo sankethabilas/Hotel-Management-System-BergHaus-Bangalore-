@@ -90,9 +90,9 @@ exports.enrollGuest = async (req, res) => {
 
 exports.getLoyaltyDetails = async (req, res) => {
   try {
-    const { guestId } = req.query;
+    const { guestId } = req.params;  // Changed from req.query to req.params
     if (!guestId) {
-      return res.status(400).json({ message: 'guestId query param is required' });
+      return res.status(400).json({ message: 'guestId parameter is required' });
     }
     const loyalty = await Loyalty.findOne({ guestId }).populate('assignedOffers');
     if (!loyalty) {
@@ -174,6 +174,312 @@ exports.deleteMember = async (req, res) => {
   }
 }
 
+// Get transaction history with filters
+exports.getTransactionHistory = async (req, res) => {
+  try {
+    const { guestId, startDate, endDate, type, limit = 50 } = req.query;
+    
+    const filter = {};
+    if (guestId) filter.guestId = guestId;
+    if (type) filter.type = type;
+    if (startDate || endDate) {
+      filter.createdAt = {};
+      if (startDate) filter.createdAt.$gte = new Date(startDate);
+      if (endDate) filter.createdAt.$lte = new Date(endDate);
+    }
 
+    const transactions = await PointTransaction.find(filter)
+      .populate('loyaltyId', 'guestName tier')
+      .populate('performedBy', 'name email')
+      .sort({ createdAt: -1 })
+      .limit(parseInt(limit))
+      .lean();
 
+    res.json({
+      success: true,
+      count: transactions.length,
+      data: transactions
+    });
+  } catch (error) {
+    console.error('Error fetching transaction history:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error fetching transaction history', 
+      error: error.message 
+    });
+  }
+};
 
+// Get member transaction history
+exports.getMemberTransactions = async (req, res) => {
+  try {
+    const { guestId } = req.params;
+    const { limit = 10 } = req.query;
+
+    const loyalty = await Loyalty.findOne({ guestId });
+    if (!loyalty) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Loyalty member not found' 
+      });
+    }
+
+    const transactions = await PointTransaction.find({ loyaltyId: loyalty._id })
+      .populate('performedBy', 'name email')
+      .sort({ createdAt: -1 })
+      .limit(parseInt(limit))
+      .lean();
+
+    res.json({
+      success: true,
+      member: {
+        guestId: loyalty.guestId,
+        guestName: loyalty.guestName,
+        tier: loyalty.tier,
+        points: loyalty.points
+      },
+      transactions: transactions
+    });
+  } catch (error) {
+    console.error('Error fetching member transactions:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error fetching member transactions', 
+      error: error.message 
+    });
+  }
+};
+
+// Get points statistics
+exports.getPointsStats = async (req, res) => {
+  try {
+    // Total points issued (all earn transactions)
+    const earnStats = await PointTransaction.aggregate([
+      { $match: { points: { $gt: 0 } } },
+      { $group: { _id: null, total: { $sum: '$points' } } }
+    ]);
+    const totalPointsIssued = earnStats[0]?.total || 0;
+
+    // Total points redeemed (all redeem transactions)
+    const redeemStats = await PointTransaction.aggregate([
+      { $match: { points: { $lt: 0 } } },
+      { $group: { _id: null, total: { $sum: { $abs: '$points' } } } }
+    ]);
+    const totalPointsRedeemed = redeemStats[0]?.total || 0;
+
+    // Current points balance across all members
+    const balanceStats = await Loyalty.aggregate([
+      { $group: { _id: null, total: { $sum: '$points' } } }
+    ]);
+    const currentBalance = balanceStats[0]?.total || 0;
+
+    // Average points per member
+    const memberCount = await Loyalty.countDocuments();
+    const avgPointsPerMember = memberCount > 0 ? Math.round(currentBalance / memberCount) : 0;
+
+    // Most active members (by transaction count)
+    const activeMembers = await PointTransaction.aggregate([
+      {
+        $group: {
+          _id: '$loyaltyId',
+          transactionCount: { $sum: 1 },
+          totalEarned: {
+            $sum: {
+              $cond: [{ $gt: ['$points', 0] }, '$points', 0]
+            }
+          },
+          totalRedeemed: {
+            $sum: {
+              $cond: [{ $lt: ['$points', 0] }, { $abs: '$points' }, 0]
+            }
+          }
+        }
+      },
+      { $sort: { transactionCount: -1 } },
+      { $limit: 5 }
+    ]);
+
+    // Populate member details
+    const populatedActiveMembers = await Loyalty.populate(activeMembers, {
+      path: '_id',
+      select: 'guestName tier points guestId'
+    });
+
+    // Recent transactions
+    const recentTransactions = await PointTransaction.countDocuments({
+      createdAt: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) }
+    });
+
+    // Points by tier
+    const pointsByTier = await Loyalty.aggregate([
+      {
+        $group: {
+          _id: '$tier',
+          members: { $sum: 1 },
+          totalPoints: { $sum: '$points' },
+          avgPoints: { $avg: '$points' }
+        }
+      },
+      { $sort: { totalPoints: -1 } }
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        overview: {
+          totalPointsIssued,
+          totalPointsRedeemed,
+          currentBalance,
+          avgPointsPerMember,
+          totalMembers: memberCount,
+          recentTransactions7Days: recentTransactions
+        },
+        mostActiveMembers: populatedActiveMembers.map(m => ({
+          guestId: m._id?.guestId,
+          guestName: m._id?.guestName,
+          tier: m._id?.tier,
+          currentPoints: m._id?.points,
+          transactionCount: m.transactionCount,
+          totalEarned: m.totalEarned,
+          totalRedeemed: m.totalRedeemed
+        })),
+        pointsByTier
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching points statistics:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error fetching points statistics', 
+      error: error.message 
+    });
+  }
+};
+
+// Redeem reward with stock management
+exports.redeemReward = async (req, res) => {
+  try {
+    const { guestId, rewardId } = req.body;
+
+    if (!guestId || !rewardId) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'guestId and rewardId are required' 
+      });
+    }
+
+    // Import Reward model
+    const Reward = require('../models/rewardModel');
+
+    // Find loyalty member
+    const loyalty = await Loyalty.findOne({ guestId });
+    if (!loyalty) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Loyalty record not found' 
+      });
+    }
+
+    // Find reward
+    const reward = await Reward.findById(rewardId);
+    if (!reward) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Reward not found' 
+      });
+    }
+
+    // Check if reward is active
+    if (reward.status !== 'active') {
+      return res.status(400).json({ 
+        success: false,
+        message: 'This reward is currently inactive' 
+      });
+    }
+
+    // Check stock availability
+    if (reward.stockAvailable !== null && reward.stockAvailable <= 0) {
+      return res.status(400).json({ 
+        success: false,
+        message: 'This reward is out of stock' 
+      });
+    }
+
+    // Check if user has enough points
+    if (loyalty.points < reward.pointsCost) {
+      return res.status(400).json({ 
+        success: false,
+        message: `Insufficient points. You need ${reward.pointsCost - loyalty.points} more points`,
+        required: reward.pointsCost,
+        current: loyalty.points,
+        needed: reward.pointsCost - loyalty.points
+      });
+    }
+
+    // Check tier requirement
+    const tierLevels = { Silver: 1, Gold: 2, Platinum: 3 };
+    const userTierLevel = tierLevels[loyalty.tier] || 0;
+    const requiredTierLevel = tierLevels[reward.minTierRequired] || 0;
+    
+    if (userTierLevel < requiredTierLevel) {
+      return res.status(400).json({ 
+        success: false,
+        message: `This reward requires ${reward.minTierRequired} tier membership`,
+        userTier: loyalty.tier,
+        requiredTier: reward.minTierRequired
+      });
+    }
+
+    // Deduct points
+    const previousPoints = loyalty.points;
+    loyalty.points -= reward.pointsCost;
+    
+    // Auto-update tier based on new points
+    if (loyalty.points >= 5000) loyalty.tier = 'Platinum';
+    else if (loyalty.points >= 2000) loyalty.tier = 'Gold';
+    else loyalty.tier = 'Silver';
+    
+    await loyalty.save();
+
+    // Decrease stock count (if not unlimited)
+    if (reward.stockAvailable !== null) {
+      reward.stockAvailable -= 1;
+      await reward.save();
+    }
+
+    // Record transaction
+    await PointTransaction.create({
+      guestId: loyalty.guestId,
+      loyaltyId: loyalty._id,
+      points: reward.pointsCost,
+      type: 'redeem',
+      description: `Redeemed reward: ${reward.name}`,
+      referenceType: 'reward',
+      referenceId: reward._id,
+      balanceAfter: loyalty.points
+    });
+
+    res.json({
+      success: true,
+      message: 'Reward redeemed successfully',
+      loyalty: {
+        points: loyalty.points,
+        tier: loyalty.tier,
+        pointsDeducted: reward.pointsCost,
+        previousPoints
+      },
+      reward: {
+        id: reward._id,
+        name: reward.name,
+        stockRemaining: reward.stockAvailable
+      }
+    });
+  } catch (error) {
+    console.error('Error redeeming reward:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error redeeming reward', 
+      error: error.message 
+    });
+  }
+};

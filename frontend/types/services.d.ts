@@ -51,6 +51,9 @@ declare module '@/services/loyaltyService' {
     updatePoints(guestId: string, points: number): Promise<any>;
     deleteMember(guestId: string): Promise<any>;
     getAvailableGuests(): Promise<any>;
+    getTransactionHistory(filters?: any): Promise<any>;
+    getMemberTransactions(guestId: string, limit?: number): Promise<any>;
+    getPointsStats(): Promise<any>;
   }
   const loyaltyService: LoyaltyService;
   export default loyaltyService;

@@ -5,6 +5,8 @@ const Room = require('../models/Room');
 const User = require('../models/User');
 const { generateToken } = require('../config/jwt');
 const emailService = require('../services/emailService');
+const AutomatedRulesService = require('../services/automatedRulesService');
+const Loyalty = require('../models/loyaltyModel');
 
 // @desc    Search available rooms
 // @route   POST /api/bookings/search
@@ -335,6 +337,27 @@ const createBooking = async (req, res) => {
       // Don't fail the booking if email fails
     }
 
+    // Trigger automated rules for booking_created
+    try {
+      const loyalty = await Loyalty.findOne({ userId: guest._id });
+      if (loyalty) {
+        console.log(`🎯 Triggering booking_created rules for guest ${guest.email}`);
+        await AutomatedRulesService.executeRules('booking_created', {
+          guestId: guest._id,
+          loyaltyId: loyalty._id,
+          bookingAmount: totalAmount,
+          referenceType: 'booking',
+          referenceId: booking._id
+        });
+        console.log('✅ Automated rules executed for booking_created');
+      } else {
+        console.log(`⚠️ Guest ${guest.email} is not enrolled in loyalty program - rules not executed`);
+      }
+    } catch (rulesError) {
+      console.error('Failed to execute automated rules:', rulesError);
+      // Don't fail the booking if rules execution fails
+    }
+
     res.status(201).json({
       success: true,
       message: 'Booking created successfully',
@@ -597,6 +620,8 @@ const updateBookingStatus = async (req, res) => {
       });
     }
 
+    const oldStatus = booking.status;
+    
     if (status) {
       booking.status = status;
     }
@@ -606,6 +631,32 @@ const updateBookingStatus = async (req, res) => {
     }
 
     await booking.save();
+
+    // Trigger automated rules for booking_completed when status changes to completed
+    if (status === 'completed' && oldStatus !== 'completed') {
+      try {
+        const guest = await User.findById(booking.guestId);
+        if (guest) {
+          const loyalty = await Loyalty.findOne({ userId: guest._id });
+          if (loyalty) {
+            console.log(`🎯 Triggering booking_completed rules for guest ${guest.email}`);
+            await AutomatedRulesService.executeRules('booking_completed', {
+              guestId: guest._id,
+              loyaltyId: loyalty._id,
+              bookingAmount: booking.totalAmount,
+              referenceType: 'booking',
+              referenceId: booking._id
+            });
+            console.log('✅ Automated rules executed for booking_completed');
+          } else {
+            console.log(`⚠️ Guest ${guest.email} is not enrolled in loyalty program - rules not executed`);
+          }
+        }
+      } catch (rulesError) {
+        console.error('Failed to execute automated rules:', rulesError);
+        // Don't fail the status update if rules execution fails
+      }
+    }
 
     res.json({
       success: true,

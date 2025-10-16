@@ -60,6 +60,24 @@ const EnrollmentForm: React.FC<EnrollmentFormProps> = ({
       }
       
       const data = await loyaltyService.getAvailableGuests();
+      console.log('📊 Raw data from getAvailableGuests:', data);
+      console.log('📊 Data type:', typeof data, 'Is Array:', Array.isArray(data));
+      
+      // Handle different response structures
+      let guestsArray = data;
+      if (data && typeof data === 'object' && !Array.isArray(data)) {
+        // If data is an object, check for common array properties
+        guestsArray = data.data || data.users || data.guests || [];
+        console.log('📊 Extracted array from object, length:', Array.isArray(guestsArray) ? guestsArray.length : 'not an array');
+      }
+      
+      // Ensure we have an array
+      if (!Array.isArray(guestsArray)) {
+        console.error('Expected array but got:', typeof guestsArray, guestsArray);
+        setError('Invalid data format received from server');
+        setGuests([]);
+        return;
+      }
       
       // Filter out guests who are already enrolled in loyalty program
       const enrolledUserIds = enrolledMembers.map(member => 
@@ -67,7 +85,7 @@ const EnrollmentForm: React.FC<EnrollmentFormProps> = ({
           ? member.userId._id 
           : member.userId
       );
-      const availableGuests = data.filter((guest: Guest) => !enrolledUserIds.includes(guest._id));
+      const availableGuests = guestsArray.filter((guest: Guest) => !enrolledUserIds.includes(guest._id));
       
       setGuests(availableGuests);
     } catch (err: any) {

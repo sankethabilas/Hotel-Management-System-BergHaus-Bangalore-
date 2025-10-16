@@ -2,6 +2,9 @@
 
 import React, { useState } from 'react';
 import { Search } from 'lucide-react';
+import PointsStats from './PointsStats';
+import MemberPointsSnapshot from './MemberPointsSnapshot';
+import TransactionHistory from './TransactionHistory';
 
 interface LoyaltyMember {
   _id: string;
@@ -28,6 +31,7 @@ const PointsTracker: React.FC<PointsTrackerProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [balanceWarning, setBalanceWarning] = useState<string | null>(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const checkBalance = (memberId: string, amount: string, txnType: string) => {
     if (!memberId || !amount || parseInt(amount) <= 0) {
@@ -122,6 +126,8 @@ const PointsTracker: React.FC<PointsTrackerProps> = ({
       setSelectedMember('');
       setTransactionType('earn');
       setBalanceWarning(null);
+      // Trigger refresh
+      setRefreshTrigger(prev => prev + 1);
     } else {
       setError(result.error || 'Failed to update points');
     }
@@ -140,11 +146,17 @@ const PointsTracker: React.FC<PointsTrackerProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Form to add points */}
-      <div className="bg-white rounded-lg shadow">
-        <div className="p-6 border-b border-gray-200">
-          <h2 className="text-lg font-semibold text-gray-900">
-            Update Member Points
+      {/* Points Statistics Dashboard */}
+      <PointsStats refreshTrigger={refreshTrigger} />
+
+      {/* Two Column Layout: Form + Member Snapshot */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Update Points Form - 2/3 width */}
+        <div className="lg:col-span-2">
+          <div className="bg-white rounded-lg shadow">
+            <div className="p-6 border-b border-gray-200">
+              <h2 className="text-lg font-semibold text-gray-900">
+                Update Member Points
           </h2>
         </div>
         <form onSubmit={handleSubmit} className="p-6">
@@ -283,14 +295,17 @@ const PointsTracker: React.FC<PointsTrackerProps> = ({
             </button>
           </div>
         </form>
+          </div>
+        </div>
+
+        {/* Member Points Snapshot - 1/3 width */}
+        <div className="lg:col-span-1">
+          <MemberPointsSnapshot guestId={selectedMember} />
+        </div>
       </div>
 
-      {/* Note about transaction history */}
-      <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
-        <p className="text-sm text-blue-700">
-          <strong>Note:</strong> Transaction history tracking will be added in a future update. Currently, you can update points, and the system will automatically adjust member tiers based on their point balance.
-        </p>
-      </div>
+      {/* Transaction History */}
+      <TransactionHistory refreshTrigger={refreshTrigger} />
     </div>
   );
 };

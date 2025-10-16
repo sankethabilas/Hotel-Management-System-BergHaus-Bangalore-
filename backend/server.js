@@ -114,6 +114,8 @@ app.use('/api/guest-history', require('./routes/guestHistoryRoutes'));
 app.use('/api/loyalty', require('./routes/loyaltyRoutes'));
 app.use('/api/notifications', require('./routes/notificationRoutes'));
 app.use('/api/offers', require('./routes/offerRoutes'));
+app.use('/api/rewards', require('./routes/rewardRoutes'));
+app.use('/api/automated-rules', require('./routes/automatedRulesRoutes'));
 // Note: /api/feedback is already registered above with proper authentication
 
 // Health check endpoint

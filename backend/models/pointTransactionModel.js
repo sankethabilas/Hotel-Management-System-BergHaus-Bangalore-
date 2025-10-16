@@ -43,6 +43,23 @@ const pointTransactionSchema = new mongoose.Schema(
     performedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User'
+    },
+    // Expiry Management Fields
+    expiryDate: {
+      type: Date,
+      index: true
+    },
+    isExpired: {
+      type: Boolean,
+      default: false
+    },
+    expiryNotificationSent: {
+      type: Boolean,
+      default: false
+    },
+    sourceTransactionId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'PointTransaction'
     }
   },
   { 

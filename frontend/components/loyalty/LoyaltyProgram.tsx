@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import LoyaltyDashboard from '@/components/loyalty/LoyaltyDashboard';
 import EnrollmentForm from '@/components/loyalty/EnrollmentForm';
 import PointsTracker from '@/components/loyalty/PointsTracker';
+import RewardsCatalog from '@/components/loyalty/RewardsCatalog';
+import AutomatedRules from '@/components/loyalty/AutomatedRules';
 import loyaltyService from '@/services/loyaltyService';
 
 interface LoyaltyMember {
@@ -21,7 +23,7 @@ interface LoyaltyMember {
 }
 
 const LoyaltyProgram: React.FC = () => {
-  const [view, setView] = useState<'dashboard' | 'enrollment' | 'points'>('dashboard');
+  const [view, setView] = useState<'dashboard' | 'enrollment' | 'points' | 'rewards' | 'rules'>('dashboard');
   const [members, setMembers] = useState<LoyaltyMember[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -109,7 +111,7 @@ const LoyaltyProgram: React.FC = () => {
       )}
 
       <div className="bg-white rounded-lg shadow p-6 mb-6">
-        <div className="flex space-x-4">
+        <div className="flex flex-wrap gap-2">
           <button 
             onClick={() => setView('dashboard')} 
             className={`px-4 py-2 text-sm font-medium rounded-md ${
@@ -129,6 +131,26 @@ const LoyaltyProgram: React.FC = () => {
             }`}
           >
             Points Management
+          </button>
+          <button 
+            onClick={() => setView('rewards')} 
+            className={`px-4 py-2 text-sm font-medium rounded-md ${
+              view === 'rewards' 
+                ? 'bg-blue-600 text-white' 
+                : 'text-gray-500 hover:text-gray-700 bg-white'
+            }`}
+          >
+            Rewards Catalog
+          </button>
+          <button 
+            onClick={() => setView('rules')} 
+            className={`px-4 py-2 text-sm font-medium rounded-md ${
+              view === 'rules' 
+                ? 'bg-blue-600 text-white' 
+                : 'text-gray-500 hover:text-gray-700 bg-white'
+            }`}
+          >
+            Automated Rules
           </button>
         </div>
       </div>
@@ -155,6 +177,14 @@ const LoyaltyProgram: React.FC = () => {
           members={members}
           onUpdatePoints={handleUpdatePoints}
         />
+      )}
+
+      {view === 'rewards' && (
+        <RewardsCatalog />
+      )}
+
+      {view === 'rules' && (
+        <AutomatedRules />
       )}
     </div>
   );

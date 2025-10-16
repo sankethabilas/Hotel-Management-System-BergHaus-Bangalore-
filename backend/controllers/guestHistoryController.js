@@ -19,8 +19,10 @@ exports.getGuestHistory = async (req, res) => {
       return res.status(404).json({ message: 'Guest not found' });
     }
 
-    // Fetch loyalty data
-    const loyalty = await Loyalty.findOne({ userId: guestId }).lean();
+    // Fetch loyalty data with populated offers
+    const loyalty = await Loyalty.findOne({ userId: guestId })
+      .populate('assignedOffers')
+      .lean();
 
     // Fetch bookings
     const bookings = await Booking.find({ guestId })
@@ -78,7 +80,8 @@ exports.getGuestHistory = async (req, res) => {
         tier: loyalty.tier,
         points: loyalty.points,
         status: loyalty.status,
-        memberSince: loyalty.createdAt
+        memberSince: loyalty.createdAt,
+        assignedOffers: loyalty.assignedOffers || []
       } : null,
       summary: {
         totalStays,

@@ -40,11 +40,17 @@ export default function AdminLogin() {
       const data = await response.json();
 
       if (response.ok) {
+        // Backend returns nested structure: { success, message, data: { user, token } }
+        const userData = data.data?.user || data.user;
+        const token = data.data?.token || data.token;
+        
         // Check if user has admin or frontdesk role
-        if (data.user.role === 'admin' || data.user.role === 'frontdesk') {
+        if (userData.role === 'admin' || userData.role === 'frontdesk') {
           // Store admin data in localStorage
-          localStorage.setItem('adminToken', data.token);
-          localStorage.setItem('adminData', JSON.stringify(data.user));
+          localStorage.setItem('adminToken', token);
+          localStorage.setItem('adminData', JSON.stringify(userData));
+          
+          console.log('✅ Admin login successful! Token stored:', token ? 'Yes' : 'No');
           
           // Redirect to admin dashboard
           router.push('/admin/leave-requests');

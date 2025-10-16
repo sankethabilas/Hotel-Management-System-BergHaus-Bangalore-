@@ -120,7 +120,7 @@ const ManagerDashboard: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Manager Dashboard</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Customer Relationship Dashboard</h1>
         <div className="flex space-x-3">
           <select 
             className="bg-white border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-gold focus:border-gold text-sm"

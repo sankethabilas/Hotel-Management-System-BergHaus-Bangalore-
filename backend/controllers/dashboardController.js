@@ -56,9 +56,22 @@ exports.getDashboardStats = async (req, res) => {
     const ratingStatsCurrent = await Feedback.aggregate([
       { $match: { createdAt: { $gte: startDate } } },
       {
+        $project: {
+          avgRating: {
+            $avg: [
+              '$rating.checkIn',
+              '$rating.roomQuality',
+              '$rating.cleanliness',
+              '$rating.dining',
+              '$rating.amenities'
+            ]
+          }
+        }
+      },
+      {
         $group: {
           _id: null,
-          avgRating: { $avg: '$rating' }
+          avgRating: { $avg: '$avgRating' }
         }
       }
     ]);
@@ -70,9 +83,22 @@ exports.getDashboardStats = async (req, res) => {
         }
       },
       {
+        $project: {
+          avgRating: {
+            $avg: [
+              '$rating.checkIn',
+              '$rating.roomQuality',
+              '$rating.cleanliness',
+              '$rating.dining',
+              '$rating.amenities'
+            ]
+          }
+        }
+      },
+      {
         $group: {
           _id: null,
-          avgRating: { $avg: '$rating' }
+          avgRating: { $avg: '$avgRating' }
         }
       }
     ]);
@@ -119,12 +145,27 @@ exports.getDashboardStats = async (req, res) => {
     const satisfactionTrend = await Feedback.aggregate([
       { $match: { createdAt: { $gte: startDate } } },
       {
+        $project: {
+          year: { $year: '$createdAt' },
+          month: { $month: '$createdAt' },
+          avgRating: {
+            $avg: [
+              '$rating.checkIn',
+              '$rating.roomQuality',
+              '$rating.cleanliness',
+              '$rating.dining',
+              '$rating.amenities'
+            ]
+          }
+        }
+      },
+      {
         $group: {
           _id: {
-            year: { $year: '$createdAt' },
-            month: { $month: '$createdAt' }
+            year: '$year',
+            month: '$month'
           },
-          satisfaction: { $avg: '$rating' }
+          satisfaction: { $avg: '$avgRating' }
         }
       },
       { $sort: { '_id.year': 1, '_id.month': 1 } }
@@ -160,17 +201,29 @@ exports.getDashboardStats = async (req, res) => {
     const recentFeedback = await Feedback.find()
       .sort({ createdAt: -1 })
       .limit(5)
-      .select('guestName email rating comment managerResponse createdAt')
+      .select('name email rating comments adminResponse createdAt')
       .lean();
 
-    const recentFeedbackFormatted = recentFeedback.map(feedback => ({
-      id: feedback._id,
-      guest: feedback.guestName || feedback.email,
-      rating: feedback.rating,
-      comment: feedback.comment,
-      date: feedback.createdAt,
-      status: feedback.managerResponse ? 'responded' : 'pending'
-    }));
+    const recentFeedbackFormatted = recentFeedback.map(feedback => {
+      // Calculate average rating from all rating categories
+      const avgRating = feedback.rating ? 
+        Math.round((
+          (feedback.rating.checkIn || 0) +
+          (feedback.rating.roomQuality || 0) +
+          (feedback.rating.cleanliness || 0) +
+          (feedback.rating.dining || 0) +
+          (feedback.rating.amenities || 0)
+        ) / 5) : 0;
+
+      return {
+        id: feedback._id,
+        guest: feedback.name || feedback.email,
+        rating: avgRating,
+        comment: feedback.comments || 'No comment provided',
+        date: feedback.createdAt,
+        status: feedback.adminResponse ? 'responded' : 'pending'
+      };
+    });
 
     // 8. Top Guests by Booking Count
     const topGuests = await Booking.aggregate([
