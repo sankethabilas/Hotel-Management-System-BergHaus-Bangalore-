@@ -81,7 +81,6 @@ const CRM_MANAGEMENT_ITEMS: DropdownItem[] = [
   { href: "/admin/crm/offers", label: "Offers & Discounts" },
   { href: "/admin/crm/guest-history", label: "Guest History" },
   { href: "/admin/crm/notifications", label: "Notifications" },
-  { href: "/admin/crm/analytics", label: "Analytics" },
   { href: "/admin/crm/reports", label: "Reports" },
 ];
 

@@ -116,6 +116,8 @@ app.use('/api/notifications', require('./routes/notificationRoutes'));
 app.use('/api/offers', require('./routes/offerRoutes'));
 app.use('/api/rewards', require('./routes/rewardRoutes'));
 app.use('/api/automated-rules', require('./routes/automatedRulesRoutes'));
+app.use('/api/crm-reports', require('./routes/crmReports')); // CRM Reports
+app.use('/api/crm-test', require('./routes/crmReportsTest')); // Test routes without auth
 // Note: /api/feedback is already registered above with proper authentication
 
 // Health check endpoint
