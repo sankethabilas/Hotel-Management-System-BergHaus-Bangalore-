@@ -9,20 +9,28 @@ Create a `.env` file in the `backend` directory with the following variables:
 MONGODB_URI=mongodb+srv://Sanketh:Gv5T0YzYqgFCI6th@cluster0.6vyj3nr.mongodb.net/hms_database?retryWrites=true&w=majority
 
 # JWT Configuration
-JWT_SECRET=your_jwt_secret_key_here
+JWT_SECRET=hms_jwt_secret_key_2024_secure_random_string_12345
 JWT_EXPIRE=7d
 
 # Server Configuration
 PORT=5000
 NODE_ENV=development
+FRONTEND_URL=http://localhost:3000
 
-# Email Configuration (if needed)
+# Email Configuration
+EMAIL_SERVICE=gmail
+EMAIL_USER=sankethabilaschk@gmail.com
+EMAIL_PASSWORD=ehjz vieo quab rgyr
 EMAIL_HOST=smtp.gmail.com
 EMAIL_PORT=587
-EMAIL_USER=your_email@gmail.com
-EMAIL_PASS=your_app_password
+EMAIL_SECURE=false
 
-# Other configurations
+# SMTP Configuration
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_SECURE=false
+
+# Security Configuration
 BCRYPT_ROUNDS=12
 ```
 

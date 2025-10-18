@@ -1,4 +1,4 @@
-"use client";
+np"use client";
 
 import { useEffect, useState } from "react";
 import Navbar from "@/components/admin/Navbar";

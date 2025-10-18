@@ -9,7 +9,12 @@ const {
   deactivateUser,
   activateUser,
   uploadProfilePicture,
-  googleSignup
+  googleSignup,
+  getUserStats,
+  createUser,
+  updateUserStatus,
+  sendNotification,
+  getUserAnalytics
 } = require('../controllers/userController');
 
 const upload = require('../middleware/upload');
@@ -29,6 +34,26 @@ router.post('/google-signup', googleSignup);
 // @desc    Get all users (with pagination and filtering)
 // @access  Private/Admin
 router.get('/', protect, authorize('admin'), getAllUsers);
+
+// @route   GET /api/users/stats
+// @desc    Get user statistics
+// @access  Private/Admin
+router.get('/stats', protect, authorize('admin'), getUserStats);
+
+// @route   GET /api/users/analytics
+// @desc    Get user analytics
+// @access  Private/Admin
+router.get('/analytics', protect, authorize('admin'), getUserAnalytics);
+
+// @route   POST /api/users/create
+// @desc    Create new user (Admin only)
+// @access  Private/Admin
+router.post('/create', protect, authorize('admin'), createUser);
+
+// @route   POST /api/users/notify
+// @desc    Send notification to users
+// @access  Private/Admin
+router.post('/notify', protect, authorize('admin'), sendNotification);
 
 // @route   GET /api/users/:id
 // @desc    Get user by ID
@@ -86,5 +111,10 @@ router.post('/:id/upload', protect, upload.single('profileImage'), (err, req, re
   }
   next();
 }, uploadProfilePicture);
+
+// @route   PATCH /api/users/:id/status
+// @desc    Update user status (active/inactive, banned/unbanned)
+// @access  Private/Admin
+router.patch('/:id/status', protect, authorize('admin'), updateUserStatus);
 
 module.exports = router;

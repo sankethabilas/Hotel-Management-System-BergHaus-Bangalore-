@@ -2,6 +2,10 @@ import axios from 'axios';
 
 const API_BASE_URL = 'http://localhost:5000/api';
 
+// Configure axios defaults for authentication
+axios.defaults.withCredentials = true;
+axios.defaults.headers.common['Content-Type'] = 'application/json';
+
 export interface MenuItem {
   _id: string;
   name: string;
@@ -283,6 +287,161 @@ export const adminAPI = {
       throw error;
     }
   },
+
+  // User Management API
+  getUserStats: async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/users/stats`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching user stats:', error);
+      throw error;
+    }
+  },
+
+  getAllUsers: async (filters: any = {}) => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/users`, { params: filters });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      throw error;
+    }
+  },
+
+  createUser: async (userData: any) => {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/users/create`, userData);
+      return response.data;
+    } catch (error) {
+      console.error('Error creating user:', error);
+      throw error;
+    }
+  },
+
+  updateUser: async (id: string, userData: any) => {
+    try {
+      const response = await axios.put(`${API_BASE_URL}/users/${id}`, userData);
+      return response.data;
+    } catch (error) {
+      console.error('Error updating user:', error);
+      throw error;
+    }
+  },
+
+  updateUserStatus: async (id: string, statusData: any) => {
+    try {
+      const response = await axios.patch(`${API_BASE_URL}/users/${id}/status`, statusData);
+      return response.data;
+    } catch (error) {
+      console.error('Error updating user status:', error);
+      throw error;
+    }
+  },
+
+  deleteUser: async (id: string) => {
+    try {
+      const response = await axios.delete(`${API_BASE_URL}/users/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      throw error;
+    }
+  },
+
+  sendNotification: async (notificationData: any) => {
+    try {
+      const response = await axios.post(`${API_BASE_URL}/users/notify`, notificationData);
+      return response.data;
+    } catch (error) {
+      console.error('Error sending notification:', error);
+      throw error;
+    }
+  },
+
+  getUserAnalytics: async (period: string = '30d') => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/users/analytics`, { 
+        params: { period } 
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching user analytics:', error);
+      throw error;
+    }
+  },
+
+  // Activity Logs API
+  getUserActivityLogs: async (userId: string, filters: any = {}) => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/activity-logs/user/${userId}`, { 
+        params: filters 
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching user activity logs:', error);
+      throw error;
+    }
+  },
+
+  getAllActivityLogs: async (filters: any = {}) => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/activity-logs`, { params: filters });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching activity logs:', error);
+      throw error;
+    }
+  },
+
+  getActivitySummary: async (filters: any = {}) => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/activity-logs/summary`, { 
+        params: filters 
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching activity summary:', error);
+      throw error;
+    }
+  },
+
+  exportActivityLogs: async (filters: any = {}) => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/activity-logs/export`, { 
+        params: filters,
+        responseType: 'blob'
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error exporting activity logs:', error);
+      throw error;
+    }
+  },
+
+  getActivityStats: async (filters: any = {}) => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/activity-logs/stats`, { 
+        params: filters 
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching activity stats:', error);
+      throw error;
+    }
+  },
 };
 
-export default api;
+// Main API object with all methods
+const mainAPI = {
+  // Menu API
+  ...menuAPI,
+  
+  // Order API  
+  ...orderAPI,
+  
+  // Admin API
+  ...adminAPI,
+};
+
+export default mainAPI;

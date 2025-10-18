@@ -106,6 +106,30 @@ const userSchema = new mongoose.Schema({
   },
   lockUntil: {
     type: Date
+  },
+  department: {
+    type: String,
+    trim: true,
+    enum: ['frontdesk', 'housekeeping', 'kitchen', 'maintenance', 'management', 'security', 'other'],
+    default: null
+  },
+  isBanned: {
+    type: Boolean,
+    default: false
+  },
+  bannedReason: {
+    type: String,
+    trim: true,
+    default: null
+  },
+  bannedAt: {
+    type: Date,
+    default: null
+  },
+  bannedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    default: null
   }
 }, {
   timestamps: true
@@ -114,6 +138,10 @@ const userSchema = new mongoose.Schema({
 // Index for better query performance
 userSchema.index({ email: 1 });
 userSchema.index({ role: 1 });
+userSchema.index({ department: 1 });
+userSchema.index({ isActive: 1 });
+userSchema.index({ isBanned: 1 });
+userSchema.index({ createdAt: -1 });
 
 // Virtual for full name
 userSchema.virtual('fullName').get(function() {

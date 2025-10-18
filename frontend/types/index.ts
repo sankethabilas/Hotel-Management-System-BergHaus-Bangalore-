@@ -28,9 +28,15 @@ export interface User {
     idType?: 'passport' | 'national_id' | 'driving_license';
     idNumber?: string;
   };
+  department?: UserDepartment;
+  isBanned?: boolean;
+  bannedReason?: string;
+  bannedAt?: string;
+  bannedBy?: string;
 }
 
 export type UserRole = 'admin' | 'employee' | 'guest' | 'manager' | 'frontdesk';
+export type UserDepartment = 'frontdesk' | 'housekeeping' | 'kitchen' | 'maintenance' | 'management' | 'security' | 'other';
 
 // Auth Types
 export interface LoginCredentials {
@@ -177,3 +183,74 @@ export interface Booking {
 }
 
 export type BookingStatus = 'pending' | 'confirmed' | 'checked_in' | 'checked_out' | 'cancelled' | 'no_show';
+
+// User Management Types
+export interface UserStatistics {
+  totalUsers: number;
+  activeUsers: number;
+  inactiveUsers: number;
+  bannedUsers: number;
+  usersByRole: Array<{ _id: string; count: number }>;
+  usersByDepartment: Array<{ _id: string; count: number }>;
+  recentRegistrations: number;
+  monthlyGrowth: Array<{ _id: { year: number; month: number }; count: number }>;
+}
+
+export interface ActivityLog {
+  _id: string;
+  userId: string | User;
+  action: string;
+  details: Record<string, any>;
+  ipAddress: string;
+  userAgent: string;
+  sessionId?: string;
+  resourceId?: string;
+  resourceType?: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  metadata: Record<string, any>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UserManagementFilters {
+  page?: number;
+  limit?: number;
+  role?: UserRole;
+  department?: UserDepartment;
+  status?: 'active' | 'inactive' | 'banned';
+  search?: string;
+  startDate?: string;
+  endDate?: string;
+}
+
+export interface NotificationRecipients {
+  type: 'all' | 'role' | 'department' | 'specific';
+  role?: UserRole;
+  department?: UserDepartment;
+  userIds?: string[];
+}
+
+export interface UserAnalytics {
+  userGrowth: Array<{ _id: { year: number; month: number; day: number }; count: number }>;
+  activeUsers: number;
+  loginTrends: Array<{ _id: { year: number; month: number; day: number }; count: number }>;
+  roleDistribution: Array<{ _id: string; count: number }>;
+  departmentDistribution: Array<{ _id: string; count: number }>;
+}
+
+export interface CreateUserData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone?: string;
+  role: UserRole;
+  department?: UserDepartment;
+  password?: string;
+  isActive?: boolean;
+}
+
+export interface UpdateUserStatusData {
+  isActive?: boolean;
+  isBanned?: boolean;
+  bannedReason?: string;
+}

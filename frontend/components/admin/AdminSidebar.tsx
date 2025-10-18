@@ -75,6 +75,63 @@ const INVENTORY_MANAGEMENT_ITEMS: DropdownItem[] = [
   },
 ];
 
+const USER_MANAGEMENT_ITEMS: DropdownItem[] = [
+  { 
+    href: "/admin/users", 
+    label: "User Dashboard",
+    icon: (
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+      </svg>
+    )
+  },
+  { 
+    href: "/admin/users/all", 
+    label: "All Users",
+    icon: (
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+      </svg>
+    )
+  },
+  { 
+    href: "/admin/users/add", 
+    label: "Add User",
+    icon: (
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+      </svg>
+    )
+  },
+  { 
+    href: "/admin/users/logs", 
+    label: "Activity Logs",
+    icon: (
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+      </svg>
+    )
+  },
+  { 
+    href: "/admin/users/analytics", 
+    label: "User Analytics",
+    icon: (
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+      </svg>
+    )
+  },
+  { 
+    href: "/admin/users/communication", 
+    label: "Communication Center",
+    icon: (
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+      </svg>
+    )
+  },
+];
+
 const CRM_MANAGEMENT_ITEMS: DropdownItem[] = [
   { 
     href: "/admin/crm", 
@@ -120,6 +177,7 @@ const AdminSidebar = memo(function AdminSidebar() {
   const [isStaffDropdownOpen, setIsStaffDropdownOpen] = useState(false);
   const [isKitchenDropdownOpen, setIsKitchenDropdownOpen] = useState(false);
   const [isInventoryDropdownOpen, setIsInventoryDropdownOpen] = useState(false);
+  const [isUserManagementDropdownOpen, setIsUserManagementDropdownOpen] = useState(false);
   const [isCrmDropdownOpen, setIsCrmDropdownOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
@@ -148,6 +206,11 @@ const AdminSidebar = memo(function AdminSidebar() {
 
   // Check if any inventory management item is active
   const isInventoryManagementActive = INVENTORY_MANAGEMENT_ITEMS.some(item => 
+    pathname === item.href || pathname?.startsWith(item.href)
+  );
+
+  // Check if any user management item is active
+  const isUserManagementActive = USER_MANAGEMENT_ITEMS.some(item => 
     pathname === item.href || pathname?.startsWith(item.href)
   );
 
@@ -380,6 +443,71 @@ const AdminSidebar = memo(function AdminSidebar() {
               {isInventoryDropdownOpen && (
                 <div className="ml-6 space-y-1">
                   {INVENTORY_MANAGEMENT_ITEMS.map((item) => {
+                    const isActive = pathname === item.href || pathname?.startsWith(item.href);
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                          isActive 
+                            ? "bg-white/20 text-white" 
+                            : "text-white/80 hover:bg-white/10 hover:text-white"
+                        }`}
+                      >
+                        {item.icon ? (
+                          <span className="flex-shrink-0">
+                            {item.icon}
+                          </span>
+                        ) : (
+                          <span className="inline-flex h-2 w-2 rounded-full"
+                            style={{ backgroundColor: isActive ? "#ffc973" : "#fee3b3" }}
+                          />
+                        )}
+                        <span>{item.label}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* User Management Dropdown */}
+            <div className="space-y-1">
+              <button
+                onClick={() => setIsUserManagementDropdownOpen(!isUserManagementDropdownOpen)}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  isUserManagementActive 
+                    ? "bg-white/20 text-white" 
+                    : "text-white/90 hover:bg-white/10 hover:text-white"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <span className="inline-flex h-2.5 w-2.5 rounded-full"
+                    style={{ backgroundColor: isUserManagementActive ? "#ffc973" : "#fee3b3" }}
+                  />
+                  <span>User Management</span>
+                </div>
+                <svg
+                  className={`w-4 h-4 transition-transform duration-200 ${
+                    isUserManagementDropdownOpen ? "rotate-180" : ""
+                  }`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 9l-7 7-7-7"
+                  />
+                </svg>
+              </button>
+
+              {/* Dropdown Items */}
+              {isUserManagementDropdownOpen && (
+                <div className="ml-6 space-y-1">
+                  {USER_MANAGEMENT_ITEMS.map((item) => {
                     const isActive = pathname === item.href || pathname?.startsWith(item.href);
                     return (
                       <Link
