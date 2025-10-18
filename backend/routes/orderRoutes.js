@@ -91,26 +91,75 @@ router.get('/:id', async (req, res) => {
 
 // Create new order
 router.post('/', optionalAuth, async (req, res) => {
+  console.log('=== ORDER CREATION REQUEST ===');
+  console.log('Body type:', typeof req.body);
+  console.log('Body:', JSON.stringify(req.body, null, 2));
+  console.log('Body keys:', req.body ? Object.keys(req.body) : 'req.body is null/undefined');
+  console.log('User:', req.user);
+  console.log('Headers:', req.headers);
+  
   try {
+    if (!req.body) {
+      console.log('ERROR: req.body is null or undefined');
+      return res.status(400).json({
+        success: false,
+        message: 'Request body is missing or invalid'
+      });
+    }
+    
     const { customerInfo, items, paymentMethod = 'cash', notes } = req.body;
+    console.log('Parsed data:', { customerInfo, items, paymentMethod });
+
+    // Validate request data
+    if (!customerInfo || !items || items.length === 0) {
+      console.log('Validation failed: Missing required fields');
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required fields: customerInfo and items are required'
+      });
+    }
+
+    if (!customerInfo.name || !customerInfo.email || !customerInfo.phone) {
+      console.log('Validation failed: Missing customer info fields');
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required customer information: name, email, and phone are required'
+      });
+    }
+
+    console.log('Request validation passed');
 
     // Validate menu items exist and calculate totals
     let subtotal = 0;
     const validatedItems = [];
 
     for (const item of items) {
-      const menuItem = await MenuItem.findById(item.menuItem);
-      if (!menuItem) {
-        return res.status(400).json({
-          success: false,
-          message: `Menu item with ID ${item.menuItem} not found`
-        });
-      }
+      console.log(`Processing menu item: ${item.menuItem}`);
+      try {
+        const menuItem = await MenuItem.findById(item.menuItem);
+        if (!menuItem) {
+          console.log(`Menu item not found: ${item.menuItem}`);
+          return res.status(400).json({
+            success: false,
+            message: `Menu item with ID ${item.menuItem} not found`
+          });
+        }
 
-      if (!menuItem.isAvailable) {
-        return res.status(400).json({
+        console.log(`Found menu item: ${menuItem.name}, Available: ${menuItem.isAvailable}`);
+
+        if (!menuItem.isAvailable) {
+          console.log(`Menu item not available: ${menuItem.name}`);
+          return res.status(400).json({
+            success: false,
+            message: `Menu item "${menuItem.name}" is not available`
+          });
+        }
+      } catch (dbError) {
+        console.error('Database error finding menu item:', dbError);
+        return res.status(500).json({
           success: false,
-          message: `Menu item "${menuItem.name}" is not available`
+          message: 'Database error while validating menu items',
+          error: dbError.message
         });
       }
 
