@@ -1,89 +1,52 @@
 import React, { useState } from 'react';
-import { SearchIcon, FilterIcon } from 'lucide-react';
-const loyaltyMembers = [{
-  id: 1,
-  name: 'Robert Davis',
-  email: 'robert.davis@example.com',
-  joined: '2022-05-12',
-  tier: 'Platinum',
-  points: 24500,
-  status: 'active'
-}, {
-  id: 2,
-  name: 'Jennifer Adams',
-  email: 'jennifer.adams@example.com',
-  joined: '2022-06-23',
-  tier: 'Gold',
-  points: 12800,
-  status: 'active'
-}, {
-  id: 3,
-  name: 'Thomas Wilson',
-  email: 'thomas.wilson@example.com',
-  joined: '2022-07-15',
-  tier: 'Gold',
-  points: 9600,
-  status: 'active'
-}, {
-  id: 4,
-  name: 'Patricia Moore',
-  email: 'patricia.moore@example.com',
-  joined: '2022-09-02',
-  tier: 'Silver',
-  points: 7200,
-  status: 'active'
-}, {
-  id: 5,
-  name: 'Michael Johnson',
-  email: 'michael.johnson@example.com',
-  joined: '2023-01-18',
-  tier: 'Silver',
-  points: 5400,
-  status: 'active'
-}, {
-  id: 6,
-  name: 'Elizabeth Brown',
-  email: 'elizabeth.brown@example.com',
-  joined: '2023-02-27',
-  tier: 'Bronze',
-  points: 3200,
-  status: 'active'
-}, {
-  id: 7,
-  name: 'William Taylor',
-  email: 'william.taylor@example.com',
-  joined: '2023-03-14',
-  tier: 'Bronze',
-  points: 2800,
-  status: 'inactive'
-}];
+import { SearchIcon, FilterIcon, TrashIcon } from 'lucide-react';
+
 const LoyaltyDashboard = ({
-  onEnrollNew
+  members = [],
+  loading = false,
+  onEnrollNew,
+  onDeleteMember
 }) => {
-  const [filter, setFilter] = useState('all'); // all, platinum, gold, silver, bronze, inactive
+  const [filter, setFilter] = useState('all'); // all, platinum, gold, silver, inactive
   const [searchTerm, setSearchTerm] = useState('');
-  const filteredMembers = loyaltyMembers.filter(member => {
+
+  const filteredMembers = members.filter(member => {
     if (filter === 'inactive') return member.status === 'inactive';
     if (filter === 'platinum') return member.tier === 'Platinum' && member.status === 'active';
     if (filter === 'gold') return member.tier === 'Gold' && member.status === 'active';
     if (filter === 'silver') return member.tier === 'Silver' && member.status === 'active';
-    if (filter === 'bronze') return member.tier === 'Bronze' && member.status === 'active';
     if (filter === 'active') return member.status === 'active';
     return true;
-  }).filter(member => member.name.toLowerCase().includes(searchTerm.toLowerCase()) || member.email.toLowerCase().includes(searchTerm.toLowerCase()));
+  }).filter(member => {
+    const name = member.guestName || '';
+    const email = member.email || '';
+    const search = searchTerm.toLowerCase();
+    return name.toLowerCase().includes(search) || email.toLowerCase().includes(search);
+  });
+
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+  };
+  const activeMembers = members.filter(m => m?.status === 'active');
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const newMembers = members.filter(m => m?.enrolledDate && new Date(m.enrolledDate) >= thirtyDaysAgo);
+  
   return <>
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         <div className="bg-white p-6 rounded-lg shadow">
           <p className="text-sm font-medium text-gray-500">Total Members</p>
           <p className="text-2xl font-bold text-gray-900 mt-1">
-            {loyaltyMembers.length}
+            {members.length}
           </p>
           <div className="mt-4">
             <div className="flex justify-between text-sm">
               <span className="text-gray-500">Active</span>
               <span className="font-medium text-gray-900">
-                {loyaltyMembers.filter(m => m.status === 'active').length}
+                {activeMembers.length}
               </span>
             </div>
           </div>
@@ -94,25 +57,19 @@ const LoyaltyDashboard = ({
             <div className="flex justify-between text-sm">
               <span className="text-purple-600">Platinum</span>
               <span className="font-medium text-gray-900">
-                {loyaltyMembers.filter(m => m.tier === 'Platinum').length}
+                {members.filter(m => m?.tier === 'Platinum').length}
               </span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-yellow-600">Gold</span>
               <span className="font-medium text-gray-900">
-                {loyaltyMembers.filter(m => m.tier === 'Gold').length}
+                {members.filter(m => m?.tier === 'Gold').length}
               </span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-gray-500">Silver</span>
               <span className="font-medium text-gray-900">
-                {loyaltyMembers.filter(m => m.tier === 'Silver').length}
-              </span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-amber-700">Bronze</span>
-              <span className="font-medium text-gray-900">
-                {loyaltyMembers.filter(m => m.tier === 'Bronze').length}
+                {members.filter(m => m?.tier === 'Silver').length}
               </span>
             </div>
           </div>
@@ -120,13 +77,16 @@ const LoyaltyDashboard = ({
         <div className="bg-white p-6 rounded-lg shadow">
           <p className="text-sm font-medium text-gray-500">Average Points</p>
           <p className="text-2xl font-bold text-gray-900 mt-1">
-            {Math.round(loyaltyMembers.reduce((sum, member) => sum + member.points, 0) / loyaltyMembers.length).toLocaleString()}
+            {members.length > 0 
+              ? Math.round(members.reduce((sum, member) => sum + (member?.points || 0), 0) / members.length).toLocaleString()
+              : '0'
+            }
           </p>
           <div className="mt-4">
             <div className="w-full bg-gray-200 rounded-full h-2.5">
               <div className="bg-gold h-2.5 rounded-full" style={{
-              width: '70%'
-            }}></div>
+                width: members.length > 0 ? `${Math.min((members.reduce((sum, m) => sum + (m?.points || 0), 0) / members.length / 10000) * 100, 100)}%` : '0%'
+              }}></div>
             </div>
           </div>
         </div>
@@ -134,12 +94,12 @@ const LoyaltyDashboard = ({
           <p className="text-sm font-medium text-gray-500">
             New Members (30 days)
           </p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">12</p>
+          <p className="text-2xl font-bold text-gray-900 mt-1">{newMembers.length}</p>
           <p className="mt-2 flex items-center text-sm text-green-600">
             <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clipRule="evenodd" />
             </svg>
-            <span>25% increase</span>
+            <span>Recent enrollments</span>
           </p>
         </div>
       </div>
@@ -165,7 +125,6 @@ const LoyaltyDashboard = ({
                   <option value="platinum">Platinum</option>
                   <option value="gold">Gold</option>
                   <option value="silver">Silver</option>
-                  <option value="bronze">Bronze</option>
                 </select>
               </div>
               <button onClick={onEnrollNew} className="bg-navy-blue hover:bg-navy-blue-dark text-white py-2 px-4 rounded-md text-sm">
@@ -197,46 +156,75 @@ const LoyaltyDashboard = ({
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredMembers.map(member => <tr key={member.id}>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0 h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
-                        <span className="text-gray-600 font-medium">
-                          {member.name.charAt(0)}
-                        </span>
-                      </div>
-                      <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">
-                          {member.name}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {member.email}
-                        </div>
-                      </div>
+              {loading ? (
+                <tr>
+                  <td colSpan="6" className="px-6 py-12 text-center text-sm text-gray-500">
+                    <div className="flex justify-center items-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                      <span className="ml-3">Loading members...</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {member.joined}
+                </tr>
+              ) : filteredMembers.length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="px-6 py-12 text-center text-sm text-gray-500">
+                    No members found. {searchTerm && 'Try adjusting your search.'}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${member.tier === 'Platinum' ? 'bg-purple-100 text-purple-800' : member.tier === 'Gold' ? 'bg-yellow-100 text-yellow-800' : member.tier === 'Silver' ? 'bg-gray-100 text-gray-800' : 'bg-amber-100 text-amber-800'}`}>
-                      {member.tier}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {member.points.toLocaleString()}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${member.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                      {member.status === 'active' ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <a href="#" className="text-navy-blue hover:text-navy-blue-dark">
-                      View
-                    </a>
-                  </td>
-                </tr>)}
+                </tr>
+              ) : (
+                filteredMembers.map(member => (
+                  <tr key={member._id}>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="flex-shrink-0 h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
+                          <span className="text-gray-600 font-medium">
+                            {member?.guestName?.charAt(0) || '?'}
+                          </span>
+                        </div>
+                        <div className="ml-4">
+                          <div className="text-sm font-medium text-gray-900">
+                            {member?.guestName || 'N/A'}
+                          </div>
+                          <div className="text-sm text-gray-500">
+                            {member?.email || 'N/A'}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {formatDate(member?.enrolledDate)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                        member?.tier === 'Platinum' ? 'bg-purple-100 text-purple-800' : 
+                        member?.tier === 'Gold' ? 'bg-yellow-100 text-yellow-800' : 
+                        'bg-gray-100 text-gray-800'
+                      }`}>
+                        {member?.tier || 'N/A'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {(member?.points || 0).toLocaleString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                        member?.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                      }`}>
+                        {member?.status === 'active' ? 'Active' : 'Inactive'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <button 
+                        onClick={() => onDeleteMember(member?.guestId)}
+                        className="text-red-600 hover:text-red-800"
+                        title="Delete member"
+                      >
+                        <TrashIcon className="h-4 w-4 inline" />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
@@ -245,7 +233,7 @@ const LoyaltyDashboard = ({
             <div className="text-sm text-gray-500">
               Showing{' '}
               <span className="font-medium">{filteredMembers.length}</span> of{' '}
-              <span className="font-medium">{loyaltyMembers.length}</span>{' '}
+              <span className="font-medium">{members.length}</span>{' '}
               members
             </div>
             <div className="flex space-x-2">

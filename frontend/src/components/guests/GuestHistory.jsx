@@ -1,8 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { SearchIcon, FilterIcon, UserIcon, CreditCardIcon, BedIcon, CalendarIcon } from 'lucide-react';
-const guestData = [{
-  id: 1,
-  name: 'Robert Davis',
+import { guestService } from '../../services/guestService';
+
+const GuestHistory = () => {
+  const [guestData, setGuestData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [selectedGuestDetails, setSelectedGuestDetails] = useState(null);
+  const [detailsLoading, setDetailsLoading] = useState(false);
+
+  const mockGuestData = [{
+    id: 1,
+    name: 'Robert Davis',
   email: 'robert.davis@example.com',
   phone: '+1 (555) 123-4567',
   tier: 'Platinum',
@@ -92,11 +101,55 @@ const guestData = [{
     totalSpent: '$900'
   }]
 }];
-const GuestHistory = () => {
+
+  // State declarations
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState('all'); // all, platinum, gold, silver, bronze
   const [selectedGuest, setSelectedGuest] = useState(null);
   const [activeTab, setActiveTab] = useState('stays'); // stays, feedback, loyalty
+
+  // Fetch guests list on component mount
+  useEffect(() => {
+    fetchGuests();
+  }, []);
+
+  // Fetch detailed history when a guest is selected
+  useEffect(() => {
+    if (selectedGuest) {
+      fetchGuestDetails(selectedGuest.id);
+    }
+  }, [selectedGuest]);
+
+  const fetchGuests = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const guests = await guestService.getAllGuestsHistory();
+      setGuestData(guests);
+    } catch (err) {
+      console.error('Error fetching guests:', err);
+      setError('Failed to load guests');
+      // Fallback to mock data if error
+      setGuestData(mockGuestData);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchGuestDetails = async (guestId) => {
+    try {
+      setDetailsLoading(true);
+      const details = await guestService.getGuestHistory(guestId);
+      setSelectedGuestDetails(details);
+    } catch (err) {
+      console.error('Error fetching guest details:', err);
+      // Use data from the list if details fail to load
+      setSelectedGuestDetails(null);
+    } finally {
+      setDetailsLoading(false);
+    }
+  };
+  
   const filteredGuests = guestData.filter(guest => {
     if (filter === 'platinum') return guest.tier === 'Platinum';
     if (filter === 'gold') return guest.tier === 'Gold';
@@ -107,10 +160,60 @@ const GuestHistory = () => {
   const handleGuestSelect = guest => {
     setSelectedGuest(guest);
   };
+
+  // Helper functions to format data
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+  };
+
+  // Get display data - merge list data with detailed data from API
+  const displayGuest = selectedGuest ? {
+    ...selectedGuest,
+    // Use detailed data if available, otherwise use list data
+    stays: (selectedGuestDetails?.bookings || selectedGuest.stays || []),
+    feedback: (selectedGuestDetails?.feedback || selectedGuest.feedback || []),
+    pointTransactions: (selectedGuestDetails?.pointTransactions || []),
+    // Ensure summary data is available
+    totalSpent: selectedGuestDetails?.summary?.totalSpent || selectedGuest.totalSpent || 0,
+    totalStays: selectedGuestDetails?.summary?.totalStays || selectedGuest.totalStays || 0,
+    lastStay: selectedGuestDetails?.summary?.lastStay || selectedGuest.lastStay,
+    upcomingStay: selectedGuestDetails?.summary?.upcomingStay || selectedGuest.upcomingStay,
+    // Ensure loyalty data is available
+    tier: selectedGuestDetails?.loyalty?.tier || selectedGuest.tier || 'Bronze',
+    points: selectedGuestDetails?.loyalty?.points || selectedGuest.points || 0
+  } : null;
+
   return <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Guest History</h1>
       </div>
+      
+      {loading ? (
+        <div className="bg-white rounded-lg shadow p-12">
+          <div className="flex justify-center items-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-navy-blue"></div>
+            <span className="ml-3 text-gray-600">Loading guests...</span>
+          </div>
+        </div>
+      ) : error ? (
+        <div className="bg-white rounded-lg shadow p-12">
+          <div className="text-center">
+            <p className="text-red-600 mb-4">{error}</p>
+            <button 
+              onClick={fetchGuests} 
+              className="bg-navy-blue hover:bg-navy-blue-dark text-white py-2 px-4 rounded-md text-sm"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      ) : (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Guest List */}
         <div className="lg:col-span-1">
@@ -172,40 +275,37 @@ const GuestHistory = () => {
         </div>
         {/* Guest Details */}
         <div className="lg:col-span-2">
-          {selectedGuest ? <div className="bg-white rounded-lg shadow">
+          {displayGuest ? <div className="bg-white rounded-lg shadow">
               <div className="p-6 border-b border-gray-200">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center">
                     <div className="flex-shrink-0 h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center">
                       <span className="text-gray-600 font-medium text-lg">
-                        {selectedGuest.name.charAt(0)}
+                        {displayGuest.name.charAt(0)}
                       </span>
                     </div>
                     <div className="ml-4">
                       <h2 className="text-xl font-semibold text-gray-900">
-                        {selectedGuest.name}
+                        {displayGuest.name}
                       </h2>
                       <div className="flex items-center mt-1">
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${selectedGuest.tier === 'Platinum' ? 'bg-purple-100 text-purple-800' : selectedGuest.tier === 'Gold' ? 'bg-yellow-100 text-yellow-800' : selectedGuest.tier === 'Silver' ? 'bg-gray-100 text-gray-800' : 'bg-amber-100 text-amber-800'}`}>
-                          {selectedGuest.tier}
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${displayGuest.tier === 'Platinum' ? 'bg-purple-100 text-purple-800' : displayGuest.tier === 'Gold' ? 'bg-yellow-100 text-yellow-800' : displayGuest.tier === 'Silver' ? 'bg-gray-100 text-gray-800' : 'bg-amber-100 text-amber-800'}`}>
+                          {displayGuest.tier}
                         </span>
                         <span className="ml-2 text-sm text-gray-500">
-                          {selectedGuest.points.toLocaleString()} Points
+                          {displayGuest.points.toLocaleString()} Points
                         </span>
                       </div>
                     </div>
                   </div>
-                  <button className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gold">
-                    Edit Profile
-                  </button>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
                   <div className="flex items-center">
                     <UserIcon className="h-5 w-5 text-gray-400 mr-2" />
                     <div>
                       <p className="text-xs text-gray-500">Contact</p>
-                      <p className="text-sm">{selectedGuest.email}</p>
-                      <p className="text-sm">{selectedGuest.phone}</p>
+                      <p className="text-sm">{displayGuest.email}</p>
+                      <p className="text-sm">{displayGuest.phone}</p>
                     </div>
                   </div>
                   <div className="flex items-center">
@@ -213,7 +313,7 @@ const GuestHistory = () => {
                     <div>
                       <p className="text-xs text-gray-500">Total Spent</p>
                       <p className="text-sm font-medium">
-                        {selectedGuest.totalSpent}
+                        {formatCurrency(displayGuest.totalSpent)}
                       </p>
                     </div>
                   </div>
@@ -222,7 +322,7 @@ const GuestHistory = () => {
                     <div>
                       <p className="text-xs text-gray-500">Total Stays</p>
                       <p className="text-sm font-medium">
-                        {selectedGuest.totalStays}
+                        {displayGuest.totalStays}
                       </p>
                     </div>
                   </div>
@@ -230,11 +330,11 @@ const GuestHistory = () => {
                     <CalendarIcon className="h-5 w-5 text-gray-400 mr-2" />
                     <div>
                       <p className="text-xs text-gray-500">Last Stay</p>
-                      <p className="text-sm">{selectedGuest.lastStay}</p>
-                      {selectedGuest.upcomingStay && <>
+                      <p className="text-sm">{formatDate(displayGuest.lastStay)}</p>
+                      {displayGuest.upcomingStay && <>
                           <p className="text-xs text-gray-500 mt-1">Upcoming</p>
                           <p className="text-sm">
-                            {selectedGuest.upcomingStay}
+                            {formatDate(displayGuest.upcomingStay)}
                           </p>
                         </>}
                     </div>
@@ -278,18 +378,18 @@ const GuestHistory = () => {
                           </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                          {selectedGuest.stays.map((stay, index) => <tr key={index}>
+                          {displayGuest.stays.map((stay, index) => <tr key={index}>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {stay.checkIn} - {stay.checkOut}
+                                {formatDate(stay.checkIn)} - {formatDate(stay.checkOut)}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {stay.room}
+                                {stay.roomType} - {stay.roomNumber}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {stay.rate}
+                                {formatCurrency(stay.roomPrice)}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
-                                {stay.totalSpent}
+                                {formatCurrency(stay.totalAmount)}
                               </td>
                             </tr>)}
                         </tbody>
@@ -300,8 +400,8 @@ const GuestHistory = () => {
                     <h3 className="text-lg font-medium text-gray-900 mb-4">
                       Feedback History
                     </h3>
-                    {selectedGuest.feedback.length > 0 ? <div className="space-y-4">
-                        {selectedGuest.feedback.map((item, index) => <div key={index} className="bg-gray-50 p-4 rounded-md">
+                    {displayGuest.feedback.length > 0 ? <div className="space-y-4">
+                        {displayGuest.feedback.map((item, index) => <div key={index} className="bg-gray-50 p-4 rounded-md">
                             <div className="flex justify-between">
                               <div className="flex items-center">
                                 {[...Array(5)].map((_, i) => <svg key={i} className={`h-4 w-4 ${i < item.rating ? 'text-yellow-400' : 'text-gray-300'}`} fill="currentColor" viewBox="0 0 20 20">
@@ -329,8 +429,8 @@ const GuestHistory = () => {
                         <div>
                           <p className="text-sm text-gray-500">Current Tier</p>
                           <div className="flex items-center mt-1">
-                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${selectedGuest.tier === 'Platinum' ? 'bg-purple-100 text-purple-800' : selectedGuest.tier === 'Gold' ? 'bg-yellow-100 text-yellow-800' : selectedGuest.tier === 'Silver' ? 'bg-gray-100 text-gray-800' : 'bg-amber-100 text-amber-800'}`}>
-                              {selectedGuest.tier}
+                            <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${displayGuest.tier === 'Platinum' ? 'bg-purple-100 text-purple-800' : displayGuest.tier === 'Gold' ? 'bg-yellow-100 text-yellow-800' : displayGuest.tier === 'Silver' ? 'bg-gray-100 text-gray-800' : 'bg-amber-100 text-amber-800'}`}>
+                              {displayGuest.tier}
                             </span>
                           </div>
                         </div>
@@ -339,13 +439,8 @@ const GuestHistory = () => {
                             Available Points
                           </p>
                           <p className="text-lg font-semibold">
-                            {selectedGuest.points.toLocaleString()}
+                            {displayGuest.points.toLocaleString()}
                           </p>
-                        </div>
-                        <div>
-                          <button className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gold">
-                            Adjust Points
-                          </button>
                         </div>
                       </div>
                     </div>
@@ -354,20 +449,21 @@ const GuestHistory = () => {
                     </h4>
                     <div className="mb-6">
                       <div className="flex justify-between text-xs text-gray-500 mb-1">
-                        <span>Current: {selectedGuest.tier}</span>
+                        <span>Current: {displayGuest.tier}</span>
                         <span>
-                          {selectedGuest.tier === 'Bronze' ? 'Next: Silver (5,000 points)' : selectedGuest.tier === 'Silver' ? 'Next: Gold (10,000 points)' : selectedGuest.tier === 'Gold' ? 'Next: Platinum (20,000 points)' : 'Highest tier achieved'}
+                          {displayGuest.tier === 'Bronze' ? 'Next: Silver (5,000 points)' : displayGuest.tier === 'Silver' ? 'Next: Gold (10,000 points)' : displayGuest.tier === 'Gold' ? 'Next: Platinum (20,000 points)' : 'Highest tier achieved'}
                         </span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2.5">
                         <div className="bg-gold h-2.5 rounded-full" style={{
-                    width: selectedGuest.tier === 'Bronze' ? `${selectedGuest.points / 5000 * 100}%` : selectedGuest.tier === 'Silver' ? `${selectedGuest.points / 10000 * 100}%` : selectedGuest.tier === 'Gold' ? `${selectedGuest.points / 20000 * 100}%` : '100%'
+                    width: displayGuest.tier === 'Bronze' ? `${displayGuest.points / 5000 * 100}%` : displayGuest.tier === 'Silver' ? `${displayGuest.points / 10000 * 100}%` : displayGuest.tier === 'Gold' ? `${displayGuest.points / 20000 * 100}%` : '100%'
                   }}></div>
                       </div>
                     </div>
                     <h4 className="font-medium text-gray-900 mb-2">
                       Recent Points Activity
                     </h4>
+                    {displayGuest.pointTransactions && displayGuest.pointTransactions.length > 0 ? (
                     <div className="overflow-x-auto">
                       <table className="min-w-full divide-y divide-gray-200">
                         <thead>
@@ -384,42 +480,25 @@ const GuestHistory = () => {
                           </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                          <tr>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                              2023-08-10
-                            </td>
-                            <td className="px-6 py-4 text-sm text-gray-500">
-                              5-night stay in Executive Suite
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">
-                              +2,500
-                            </td>
-                          </tr>
-                          <tr>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                              2023-08-08
-                            </td>
-                            <td className="px-6 py-4 text-sm text-gray-500">
-                              Restaurant spending
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">
-                              +350
-                            </td>
-                          </tr>
-                          <tr>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                              2023-06-15
-                            </td>
-                            <td className="px-6 py-4 text-sm text-gray-500">
-                              Spa treatment redemption
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-red-600">
-                              -1,000
-                            </td>
-                          </tr>
+                          {displayGuest.pointTransactions.map((transaction) => (
+                            <tr key={transaction.id}>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {formatDate(transaction.date)}
+                              </td>
+                              <td className="px-6 py-4 text-sm text-gray-500">
+                                {transaction.description}
+                              </td>
+                              <td className={`px-6 py-4 whitespace-nowrap text-sm font-medium ${transaction.points > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                {transaction.points > 0 ? '+' : ''}{transaction.points.toLocaleString()}
+                              </td>
+                            </tr>
+                          ))}
                         </tbody>
                       </table>
                     </div>
+                    ) : (
+                      <p className="text-gray-500 text-sm">No point transaction history available.</p>
+                    )}
                   </div>}
               </div>
             </div> : <div className="bg-white rounded-lg shadow p-6 flex flex-col items-center justify-center h-full">
@@ -435,6 +514,7 @@ const GuestHistory = () => {
             </div>}
         </div>
       </div>
+      )}
     </div>;
 };
 export default GuestHistory;

@@ -4,70 +4,60 @@ export const loyaltyService = {
   // Get all loyalty members
   getAllMembers: async () => {
     try {
-      const response = await api.get('/loyalty');
+      const response = await api.get('/loyalty/all');
       return response.data;
     } catch (error) {
       throw new Error(error.response?.data?.message || 'Failed to fetch loyalty members');
     }
   },
 
-  // Get member by ID
-  getMemberById: async (id) => {
+  // Get member by guestId (email)
+  getMemberByGuestId: async (guestId) => {
     try {
-      const response = await api.get(`/loyalty/${id}`);
+      const response = await api.get(`/loyalty?guestId=${guestId}`);
       return response.data;
     } catch (error) {
       throw new Error(error.response?.data?.message || 'Failed to fetch member');
     }
   },
 
-  // Create new loyalty member
-  createMember: async (memberData) => {
+  // Enroll guest in loyalty program
+  enrollGuest: async (userId, initialPoints = 0) => {
     try {
-      const response = await api.post('/loyalty', memberData);
+      const response = await api.post('/loyalty', { userId, initialPoints });
       return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to create loyalty member');
+      throw new Error(error.response?.data?.message || 'Failed to enroll guest');
     }
   },
 
-  // Update loyalty member
-  updateMember: async (id, memberData) => {
+  // Add or subtract points
+  updatePoints: async (guestId, points) => {
     try {
-      const response = await api.put(`/loyalty/${id}`, memberData);
+      const response = await api.put('/loyalty', { guestId, points });
       return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to update loyalty member');
+      throw new Error(error.response?.data?.message || 'Failed to update points');
     }
   },
 
   // Delete loyalty member
-  deleteMember: async (id) => {
+  deleteMember: async (guestId) => {
     try {
-      const response = await api.delete(`/loyalty/${id}`);
+      const response = await api.delete(`/loyalty/${guestId}`);
       return response.data;
     } catch (error) {
       throw new Error(error.response?.data?.message || 'Failed to delete loyalty member');
     }
   },
 
-  // Add points to member
-  addPoints: async (id, points) => {
+  // Get all users with role=guest
+  getAvailableGuests: async () => {
     try {
-      const response = await api.post(`/loyalty/${id}/points`, { points });
+      const response = await api.get('/users?role=guest');
       return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to add points');
-    }
-  },
-
-  // Redeem points
-  redeemPoints: async (id, points) => {
-    try {
-      const response = await api.post(`/loyalty/${id}/redeem`, { points });
-      return response.data;
-    } catch (error) {
-      throw new Error(error.response?.data?.message || 'Failed to redeem points');
+      throw new Error(error.response?.data?.message || 'Failed to fetch guests');
     }
   }
 };

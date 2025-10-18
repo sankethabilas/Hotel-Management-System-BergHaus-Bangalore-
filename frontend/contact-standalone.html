@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact Us - BergHaus Hotel Bangalore</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .gradient-bg {
+      background: linear-gradient(135deg, #006bb8 0%, #2fa0df 100%);
+    }
+    .hero-bg {
+      background: linear-gradient(rgba(0, 107, 184, 0.85), rgba(47, 160, 223, 0.85)), 
+                  url('https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80');
+      background-size: cover;
+      background-position: center;
+    }
+    .hover-lift {
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .hover-lift:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+    .btn-primary {
+      background-color: #006bb8;
+      transition: background-color 0.3s;
+    }
+    .btn-primary:hover {
+      background-color: #2fa0df;
+    }
+    .btn-gold {
+      background-color: #ffc973;
+      transition: all 0.3s;
+    }
+    .btn-gold:hover {
+      background-color: #006bb8;
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 via-white to-amber-50">
+  
+  <!-- Hero Section -->
+  <div class="hero-bg h-80 flex flex-col items-center justify-center text-white">
+    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mb-4">
+      <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+      <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+    </svg>
+    <h1 class="text-5xl font-bold mb-4">Get In Touch</h1>
+    <p class="text-xl text-center max-w-2xl px-4">
+      We're here to make your stay memorable. Reach out to us anytime!
+    </p>
+  </div>
+
+  <div class="container mx-auto px-4 py-16 max-w-7xl">
+    
+    <!-- Contact Info Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16 -mt-24 relative z-10">
+      
+      <!-- Location Card -->
+      <div class="bg-white rounded-xl shadow-lg p-6 hover-lift" style="border-top: 4px solid #006bb8;">
+        <div class="w-14 h-14 rounded-full flex items-center justify-center mb-4 mx-auto" style="background-color: rgba(0, 107, 184, 0.1);">
+          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#006bb8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+            <circle cx="12" cy="10" r="3"></circle>
+          </svg>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-800 mb-3 text-center">Visit Us</h3>
+        <p class="text-sm text-gray-600 text-center">BergHaus Hotel</p>
+        <p class="text-sm text-gray-600 text-center">MG Road, Bangalore</p>
+        <p class="text-sm text-gray-600 text-center">Karnataka 560001, India</p>
+      </div>
+
+      <!-- Phone Card -->
+      <div class="bg-white rounded-xl shadow-lg p-6 hover-lift" style="border-top: 4px solid #2fa0df;">
+        <div class="w-14 h-14 rounded-full flex items-center justify-center mb-4 mx-auto" style="background-color: rgba(47, 160, 223, 0.1);">
+          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#2fa0df" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+          </svg>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-800 mb-3 text-center">Call Us</h3>
+        <p class="text-sm text-gray-600 text-center">+91 80 1234 5678</p>
+        <p class="text-sm text-gray-600 text-center">+91 80 8765 4321</p>
+        <p class="text-sm text-gray-600 text-center">Toll Free: 1800 123 4567</p>
+      </div>
+
+      <!-- Email Card -->
+      <div class="bg-white rounded-xl shadow-lg p-6 hover-lift" style="border-top: 4px solid #ffc973;">
+        <div class="w-14 h-14 rounded-full flex items-center justify-center mb-4 mx-auto" style="background-color: rgba(255, 201, 115, 0.1);">
+          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#ffc973" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+            <polyline points="22,6 12,13 2,6"></polyline>
+          </svg>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-800 mb-3 text-center">Email Us</h3>
+        <p class="text-sm text-gray-600 text-center">info@berghaus.com</p>
+        <p class="text-sm text-gray-600 text-center">reservations@berghaus.com</p>
+        <p class="text-sm text-gray-600 text-center">support@berghaus.com</p>
+      </div>
+
+      <!-- Hours Card -->
+      <div class="bg-white rounded-xl shadow-lg p-6 hover-lift" style="border-top: 4px solid #006bb8;">
+        <div class="w-14 h-14 rounded-full flex items-center justify-center mb-4 mx-auto" style="background-color: rgba(0, 107, 184, 0.1);">
+          <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#006bb8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-800 mb-3 text-center">Working Hours</h3>
+        <p class="text-sm text-gray-600 text-center">Front Desk: 24/7</p>
+        <p class="text-sm text-gray-600 text-center">Restaurant: 7:00 AM - 11:00 PM</p>
+        <p class="text-sm text-gray-600 text-center">Spa: 9:00 AM - 9:00 PM</p>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+      
+      <!-- Contact Form -->
+      <div class="bg-white rounded-2xl shadow-xl p-8">
+        <h2 class="text-3xl font-bold mb-2" style="color: #006bb8;">Send Us a Message</h2>
+        <p class="text-gray-600 mb-6">Fill out the form below and we'll get back to you within 24 hours</p>
+
+        <div id="successMessage" class="hidden mb-6 p-4 rounded-lg" style="background-color: #fee3b3;">
+          <p class="text-sm font-medium" style="color: #006bb8;">
+            ✓ Thank you! Your message has been sent successfully.
+          </p>
+        </div>
+
+        <form id="contactForm" class="space-y-5">
+          <!-- Name -->
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Full Name *</label>
+            <input type="text" name="name" required 
+              class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
+              placeholder="John Doe">
+          </div>
+
+          <!-- Email -->
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Email Address *</label>
+            <input type="email" name="email" required 
+              class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
+              placeholder="john@example.com">
+          </div>
+
+          <!-- Phone -->
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Phone Number *</label>
+            <input type="tel" name="phone" required 
+              class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
+              placeholder="+91 98765 43210">
+          </div>
+
+          <!-- Subject -->
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Subject *</label>
+            <select name="subject" required 
+              class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors">
+              <option value="">Select a subject</option>
+              <option value="reservation">Reservation Inquiry</option>
+              <option value="booking">Booking Modification</option>
+              <option value="services">Hotel Services</option>
+              <option value="events">Events & Conferences</option>
+              <option value="feedback">Feedback</option>
+              <option value="complaint">Complaint</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <!-- Message -->
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Message *</label>
+            <textarea name="message" required rows="5"
+              class="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-blue-500 transition-colors resize-none"
+              placeholder="Tell us how we can help you..."></textarea>
+          </div>
+
+          <!-- Submit Button -->
+          <button type="submit" class="btn-primary w-full py-4 px-6 rounded-lg font-semibold text-white">
+            Send Message
+          </button>
+        </form>
+      </div>
+
+      <!-- Map and Additional Info -->
+      <div class="space-y-6">
+        
+        <!-- Map -->
+        <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+          <div class="h-80">
+            <iframe
+              title="BergHaus Hotel Location"
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3887.948736447829!2d77.60419431482199!3d12.972442990861943!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bae1670c9b44e6d%3A0xf8dfc3e8517e4fe0!2sBrigade%20Road%2C%20Bengaluru%2C%20Karnataka!5e0!3m2!1sen!2sin!4v1234567890"
+              width="100%"
+              height="100%"
+              style="border: 0;"
+              allowfullscreen=""
+              loading="lazy">
+            </iframe>
+          </div>
+        </div>
+
+        <!-- Why Choose Us -->
+        <div class="gradient-bg rounded-2xl shadow-xl p-8 text-white">
+          <h3 class="text-2xl font-bold mb-4">Why Choose BergHaus?</h3>
+          <ul class="space-y-3">
+            <li class="flex items-start gap-3">
+              <span class="text-2xl">✓</span>
+              <span>24/7 dedicated customer support</span>
+            </li>
+            <li class="flex items-start gap-3">
+              <span class="text-2xl">✓</span>
+              <span>Luxury accommodations in the heart of Bangalore</span>
+            </li>
+            <li class="flex items-start gap-3">
+              <span class="text-2xl">✓</span>
+              <span>World-class dining and spa facilities</span>
+            </li>
+            <li class="flex items-start gap-3">
+              <span class="text-2xl">✓</span>
+              <span>State-of-the-art conference and event spaces</span>
+            </li>
+            <li class="flex items-start gap-3">
+              <span class="text-2xl">✓</span>
+              <span>Personalized concierge services</span>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Quick Contact -->
+        <div class="rounded-2xl shadow-xl p-8" style="background-color: #fee3b3;">
+          <h3 class="text-2xl font-bold mb-4" style="color: #006bb8;">Need Immediate Assistance?</h3>
+          <p class="mb-4 text-gray-700">
+            For urgent matters or immediate booking assistance, please call our 24/7 hotline:
+          </p>
+          <a href="tel:+918012345678" class="btn-gold inline-block px-6 py-3 rounded-lg font-semibold text-white">
+            📞 +91 80 1234 5678
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Social Media -->
+    <div class="mt-16 text-center">
+      <h3 class="text-2xl font-bold mb-6" style="color: #006bb8;">Follow Us on Social Media</h3>
+      <div class="flex justify-center gap-4">
+        <button class="w-12 h-12 rounded-full text-white font-bold hover-lift" style="background-color: #006bb8;">F</button>
+        <button class="w-12 h-12 rounded-full text-white font-bold hover-lift" style="background-color: #2fa0df;">I</button>
+        <button class="w-12 h-12 rounded-full text-white font-bold hover-lift" style="background-color: #ffc973;">T</button>
+        <button class="w-12 h-12 rounded-full text-white font-bold hover-lift" style="background-color: #006bb8;">L</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="text-white py-8 mt-16" style="background-color: #006bb8;">
+    <div class="container mx-auto px-4 text-center">
+      <p class="text-lg font-semibold mb-2">BergHaus Hotel Bangalore</p>
+      <p class="text-sm opacity-90">
+        © <span id="year"></span> BergHaus. All rights reserved. | Experience Luxury at Its Finest
+      </p>
+    </div>
+  </footer>
+
+  <script>
+    // Set current year
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // Form submission
+    document.getElementById('contactForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      // Get form data
+      const formData = new FormData(this);
+      const data = Object.fromEntries(formData);
+      
+      console.log('Form submitted:', data);
+      
+      // Show success message
+      document.getElementById('successMessage').classList.remove('hidden');
+      
+      // Reset form
+      this.reset();
+      
+      // Hide success message after 5 seconds
+      setTimeout(() => {
+        document.getElementById('successMessage').classList.add('hidden');
+      }, 5000);
+      
+      // Here you would typically send the data to your backend
+      // fetch('/api/contact', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify(data)
+      // });
+    });
+  </script>
+</body>
+</html>

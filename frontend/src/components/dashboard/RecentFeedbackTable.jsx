@@ -1,34 +1,6 @@
 import React from 'react';
-const feedbackData = [{
-  id: 1,
-  guest: 'John Smith',
-  rating: 5,
-  comment: 'Excellent service and beautiful rooms!',
-  date: '2023-09-15',
-  status: 'responded'
-}, {
-  id: 2,
-  guest: 'Emma Johnson',
-  rating: 4,
-  comment: 'Great stay, but the breakfast could be improved.',
-  date: '2023-09-14',
-  status: 'pending'
-}, {
-  id: 3,
-  guest: 'Michael Brown',
-  rating: 5,
-  comment: 'Absolutely loved the spa facilities!',
-  date: '2023-09-13',
-  status: 'responded'
-}, {
-  id: 4,
-  guest: 'Sarah Wilson',
-  rating: 3,
-  comment: 'Room was not as clean as expected.',
-  date: '2023-09-12',
-  status: 'pending'
-}];
-const RecentFeedbackTable = () => {
+
+const RecentFeedbackTable = ({ feedbackData = [] }) => {
   return <div className="bg-white p-6 rounded-lg shadow">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-semibold">Recent Feedback</h2>
@@ -36,26 +8,31 @@ const RecentFeedbackTable = () => {
           View all
         </a>
       </div>
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead>
-            <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Guest
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Rating
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Comment
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Status
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {feedbackData.map(feedback => <tr key={feedback.id}>
+      {feedbackData.length === 0 ? (
+        <div className="text-center py-8 text-gray-500">
+          <p>No recent feedback available</p>
+        </div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead>
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Guest
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Rating
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Comment
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {feedbackData.map(feedback => <tr key={feedback.id}>
                 <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
                   {feedback.guest}
                 </td>
@@ -75,9 +52,10 @@ const RecentFeedbackTable = () => {
                   </span>
                 </td>
               </tr>)}
-          </tbody>
-        </table>
-      </div>
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>;
 };
 export default RecentFeedbackTable;
