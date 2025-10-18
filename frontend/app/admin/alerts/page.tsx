@@ -88,6 +88,145 @@ export default function AlertsPage() {
     }
   };
 
+  const generateEmailContent = (request: StaffRequest, type: 'allocated' | 'returned') => {
+    const { staffName, itemName, quantity, reason } = request;
+    
+    // Generate unique subject based on reason and action type
+    let subject = '';
+    let emailBody = '';
+    
+    const actionText = type === 'allocated' ? 'allocated' : 'returned';
+    const actionPastTense = type === 'allocated' ? 'Allocated' : 'Returned';
+    
+    switch (reason.toLowerCase()) {
+      case 'maintenance':
+        subject = `${actionPastTense}: ${itemName} - Maintenance Request Processed`;
+        emailBody = `Dear ${staffName},
+
+This is to inform you that your maintenance request has been processed.
+
+Request Details:
+- Item: ${itemName}
+- Quantity: ${quantity}
+- Status: ${actionPastTense}
+- Request Type: Maintenance
+
+${type === 'allocated' 
+  ? `The requested ${itemName} (${quantity} units) has been allocated for maintenance purposes. Please ensure proper handling and return the items once maintenance is completed.`
+  : `Thank you for returning the ${itemName} (${quantity} units) after maintenance. The items have been received and processed.`
+}
+
+If you have any questions or concerns, please contact the inventory management team.
+
+Best regards,
+Inventory Management Team`;
+        break;
+        
+      case 'replacement':
+        subject = `${actionPastTense}: ${itemName} - Replacement Request Processed`;
+        emailBody = `Dear ${staffName},
+
+Your replacement request has been successfully processed.
+
+Request Details:
+- Item: ${itemName}
+- Quantity: ${quantity}
+- Status: ${actionPastTense}
+- Request Type: Replacement
+
+${type === 'allocated' 
+  ? `The replacement ${itemName} (${quantity} units) has been allocated to you. Please return any damaged or faulty items to the inventory.`
+  : `We have received the returned ${itemName} (${quantity} units) as part of your replacement request. Your replacement items are now available for collection.`
+}
+
+Please contact us if you need any further assistance.
+
+Best regards,
+Inventory Management Team`;
+        break;
+        
+      case 'repair':
+        subject = `${actionPastTense}: ${itemName} - Repair Request Update`;
+        emailBody = `Dear ${staffName},
+
+Update on your repair request:
+
+Request Details:
+- Item: ${itemName}
+- Quantity: ${quantity}
+- Status: ${actionPastTense}
+- Request Type: Repair
+
+${type === 'allocated' 
+  ? `The ${itemName} (${quantity} units) has been allocated for repair work. Please handle with care and return once repairs are completed.`
+  : `The repaired ${itemName} (${quantity} units) has been returned and received. Thank you for your cooperation.`
+}
+
+For any repair-related queries, please reach out to our maintenance team.
+
+Best regards,
+Inventory Management Team`;
+        break;
+        
+      case 'project use':
+        subject = `${actionPastTense}: ${itemName} - Project Equipment Request`;
+        emailBody = `Dear ${staffName},
+
+Your project equipment request has been processed.
+
+Request Details:
+- Item: ${itemName}
+- Quantity: ${quantity}
+- Status: ${actionPastTense}
+- Request Type: Project Use
+
+${type === 'allocated' 
+  ? `The requested ${itemName} (${quantity} units) has been allocated for your project. Please ensure proper usage and return the items upon project completion.`
+  : `We have received the returned project equipment - ${itemName} (${quantity} units). Thank you for returning the items in good condition.`
+}
+
+Please maintain proper documentation for project equipment usage.
+
+Best regards,
+Inventory Management Team`;
+        break;
+        
+      default:
+        subject = `${actionPastTense}: ${itemName} - Inventory Request Update`;
+        emailBody = `Dear ${staffName},
+
+Your inventory request has been processed.
+
+Request Details:
+- Item: ${itemName}
+- Quantity: ${quantity}
+- Status: ${actionPastTense}
+- Reason: ${reason}
+
+${type === 'allocated' 
+  ? `The requested ${itemName} (${quantity} units) has been allocated to you. Please collect the items from the inventory department.`
+  : `We have received the returned ${itemName} (${quantity} units). Thank you for your cooperation.`
+}
+
+If you have any questions, please contact the inventory management team.
+
+Best regards,
+Inventory Management Team`;
+    }
+    
+    return { subject, emailBody };
+  };
+
+  const handleSendEmail = (request: StaffRequest, type: 'allocated' | 'returned') => {
+    const { subject, emailBody } = generateEmailContent(request, type);
+    
+    // Create mailto URL with pre-filled content
+    const mailtoUrl = `mailto:${request.staffEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(emailBody)}`;
+    
+    // Open default email client
+    window.location.href = mailtoUrl;
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -244,7 +383,7 @@ export default function AlertsPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex space-x-2">
+                        <div className="flex flex-wrap gap-2">
                           {!request.isDone && (
                             <button
                               onClick={() => handleMarkDone(request._id)}
@@ -256,6 +395,31 @@ export default function AlertsPage() {
                               Mark Done
                             </button>
                           )}
+                          
+                          {/* Send Email Buttons */}
+                          <div className="flex flex-col sm:flex-row gap-1">
+                            <button
+                              onClick={() => handleSendEmail(request, 'allocated')}
+                              className="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                              title="Send allocation email"
+                            >
+                              <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                              </svg>
+                              Email Allocated
+                            </button>
+                            <button
+                              onClick={() => handleSendEmail(request, 'returned')}
+                              className="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+                              title="Send return acknowledgment email"
+                            >
+                              <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                              </svg>
+                              Email Returned
+                            </button>
+                          </div>
+                          
                           <button
                             onClick={() => handleDelete(request._id)}
                             className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
