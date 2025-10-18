@@ -2,16 +2,31 @@
 
 import { useState, useEffect } from 'react';
 import QRCodeDisplay from '@/components/QRCodeDisplay';
-import { attendanceAPI, AttendanceRecord, TodayAttendanceResponse } from '@/lib/attendanceApi';
+import { attendanceAPI, AttendanceRecord } from '@/lib/attendanceApi';
 
 export default function AdminAttendancePage() {
-  const [todayAttendance, setTodayAttendance] = useState<TodayAttendanceResponse | null>(null);
   const [allAttendance, setAllAttendance] = useState<AttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedDate, setSelectedDate] = useState<string>(
-    new Date().toISOString().split('T')[0]
-  );
+  // Use local date (not UTC) to avoid off-by-one-day in certain timezones
+  const getLocalDateString = () => {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+
+  const [selectedDate, setSelectedDate] = useState<string>(getLocalDateString());
+
+  // Summary calculated from the fetched attendance for the selected date
+  const [attendanceSummary, setAttendanceSummary] = useState({
+    total: 0,
+    present: 0,
+    late: 0,
+    checkedOut: 0,
+    stillWorking: 0
+  });
 
   useEffect(() => {
     fetchAttendanceData();
@@ -21,17 +36,21 @@ export default function AdminAttendancePage() {
     try {
       setLoading(true);
       setError(null);
-
-      // Fetch today's attendance for summary
-      const todayData = await attendanceAPI.getTodayAttendance();
-      setTodayAttendance(todayData);
-
       // Fetch attendance for selected date
       const allData = await attendanceAPI.getAllAttendance({
         date: selectedDate,
         limit: 100
       });
-      setAllAttendance(allData.attendance);
+      const attendanceList = allData.attendance || [];
+      setAllAttendance(attendanceList);
+
+      // Compute summary from the returned records so summary matches selected date
+      const total = attendanceList.length;
+      const present = attendanceList.filter(a => a.status === 'present').length;
+      const late = attendanceList.filter(a => a.status === 'late').length;
+      const checkedOut = attendanceList.filter(a => a.checkOutTime).length;
+      const stillWorking = total - checkedOut;
+      setAttendanceSummary({ total, present, late, checkedOut, stillWorking });
 
     } catch (error) {
       console.error('Failed to fetch attendance data:', error);

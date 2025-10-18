@@ -8,9 +8,8 @@ require('dotenv').config();
 
 const app = express();
 
-
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3001'],
+  origin: ['http://localhost:3000'],
   credentials: true
 }));
 
@@ -23,6 +22,7 @@ const limiter = rateLimit({
     message: 'Too many requests from this IP, please try again later.'
   }
 });
+
 app.use(limiter);
 
 // Body parsing middleware
@@ -85,6 +85,7 @@ app.use('/api/staff', require('./routes/staff'));
 app.use('/api/leaves', require('./routes/leaves'));
 app.use('/api/payments', require('./routes/payments'));
 app.use('/api/attendance', require('./routes/attendance'));
+app.use('/api/shifts', require('./routes/shifts'));
 
 // Routes - Food & Beverage Management System
 app.use('/api/menu', require('./routes/menuRoutes'));

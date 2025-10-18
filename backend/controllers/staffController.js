@@ -5,6 +5,8 @@ const jwt = require('jsonwebtoken');
 // Create new staff member
 const createStaff = async (req, res) => {
   try {
+    console.log('Creating staff with data:', req.body);
+    
     const {
       fullName,
       dob,
@@ -34,14 +36,16 @@ const createStaff = async (req, res) => {
       });
     }
 
-    // Generate employee ID
-    const lastStaff = await Staff.findOne().sort({ employeeId: -1 });
-    let employeeId = 'EMP0001';
+    // Generate employee ID (find highest number and increment)
+    const allStaff = await Staff.find({}, 'employeeId');
+    const existingNumbers = allStaff
+      .map(staff => parseInt(staff.employeeId.replace('EMP', '')))
+      .filter(num => !isNaN(num));
     
-    if (lastStaff && lastStaff.employeeId) {
-      const lastNumber = parseInt(lastStaff.employeeId.replace('EMP', ''));
-      employeeId = `EMP${String(lastNumber + 1).padStart(4, '0')}`;
-    }
+    const maxNumber = existingNumbers.length > 0 ? Math.max(...existingNumbers) : 0;
+    const employeeId = `EMP${String(maxNumber + 1).padStart(4, '0')}`;
+    
+    console.log('Generated employeeId:', employeeId);
 
     // Create new staff member
     const staff = new Staff({
@@ -76,6 +80,23 @@ const createStaff = async (req, res) => {
     });
 
   } catch (error) {
+    console.error('Staff creation error:', error);
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      code: error.code,
+      keyPattern: error.keyPattern
+    });
+    
+    // Handle specific MongoDB errors
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyPattern)[0];
+      return res.status(400).json({
+        success: false,
+        message: `Staff member with this ${field} already exists`
+      });
+    }
+    
     res.status(500).json({
       success: false,
       message: 'Failed to create staff member',
@@ -87,9 +108,10 @@ const createStaff = async (req, res) => {
 // Get all staff members
 const getAllStaff = async (req, res) => {
   try {
-    const { page = 1, limit = 20, department, isActive = true } = req.query;
+    const { page = 1, limit = 20, department, isActive } = req.query;
     
-    let filter = { isActive };
+    let filter = {};
+    if (isActive !== undefined) filter.isActive = isActive === 'true';
     if (department) filter.department = department;
 
     const staff = await Staff.find(filter)
@@ -187,17 +209,13 @@ const updateStaff = async (req, res) => {
   }
 };
 
-// Soft delete staff member
+// Delete staff member permanently
 const deleteStaff = async (req, res) => {
   try {
     const { id } = req.params;
     
-    const staff = await Staff.findByIdAndUpdate(
-      id,
-      { isActive: false },
-      { new: true }
-    ).select('-password');
-
+    // Check if staff member exists
+    const staff = await Staff.findById(id);
     if (!staff) {
       return res.status(404).json({
         success: false,
@@ -205,10 +223,28 @@ const deleteStaff = async (req, res) => {
       });
     }
 
+    // Check for related records that might prevent deletion
+    const Payment = require('../models/Payment');
+    const Attendance = require('../models/Attendance');
+    
+    const [paymentCount, attendanceCount] = await Promise.all([
+      Payment.countDocuments({ staffId: id }),
+      Attendance.countDocuments({ staffId: id })
+    ]);
+
+    if (paymentCount > 0 || attendanceCount > 0) {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot delete staff member. They have ${paymentCount} payment records and ${attendanceCount} attendance records. Please deactivate instead.`
+      });
+    }
+
+    // Permanently delete the staff member
+    await Staff.findByIdAndDelete(id);
+
     res.json({
       success: true,
-      message: 'Staff member deactivated successfully',
-      staff
+      message: 'Staff member deleted successfully'
     });
 
   } catch (error) {
@@ -464,6 +500,175 @@ const getStaffByEmployeeId = async (req, res) => {
   }
 };
 
+// Generate staff report (PDF/Excel)
+const generateStaffReport = async (req, res) => {
+  try {
+    const { format = 'pdf' } = req.query;
+    
+    // Get all active staff members
+    const staff = await Staff.find({ isActive: true })
+      .select('-password')
+      .sort({ createdAt: -1 });
+
+    if (format === 'excel') {
+      // Generate Excel report
+      const ExcelJS = require('exceljs');
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Staff Report');
+
+      // Add headers
+      worksheet.columns = [
+        { header: 'Employee ID', key: 'employeeId', width: 15 },
+        { header: 'Full Name', key: 'fullName', width: 25 },
+        { header: 'Email', key: 'email', width: 30 },
+        { header: 'Phone', key: 'phone', width: 15 },
+        { header: 'Job Role', key: 'jobRole', width: 20 },
+        { header: 'Department', key: 'department', width: 20 },
+        { header: 'Salary', key: 'salary', width: 15 },
+        { header: 'Gender', key: 'gender', width: 10 },
+        { header: 'Date of Birth', key: 'dob', width: 15 },
+        { header: 'Address', key: 'address', width: 40 },
+        { header: 'Bank Account', key: 'bankAccount', width: 20 },
+        { header: 'Bank Name', key: 'bankName', width: 20 },
+        { header: 'Branch', key: 'branch', width: 20 },
+        { header: 'Join Date', key: 'createdAt', width: 15 }
+      ];
+
+      // Style the header row
+      worksheet.getRow(1).font = { bold: true };
+      worksheet.getRow(1).fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFE6E6FA' }
+      };
+
+      // Add staff data
+      staff.forEach(member => {
+        worksheet.addRow({
+          employeeId: member.employeeId,
+          fullName: member.fullName,
+          email: member.email,
+          phone: member.phone || 'N/A',
+          jobRole: member.jobRole || 'N/A',
+          department: member.department || 'N/A',
+          salary: member.salary || 0,
+          gender: member.gender || 'N/A',
+          dob: member.dob ? new Date(member.dob).toLocaleDateString() : 'N/A',
+          address: member.address || 'N/A',
+          bankAccount: member.bankAccount || 'N/A',
+          bankName: member.bankName || 'N/A',
+          branch: member.branch || 'N/A',
+          createdAt: new Date(member.createdAt).toLocaleDateString()
+        });
+      });
+
+      // Auto-fit columns
+      worksheet.columns.forEach(column => {
+        column.width = Math.max(column.width, 10);
+      });
+
+      // Generate Excel buffer
+      const buffer = await workbook.xlsx.writeBuffer();
+
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', `attachment; filename="staff-report-${new Date().toISOString().split('T')[0]}.xlsx"`);
+      res.send(buffer);
+
+    } else {
+      // Generate PDF report using existing PDF service
+      const PDFDocument = require('pdfkit');
+      
+      const doc = new PDFDocument({
+        size: 'A4',
+        margin: 50
+      });
+
+      // Collect PDF data
+      const buffers = [];
+      doc.on('data', buffers.push.bind(buffers));
+      
+      return new Promise((resolve, reject) => {
+        doc.on('end', () => {
+          const pdfData = Buffer.concat(buffers);
+          res.setHeader('Content-Type', 'application/pdf');
+          res.setHeader('Content-Disposition', `attachment; filename="staff-report-${new Date().toISOString().split('T')[0]}.pdf"`);
+          res.send(pdfData);
+        });
+        
+        doc.on('error', reject);
+        
+        // Generate PDF content
+        generateStaffReportPDF(doc, staff);
+        doc.end();
+      });
+    }
+
+  } catch (error) {
+    console.error('Staff report generation error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to generate staff report',
+      error: error.message
+    });
+  }
+};
+
+// Helper function to generate PDF content
+const generateStaffReportPDF = (doc, staff) => {
+  // Header
+  doc.fontSize(24)
+     .fillColor('#2563eb')
+     .text('BERGHAUS HOTEL', 50, 50, { align: 'center' });
+  
+  doc.fontSize(16)
+     .fillColor('#555')
+     .text('Staff Report', 50, 80, { align: 'center' });
+  
+  doc.fontSize(12)
+     .fillColor('#000')
+     .text(`Generated on: ${new Date().toLocaleDateString()}`, 50, 110)
+     .text(`Total Staff: ${staff.length}`, 50, 130);
+
+  let yPosition = 160;
+  
+  // Table header
+  doc.fontSize(10)
+     .fillColor('#000')
+     .text('Employee ID', 50, yPosition)
+     .text('Name', 120, yPosition)
+     .text('Email', 250, yPosition)
+     .text('Department', 400, yPosition)
+     .text('Salary', 500, yPosition);
+  
+  // Draw line under header
+  yPosition += 15;
+  doc.moveTo(50, yPosition).lineTo(550, yPosition).stroke();
+  yPosition += 10;
+
+  // Staff data
+  staff.forEach((member, index) => {
+    if (yPosition > 700) {
+      // New page
+      doc.addPage();
+      yPosition = 50;
+    }
+
+    doc.text(member.employeeId || 'N/A', 50, yPosition)
+       .text(member.fullName || 'N/A', 120, yPosition)
+       .text(member.email || 'N/A', 250, yPosition)
+       .text(member.department || 'N/A', 400, yPosition)
+       .text(`Rs. ${member.salary || 0}`, 500, yPosition);
+    
+    yPosition += 20;
+  });
+
+  // Footer
+  yPosition += 30;
+  doc.fontSize(10)
+     .fillColor('#777')
+     .text('BergHaus Bungalow', 50, yPosition, { align: 'center' });
+};
+
 module.exports = {
   createStaff,
   getAllStaff,
@@ -473,5 +678,6 @@ module.exports = {
   staffLogin,
   getStaffDashboard,
   changePassword,
-  getStaffByEmployeeId
+  getStaffByEmployeeId,
+  generateStaffReport
 };

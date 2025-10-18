@@ -214,6 +214,9 @@ const generatePDFContent = (doc, bill) => {
   doc.fontSize(8)
      .text('|||| ||| |||| ||| |||| ||| ||||', 50, yPosition, { align: 'center' })
      .text(`${Date.now()}${billNumber}`, 50, yPosition + 15, { align: 'center' });
+  
+  yPosition += 20;
+  doc.text('BergHaus Bungalow', 50, yPosition, { align: 'center' });
 };
 
 const createSimpleBillHTML = (bill) => {
@@ -475,6 +478,11 @@ const createSimpleBillHTML = (bill) => {
         <div class="barcode">
             <div>|||| ||| |||| ||| |||| ||| ||||</div>
             <div style="font-size: 8px; margin-top: 5px;">${Date.now()}${billNumber}</div>
+        </div>
+        
+        <div class="footer">
+            <p>Thank you for dining with us!</p>
+            <p>BergHaus Bungalow</p>
         </div>
     </div>
 </body>
