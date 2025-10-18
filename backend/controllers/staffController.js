@@ -1,6 +1,8 @@
 const Staff = require('../models/Staff');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const ExcelJS = require('exceljs');
+const PDFDocument = require('pdfkit');
 
 // Create new staff member
 const createStaff = async (req, res) => {
@@ -503,16 +505,23 @@ const getStaffByEmployeeId = async (req, res) => {
 // Generate staff report (PDF/Excel)
 const generateStaffReport = async (req, res) => {
   try {
+    console.log('=== GENERATE STAFF REPORT ===');
+    console.log('Format:', req.query.format);
+    console.log('Request headers:', req.headers);
+    
     const { format = 'pdf' } = req.query;
     
     // Get all active staff members
+    console.log('Fetching staff data...');
     const staff = await Staff.find({ isActive: true })
       .select('-password')
       .sort({ createdAt: -1 });
+    
+    console.log(`Found ${staff.length} staff members`);
 
     if (format === 'excel') {
       // Generate Excel report
-      const ExcelJS = require('exceljs');
+      console.log('Generating Excel report...');
       const workbook = new ExcelJS.Workbook();
       const worksheet = workbook.addWorksheet('Staff Report');
 
@@ -576,7 +585,7 @@ const generateStaffReport = async (req, res) => {
 
     } else {
       // Generate PDF report using existing PDF service
-      const PDFDocument = require('pdfkit');
+      console.log('Generating PDF report...');
       
       const doc = new PDFDocument({
         size: 'A4',
@@ -605,10 +614,17 @@ const generateStaffReport = async (req, res) => {
 
   } catch (error) {
     console.error('Staff report generation error:', error);
+    console.error('Error stack:', error.stack);
+    console.error('Error details:', {
+      message: error.message,
+      name: error.name,
+      format: req.query.format
+    });
     res.status(500).json({
       success: false,
       message: 'Failed to generate staff report',
-      error: error.message
+      error: error.message,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 };
