@@ -39,24 +39,32 @@ export default function EditItemForm({ item, onUpdated, onClose }: EditItemFormP
     if (form.damaged < 0) newErrors.damaged = "Damaged quantity cannot be negative";
     if (form.returned < 0) newErrors.returned = "Returned quantity cannot be negative";
     
+    // Supplier details are now mandatory
+    if (!form.supplierName.trim()) newErrors.supplierName = "Supplier name is required";
+    if (!form.supplierEmail.trim()) newErrors.supplierEmail = "Supplier email is required";
+    if (!form.supplierPhone.trim()) newErrors.supplierPhone = "Supplier phone is required";
+    
     // Name validation - only letters and spaces
     if (form.name && !/^[a-zA-Z\s]+$/.test(form.name)) {
       newErrors.name = "Item name should contain only letters and spaces";
     }
 
-    // Supplier name validation - only letters if provided
+    // Supplier name validation - only letters (now required)
     if (form.supplierName && !/^[a-zA-Z\s]+$/.test(form.supplierName)) {
       newErrors.supplierName = "Supplier name should contain only letters and spaces";
     }
 
-    // Email validation if provided
+    // Email validation (now required)
     if (form.supplierEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.supplierEmail)) {
       newErrors.supplierEmail = "Please enter a valid email address";
     }
 
-    // Phone validation if provided
-    if (form.supplierPhone && !/^[0-9+\-\s()]+$/.test(form.supplierPhone)) {
-      newErrors.supplierPhone = "Please enter a valid phone number";
+    // Phone validation - must be +94 followed by exactly 9 digits
+    if (form.supplierPhone) {
+      const phoneRegex = /^\+94\d{9}$/;
+      if (!phoneRegex.test(form.supplierPhone.replace(/\s/g, ''))) {
+        newErrors.supplierPhone = "Phone must be in format +94XXXXXXXXX (9 digits after +94)";
+      }
     }
 
     // URL validation
@@ -350,13 +358,13 @@ export default function EditItemForm({ item, onUpdated, onClose }: EditItemFormP
               <svg className="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
-              Supplier Information (Optional)
+              Supplier Information
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Supplier Name */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Supplier Name
+                  Supplier Name <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -367,6 +375,7 @@ export default function EditItemForm({ item, onUpdated, onClose }: EditItemFormP
                     errors.supplierName ? 'border-red-500 bg-red-50' : 'border-gray-300'
                   }`}
                   placeholder="Enter supplier name"
+                  required
                 />
                 {errors.supplierName && <p className="text-red-500 text-sm mt-1">{errors.supplierName}</p>}
               </div>
@@ -374,7 +383,7 @@ export default function EditItemForm({ item, onUpdated, onClose }: EditItemFormP
               {/* Supplier Email */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Supplier Email
+                  Supplier Email <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="email"
@@ -385,6 +394,7 @@ export default function EditItemForm({ item, onUpdated, onClose }: EditItemFormP
                     errors.supplierEmail ? 'border-red-500 bg-red-50' : 'border-gray-300'
                   }`}
                   placeholder="supplier@example.com"
+                  required
                 />
                 {errors.supplierEmail && <p className="text-red-500 text-sm mt-1">{errors.supplierEmail}</p>}
               </div>
@@ -392,19 +402,23 @@ export default function EditItemForm({ item, onUpdated, onClose }: EditItemFormP
               {/* Supplier Phone */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Supplier Phone
+                  Supplier Phone <span className="text-red-500">*</span>
                 </label>
                 <input
-                  type="text"
+                  type="tel"
                   name="supplierPhone"
                   value={form.supplierPhone}
                   onChange={handleChange}
                   className={`w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all ${
                     errors.supplierPhone ? 'border-red-500 bg-red-50' : 'border-gray-300'
                   }`}
-                  placeholder="+94 77 123 4567"
+                  placeholder="+94771234567"
+                  pattern="\+94[0-9]{9}"
+                  title="Phone number must be in format +94XXXXXXXXX"
+                  required
                 />
                 {errors.supplierPhone && <p className="text-red-500 text-sm mt-1">{errors.supplierPhone}</p>}
+                <p className="text-xs text-gray-500 mt-1">Format: +94XXXXXXXXX (9 digits after +94)</p>
               </div>
             </div>
           </div>
