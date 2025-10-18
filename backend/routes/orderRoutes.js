@@ -1,6 +1,7 @@
 const express = require('express');
 const Order = require('../models/Order');
 const MenuItem = require('../models/MenuItem');
+const { protect, optionalAuth } = require('../middleware/auth');
 const router = express.Router();
 
 // Get all orders
@@ -89,7 +90,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // Create new order
-router.post('/', async (req, res) => {
+router.post('/', optionalAuth, async (req, res) => {
   try {
     const { customerInfo, items, paymentMethod = 'cash', notes } = req.body;
 
@@ -165,7 +166,7 @@ router.post('/', async (req, res) => {
       paymentMethod,
       estimatedDelivery,
       notes,
-      createdBy: req.user?.id
+      createdBy: req.user?.id || null
     };
 
     const order = new Order(orderData);
@@ -183,10 +184,12 @@ router.post('/', async (req, res) => {
     });
   } catch (error) {
     console.error('Create order error:', error);
+    console.error('Order data:', { customerInfo, items });
     res.status(400).json({
       success: false,
       message: 'Failed to create order',
-      error: error.message
+      error: error.message,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 });

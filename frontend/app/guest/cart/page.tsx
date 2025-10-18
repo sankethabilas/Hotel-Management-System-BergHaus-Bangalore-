@@ -81,11 +81,16 @@ export default function CartPage() {
         paymentMethod: 'cash'
       };
 
+      // Get auth token from localStorage
+      const token = localStorage.getItem('token');
+      
       const response = await fetch('http://localhost:5000/api/orders', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` })
         },
+        credentials: 'include',
         body: JSON.stringify(orderData),
       });
 
@@ -99,6 +104,12 @@ export default function CartPage() {
       }
     } catch (error) {
       console.error('Checkout error:', error);
+      console.error('Error details:', {
+        message: error.message,
+        customerInfo,
+        itemsCount: cartItems.length,
+        orderData
+      });
       alert('Failed to place order. Please try again.');
     } finally {
       setIsCheckingOut(false);
