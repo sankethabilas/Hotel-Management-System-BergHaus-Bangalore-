@@ -17,6 +17,16 @@ export default function StaffForm({ staffId, isEdit = false, basePathPrefix = ''
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [staff, setStaff] = useState<Staff | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
+
+  // Helper function to get field error
+  const getFieldError = (fieldName: string) => fieldErrors[fieldName];
+
+  // Helper function to get field className with error styling
+  const getFieldClassName = (fieldName: string, baseClassName: string) => {
+    const hasError = fieldErrors[fieldName];
+    return `${baseClassName} ${hasError ? 'border-red-500' : 'border-gray-300'}`;
+  };
 
   const [formData, setFormData] = useState<StaffFormData>({
     employeeId: '',
@@ -107,11 +117,20 @@ export default function StaffForm({ staffId, isEdit = false, basePathPrefix = ''
       }
     }
     
-    setFormData(prev => ({
-      ...prev,
+    const newFormData = {
+      ...formData,
       [name]: type === 'number' ? Number(processedValue) : 
               type === 'checkbox' ? (e.target as HTMLInputElement).checked :
               processedValue
+    };
+    
+    setFormData(newFormData);
+    
+    // Real-time validation
+    const validationResult = StaffValidator.validateFieldRealTime(name, processedValue, newFormData);
+    setFieldErrors(prev => ({
+      ...prev,
+      [name]: validationResult.error || ''
     }));
   };
 
@@ -121,6 +140,16 @@ export default function StaffForm({ staffId, isEdit = false, basePathPrefix = ''
     setError(null);
 
     try {
+      // Validate form data before submission
+      const validationErrors = StaffValidator.validateStaffForm(formData, isEdit);
+      
+      if (StaffValidator.hasErrors(validationErrors)) {
+        const firstError = StaffValidator.getFirstError(validationErrors);
+        setError(firstError || 'Please fix the form errors');
+        setLoading(false);
+        return;
+      }
+
       if (isEdit && staffId) {
         await staffAPI.updateStaff(staffId, formData);
       } else {
@@ -129,6 +158,9 @@ export default function StaffForm({ staffId, isEdit = false, basePathPrefix = ''
         console.log('Submitting staff data:', createData);
         await staffAPI.createStaff(createData as StaffFormData);
       }
+      
+      // Clear field errors on successful submission
+      setFieldErrors({});
       router.push(`${basePathPrefix}/staff` || '/admin/staff');
     } catch (err) {
       console.error('Staff creation error:', err);
@@ -223,8 +255,11 @@ export default function StaffForm({ staffId, isEdit = false, basePathPrefix = ''
                       value={formData.fullName}
                       onChange={handleChange}
                       placeholder="Enter full name"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className={getFieldClassName('fullName', 'w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500')}
                     />
+                    {getFieldError('fullName') && (
+                      <p className="mt-1 text-sm text-red-600">{getFieldError('fullName')}</p>
+                    )}
                   </div>
 
                   <div>
@@ -287,8 +322,11 @@ export default function StaffForm({ staffId, isEdit = false, basePathPrefix = ''
                       value={formData.phone}
                       onChange={handleChange}
                       placeholder="Enter phone number"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className={getFieldClassName('phone', 'w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500')}
                     />
+                    {getFieldError('phone') && (
+                      <p className="mt-1 text-sm text-red-600">{getFieldError('phone')}</p>
+                    )}
                   </div>
 
                   <div className="sm:col-span-2 lg:col-span-3">
@@ -303,8 +341,11 @@ export default function StaffForm({ staffId, isEdit = false, basePathPrefix = ''
                       value={formData.email}
                       onChange={handleChange}
                       placeholder="Enter email address"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className={getFieldClassName('email', 'w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500')}
                     />
+                    {getFieldError('email') && (
+                      <p className="mt-1 text-sm text-red-600">{getFieldError('email')}</p>
+                    )}
                   </div>
 
                   <div className="sm:col-span-2 lg:col-span-3">
@@ -480,26 +521,28 @@ export default function StaffForm({ staffId, isEdit = false, basePathPrefix = ''
                 </div>
               </div>
 
-              {/* Status */}
-              <div className="pb-6">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Status</h3>
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    name="isActive"
-                    id="isActive"
-                    checked={formData.isActive}
-                    onChange={handleChange}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  />
-                  <label htmlFor="isActive" className="ml-2 block text-sm text-gray-900">
-                    Active Employee
-                  </label>
+              {/* Status - Only show in edit mode */}
+              {isEdit && (
+                <div className="pb-6">
+                  <h3 className="text-lg font-medium text-gray-900 mb-4">Status</h3>
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      name="isActive"
+                      id="isActive"
+                      checked={formData.isActive}
+                      onChange={handleChange}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="isActive" className="ml-2 block text-sm text-gray-900">
+                      Active Employee
+                    </label>
+                  </div>
+                  <p className="mt-1 text-sm text-gray-500">
+                    Inactive employees cannot log in to the system
+                  </p>
                 </div>
-                <p className="mt-1 text-sm text-gray-500">
-                  Inactive employees cannot log in to the system
-                </p>
-              </div>
+              )}
 
               {/* Form Actions */}
               <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">

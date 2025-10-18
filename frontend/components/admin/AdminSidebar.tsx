@@ -42,6 +42,7 @@ const STAFF_MANAGEMENT_ITEMS: DropdownItem[] = [
   { href: "/admin/leave-requests", label: "Manage Leaves" },
   { href: "/admin/attendance", label: "Staff Attendance" },
   { href: "/admin/payments", label: "Staff Payment" },
+  { href: "/admin/staff/shifts", label: "Staff Shift" },
 ];
 
 

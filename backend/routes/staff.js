@@ -10,7 +10,8 @@ const {
   staffLogin,
   getStaffDashboard,
   changePassword,
-  getStaffByEmployeeId
+  getStaffByEmployeeId,
+  generateStaffReport
 } = require('../controllers/staffController');
 
 const {
@@ -42,8 +43,9 @@ router.post('/login', staffLogin);
 router.get('/active', getAllStaff); // Public endpoint for attendance scanner
 // Public routes for admin dashboard access
 router.get('/', getAllStaff); // Get all staff (no auth required)
-router.post('/', validateStaffCreate, handleValidationErrors, createStaff); // Create staff with validation
+router.post('/', createStaff); // Create staff
 router.get('/dashboard', getStaffDashboard); // Staff dashboard
+router.get('/report', generateStaffReport); // Generate staff report (PDF/Excel)
 
 // Protected routes (require authentication)
 router.post('/change-password', protect, changePassword); // Change password (protected)

@@ -122,6 +122,44 @@ class StaffAPI {
     const response = await this.request<ApiResponse<Staff>>(`/employee/${employeeId}`);
     return response.data!;
   }
+
+  // Generate staff report
+  async generateStaffReport(format: 'pdf' | 'excel' = 'pdf'): Promise<void> {
+    const url = `${API_BASE_URL}/report?format=${format}`;
+    
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          ...this.getAuthHeaders(),
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      // Get the filename from the Content-Disposition header
+      const contentDisposition = response.headers.get('Content-Disposition');
+      const filename = contentDisposition 
+        ? contentDisposition.split('filename=')[1]?.replace(/"/g, '')
+        : `staff-report-${new Date().toISOString().split('T')[0]}.${format === 'excel' ? 'xlsx' : 'pdf'}`;
+
+      // Create blob and download
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error('Report generation failed:', error);
+      throw error;
+    }
+  }
 }
 
 export const staffAPI = new StaffAPI();

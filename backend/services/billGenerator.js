@@ -146,7 +146,7 @@ const generatePDFContent = (doc, bill) => {
      .text('Thank you for dining with us!', 50, yPosition, { align: 'center' });
   
   yPosition += 20;
-  doc.text('BergHaus Hotel, Bangalore, Karnataka, India', 50, yPosition, { align: 'center' });
+  doc.text('BergHaus Bungalow', 50, yPosition, { align: 'center' });
 };
 
 const createSimpleBillHTML = (bill) => {
@@ -327,7 +327,7 @@ const createSimpleBillHTML = (bill) => {
 
         <div class="footer">
             <p>Thank you for dining with us!</p>
-            <p>BergHaus Hotel, Bangalore, Karnataka, India</p>
+            <p>BergHaus Bungalow</p>
         </div>
     </div>
 </body>

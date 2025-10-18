@@ -256,6 +256,54 @@ class PaymentAPI {
     });
   }
 
+  // Generate payment report
+  async generatePaymentReport(format: 'pdf' | 'excel' = 'pdf', filters?: {
+    year?: number;
+    month?: number;
+    status?: string;
+  }): Promise<void> {
+    const params = new URLSearchParams();
+    params.append('format', format);
+    if (filters?.year) params.append('year', filters.year.toString());
+    if (filters?.month) params.append('month', filters.month.toString());
+    if (filters?.status) params.append('status', filters.status);
+    
+    const url = `${API_BASE_URL}/report?${params.toString()}`;
+    
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          ...this.getAuthHeaders(),
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      // Get the filename from the Content-Disposition header
+      const contentDisposition = response.headers.get('Content-Disposition');
+      const filename = contentDisposition 
+        ? contentDisposition.split('filename=')[1]?.replace(/"/g, '')
+        : `payment-report-${new Date().toISOString().split('T')[0]}.${format === 'excel' ? 'xlsx' : 'pdf'}`;
+
+      // Create blob and download
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error('Report generation failed:', error);
+      throw error;
+    }
+  }
+
   // Helper methods
   formatCurrency(amount: number): string {
     return new Intl.NumberFormat('en-LK', {

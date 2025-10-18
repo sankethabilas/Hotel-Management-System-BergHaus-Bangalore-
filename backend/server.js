@@ -8,19 +8,8 @@ require('dotenv').config();
 
 const app = express();
 
-// Security middleware - temporarily disabled for debugging
-// app.use(helmet({
-//   contentSecurityPolicy: {
-//     directives: {
-//       defaultSrc: ["'self'"],
-//       imgSrc: ["'self'", "data:", "http://localhost:5000"],
-//       scriptSrc: ["'self'"],
-//       styleSrc: ["'self'", "'unsafe-inline'"],
-//     },
-//   },
-// }));
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3001'],
+  origin: ['http://localhost:3000'],
   credentials: true
 }));
 
@@ -29,6 +18,7 @@ const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100 // limit each IP to 100 requests per windowMs
 });
+
 app.use(limiter);
 
 // Body parsing middleware
@@ -91,6 +81,7 @@ app.use('/api/staff', require('./routes/staff'));
 app.use('/api/leaves', require('./routes/leaves'));
 app.use('/api/payments', require('./routes/payments'));
 app.use('/api/attendance', require('./routes/attendance'));
+app.use('/api/shifts', require('./routes/shifts'));
 
 // Routes - Food & Beverage Management System
 app.use('/api/menu', require('./routes/menuRoutes'));

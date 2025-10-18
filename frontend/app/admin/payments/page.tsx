@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { paymentAPI, Payment, CreatePaymentData } from '@/lib/paymentApi';
 import { staffAPI } from '@/lib/staffApi';
 import { Staff } from '@/types/staff';
@@ -15,10 +15,27 @@ export default function AdminPaymentsPage() {
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
   const [selectedStatus, setSelectedStatus] = useState<string>('');
   const [stats, setStats] = useState<any>(null);
+  const [generatingReport, setGeneratingReport] = useState(false);
+  const [showReportDropdown, setShowReportDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchData();
   }, [selectedMonth, selectedYear, selectedStatus]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowReportDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const fetchData = async () => {
     try {
@@ -52,11 +69,37 @@ export default function AdminPaymentsPage() {
 
   const handleStatusUpdate = async (paymentId: string, status: string) => {
     try {
-      await paymentAPI.updatePaymentStatus(paymentId, status);
+      console.log('Updating payment status:', { paymentId, status });
+      const result = await paymentAPI.updatePaymentStatus(paymentId, status);
+      console.log('Update result:', result);
+      
+      // Add a small delay to ensure backend has processed the update
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       await fetchData(); // Refresh data
+      console.log('Data refreshed after status update');
     } catch (error) {
       console.error('Failed to update payment status:', error);
       alert('Failed to update payment status');
+    }
+  };
+
+  const handleGenerateReport = async (format: 'pdf' | 'excel') => {
+    try {
+      setGeneratingReport(true);
+      setShowReportDropdown(false);
+      
+      const filters = {
+        year: selectedYear,
+        month: selectedMonth || undefined,
+        status: selectedStatus || undefined
+      };
+      
+      await paymentAPI.generatePaymentReport(format, filters);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to generate report');
+    } finally {
+      setGeneratingReport(false);
     }
   };
 
@@ -108,6 +151,53 @@ export default function AdminPaymentsPage() {
           <p className="text-sm text-gray-600">Process and manage staff salary payments</p>
         </div>
         <div className="flex items-center space-x-3">
+          {/* Report Generation Dropdown */}
+          <div className="relative" ref={dropdownRef}>
+            <button
+              disabled={generatingReport}
+              onClick={() => setShowReportDropdown(!showReportDropdown)}
+              className="bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center"
+            >
+              {generatingReport ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Generating...
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Generate Report
+                  <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </>
+              )}
+            </button>
+            {showReportDropdown && !generatingReport && (
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border">
+                <div className="py-1">
+                  <button
+                    onClick={() => handleGenerateReport('pdf')}
+                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    📄 Download PDF Report
+                  </button>
+                  <button
+                    onClick={() => handleGenerateReport('excel')}
+                    className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  >
+                    📊 Download Excel Report
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+          
           <button
             onClick={fetchData}
             disabled={loading}
@@ -127,7 +217,7 @@ export default function AdminPaymentsPage() {
 
       {/* Statistics Cards */}
       {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <div className="admin-card p-4">
             <div className="text-xs font-medium text-gray-600">Total Payments</div>
             <div className="mt-1 text-2xl font-semibold" style={{ color: '#006bb8' }}>
@@ -139,9 +229,17 @@ export default function AdminPaymentsPage() {
           <div className="admin-card p-4">
             <div className="text-xs font-medium text-gray-600">Total Amount</div>
             <div className="mt-1 text-2xl font-semibold text-green-600">
-              {paymentAPI.formatCurrency(stats.overallStats.totalAmount || 0)}
+              {paymentAPI.formatCurrency(stats.overallStats.totalPaidAmount || 0)}
             </div>
             <div className="text-xs text-gray-500">Paid out</div>
+          </div>
+          
+          <div className="admin-card p-4">
+            <div className="text-xs font-medium text-gray-600">Total Value</div>
+            <div className="mt-1 text-2xl font-semibold text-blue-600">
+              {paymentAPI.formatCurrency(stats.overallStats.totalAmount || 0)}
+            </div>
+            <div className="text-xs text-gray-500">All payments</div>
           </div>
           
           <div className="admin-card p-4">
@@ -155,7 +253,7 @@ export default function AdminPaymentsPage() {
           <div className="admin-card p-4">
             <div className="text-xs font-medium text-gray-600">Pending</div>
             <div className="mt-1 text-2xl font-semibold text-yellow-600">
-              {payments.filter(p => p.status === 'pending').length}
+              {stats.overallStats.pendingCount || 0}
             </div>
             <div className="text-xs text-gray-500">Awaiting payment</div>
           </div>

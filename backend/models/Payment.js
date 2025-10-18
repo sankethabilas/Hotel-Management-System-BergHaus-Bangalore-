@@ -140,21 +140,29 @@ paymentSchema.virtual('paymentPeriodString').get(function() {
 
 // Method to calculate payment totals
 paymentSchema.methods.calculatePayment = function() {
+  // Ensure all values are numbers and not NaN
+  const baseSalary = Number(this.baseSalary) || 0;
+  const overtimeHours = Number(this.overtimeHours) || 0;
+  const overtimeRate = Number(this.overtimeRate) || 0;
+  const bonuses = Number(this.bonuses) || 0;
+  
   // Calculate overtime pay
-  this.overtimePay = this.overtimeHours * this.overtimeRate;
+  this.overtimePay = overtimeHours * overtimeRate;
   
   // Calculate gross pay
-  this.grossPay = this.baseSalary + this.overtimePay + this.bonuses;
+  this.grossPay = baseSalary + this.overtimePay + bonuses;
   
   // Calculate total deductions
-  this.totalDeductions = (this.deductions.epf || 0) + 
-                        (this.deductions.etf || 0) + 
-                        (this.deductions.tax || 0) + 
-                        (this.deductions.advances || 0) + 
-                        (this.deductions.other || 0);
+  const epf = Number(this.deductions?.epf) || 0;
+  const etf = Number(this.deductions?.etf) || 0;
+  const tax = Number(this.deductions?.tax) || 0;
+  const advances = Number(this.deductions?.advances) || 0;
+  const other = Number(this.deductions?.other) || 0;
   
-  // Calculate net pay
-  this.netPay = this.grossPay - this.totalDeductions;
+  this.totalDeductions = epf + etf + tax + advances + other;
+  
+  // Calculate net pay (ensure it's not negative)
+  this.netPay = Math.max(0, this.grossPay - this.totalDeductions);
   
   return this;
 };
