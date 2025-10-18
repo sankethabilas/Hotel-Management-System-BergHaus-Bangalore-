@@ -32,6 +32,10 @@ const limiter = rateLimit({
   message: 'Too many requests, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
+  // Skip rate limiting for static files and uploads
+  skip: (req) => {
+    return req.path.startsWith('/uploads/') || req.path.startsWith('/static/');
+  }
 });
 app.use(limiter);
 
