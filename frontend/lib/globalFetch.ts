@@ -10,16 +10,35 @@ const originalFetch = globalThis.fetch;
 
 /**
  * Enhanced fetch function that automatically handles JSON parsing errors
+ * AND adds authentication token to all requests
  */
 export const enhancedFetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
-  const response = await originalFetch(input, init);
+  // Get auth token from localStorage
+  const token = typeof window !== 'undefined' ? (
+    localStorage.getItem('adminToken') || 
+    localStorage.getItem('staffToken') || 
+    localStorage.getItem('authToken')
+  ) : null;
+
+  // Add Authorization header if token exists
+  const enhancedInit = init || {};
+  if (token) {
+    enhancedInit.headers = {
+      ...(enhancedInit.headers || {}),
+      'Authorization': `Bearer ${token}`,
+    };
+    console.log('🔐 Auth token added to request:', typeof input === 'string' ? input : input.toString());
+  } else {
+    console.warn('⚠️ No auth token found for request:', typeof input === 'string' ? input : input.toString());
+  }
+
+  const response = await originalFetch(input, enhancedInit);
   
   // Create a new response object with enhanced methods
   const enhancedResponse = new Response(response.body, {
     status: response.status,
     statusText: response.statusText,
     headers: response.headers,
-    url: response.url,
   });
 
   // Override the json() method to use safe parsing

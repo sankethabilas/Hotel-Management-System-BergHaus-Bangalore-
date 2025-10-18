@@ -27,7 +27,12 @@ const api: AxiosInstance = axios.create({
 // Request interceptor to add auth token
 api.interceptors.request.use(
   (config) => {
-    const token = Cookies.get('token');
+    // Check multiple sources for auth token
+    const token = Cookies.get('token') || 
+                  (typeof window !== 'undefined' ? localStorage.getItem('adminToken') : null) ||
+                  (typeof window !== 'undefined' ? localStorage.getItem('staffToken') : null) ||
+                  (typeof window !== 'undefined' ? localStorage.getItem('authToken') : null);
+    
     console.log('API Request interceptor - Token:', token ? 'Present' : 'Missing');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -174,7 +179,7 @@ export const usersAPI = {
       
       console.log('API response received:', response.data);
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('API upload error:', error);
       console.error('Error response:', error.response?.data);
       throw error;
@@ -396,21 +401,37 @@ export const bookingAPI = {
 // Utility functions
 export const setAuthToken = (token: string | null): void => {
   if (token) {
+    // Store in Cookies (for backward compatibility)
     Cookies.set('token', token, { 
       expires: 7, // 7 days
       path: '/',
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax'
     });
+    
+    // ALSO store in localStorage for globalFetch to find
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('authToken', token);
+      console.log('✅ Token stored in both Cookies and localStorage');
+    }
+    
     api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
   } else {
+    // Clear from both locations
     Cookies.remove('token', { path: '/' });
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('authToken');
+    }
     delete api.defaults.headers.common['Authorization'];
   }
 };
 
 export const removeAuthToken = (): void => {
   Cookies.remove('token', { path: '/' });
+  // Also remove from localStorage
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem('authToken');
+  }
   delete api.defaults.headers.common['Authorization'];
 };
 

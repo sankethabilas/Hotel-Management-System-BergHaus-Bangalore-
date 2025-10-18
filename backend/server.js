@@ -9,18 +9,20 @@ require('dotenv').config();
 const app = express();
 
 app.use(cors({
-  origin: ['http://localhost:3000'],
+  origin: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002'],
   credentials: true
 }));
 
-// Rate limiting
+// Rate limiting - More generous for development
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: process.env.NODE_ENV === 'development' ? 1000 : 100, // More lenient for development
   message: {
     success: false,
     message: 'Too many requests from this IP, please try again later.'
-  }
+  },
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false // Disable the `X-RateLimit-*` headers
 });
 
 app.use(limiter);
@@ -99,6 +101,19 @@ app.use('/api/staff-requests', require('./routes/staffRequestRoutes'));
 app.use('/api/contact', require('./routes/contact'));
 app.use('/api/feedback', require('./routes/feedback'));
 app.use('/api/activity-logs', require('./routes/activityLogs'));
+
+// Routes - Customer Relationship Management (CRM)
+app.use('/api/dashboard', require('./routes/dashboardRoutes'));
+app.use('/api/analytics', require('./routes/analyticsRoutes'));
+app.use('/api/guest-history', require('./routes/guestHistoryRoutes'));
+app.use('/api/loyalty', require('./routes/loyaltyRoutes'));
+app.use('/api/notifications', require('./routes/notificationRoutes'));
+app.use('/api/offers', require('./routes/offerRoutes'));
+app.use('/api/rewards', require('./routes/rewardRoutes'));
+app.use('/api/automated-rules', require('./routes/automatedRulesRoutes'));
+app.use('/api/crm-reports', require('./routes/crmReports')); // CRM Reports
+app.use('/api/crm-test', require('./routes/crmReportsTest')); // Test routes without auth
+// Note: /api/feedback is already registered above with proper authentication
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

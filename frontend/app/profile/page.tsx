@@ -14,6 +14,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import { AuthService } from '@/lib/auth';
 import Navbar from '@/components/navbar';
 import Footer from '@/components/footer';
+import LoyaltyRewards from '@/components/LoyaltyRewards';
+import RewardsCatalogModal from '@/components/RewardsCatalogModal';
+import loyaltyService from '@/services/loyaltyService';
 import { getProfileImageUrl, getUserInitials } from '@/utils/profileImage';
 import { 
   User, 
@@ -25,6 +28,7 @@ import {
   Save, 
   Edit3,
   Shield,
+  Gift,
   Clock,
   CheckCircle,
   AlertCircle,
@@ -38,11 +42,26 @@ export default function ProfilePage() {
   const searchParams = useSearchParams();
   const { toast } = useToast();
   
+  // Helper to get user ID (handles both _id and id fields)
+  const getUserId = () => {
+    if (!user) return undefined;
+    return user._id || (user as any).id;
+  };
+  
+  // Helper to get guest identifier for loyalty (uses email as backend expects)
+  const getGuestIdentifier = () => {
+    if (!user) return undefined;
+    // Backend loyalty system uses email as guestId
+    return user.email;
+  };
+  
   const [isEditing, setIsEditing] = useState(false);
   const [showBackButton, setShowBackButton] = useState(false);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [passwordLoading, setPasswordLoading] = useState(false);
+  const [loyaltyData, setLoyaltyData] = useState<any>(null);
+  const [showRewardsModal, setShowRewardsModal] = useState(false);
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
     newPassword: '',
@@ -96,6 +115,9 @@ export default function ProfilePage() {
   useEffect(() => {
     if (user) {
       console.log('User object in profile page:', user);
+      console.log('User _id:', user._id);
+      console.log('User id:', (user as any).id);
+      console.log('Full user keys:', Object.keys(user));
       console.log('User profileImage:', user.profileImage);
       console.log('User firstName:', user.firstName);
       console.log('User lastName:', user.lastName);
@@ -122,6 +144,56 @@ export default function ProfilePage() {
       });
     }
   }, [user]);
+
+  // Fetch loyalty data for guests
+  useEffect(() => {
+    const fetchLoyaltyData = async () => {
+      if (user && user.role === 'guest') {
+        const guestId = getGuestIdentifier(); // Use email as guestId
+        const userId = getUserId(); // For enrollment
+        console.log('Fetching loyalty data for guestId (email):', guestId);
+        console.log('User ID for enrollment:', userId);
+        
+        if (!guestId) {
+          console.error('No guest identifier (email) found in user object');
+          setLoyaltyData(null);
+          return;
+        }
+        
+        try {
+          const data = await loyaltyService.getMemberByGuestId(guestId);
+          console.log('Loyalty data fetched:', data);
+          setLoyaltyData(data);
+        } catch (error: any) {
+          console.error('Error fetching loyalty data:', error);
+          console.error('Error message:', error.message);
+          // Set loyaltyData to null to show enrollment card
+          setLoyaltyData(null);
+        }
+      }
+    };
+
+    fetchLoyaltyData();
+  }, [user]);
+
+  const handleRedeemClick = () => {
+    setShowRewardsModal(true);
+  };
+
+  const handleRedemptionSuccess = async () => {
+    // Refresh loyalty data after successful redemption
+    if (user && user.role === 'guest') {
+      const guestId = getGuestIdentifier();
+      if (!guestId) return;
+      
+      try {
+        const data = await loyaltyService.getMemberByGuestId(guestId);
+        setLoyaltyData(data);
+      } catch (error) {
+        console.error('Error refreshing loyalty data:', error);
+      }
+    }
+  };
 
   const handleInputChange = (field: string, value: string) => {
     if (field.includes('.')) {
@@ -805,8 +877,109 @@ export default function ProfilePage() {
               </Card>
             </div>
           </div>
+
+          {/* Loyalty Rewards Section - Only for Guests */}
+          {user && user.role === 'guest' && (
+            <div className="mt-8">
+              {loyaltyData ? (
+                <LoyaltyRewards
+                  points={loyaltyData.points || 0}
+                  tier={loyaltyData.tier || 'Silver'}
+                  onRedeemClick={handleRedeemClick}
+                  userId={getGuestIdentifier()}
+                  onRedemptionSuccess={handleRedemptionSuccess}
+                />
+              ) : (
+                <Card>
+                  <CardContent className="p-8 text-center">
+                    <div className="flex flex-col items-center space-y-4">
+                      <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                        <Gift className="w-8 h-8 text-blue-600" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                          Join Our Loyalty Program
+                        </h3>
+                        <p className="text-gray-600 mb-4">
+                          Earn points on every booking and redeem them for amazing rewards!
+                        </p>
+                      </div>
+                      <Button
+                        onClick={async () => {
+                          try {
+                            setLoading(true);
+                            const userId = getUserId(); // For enrollment API
+                            const guestId = getGuestIdentifier(); // For lookup API (email)
+                            
+                            if (!userId || !guestId) {
+                              toast({
+                                title: 'Error',
+                                description: 'User information incomplete. Please try logging in again.',
+                                variant: 'destructive'
+                              });
+                              return;
+                            }
+                            
+                            // Try to fetch existing loyalty data first (using email)
+                            try {
+                              const existingData = await loyaltyService.getMemberByGuestId(guestId);
+                              console.log('User already enrolled:', existingData);
+                              setLoyaltyData(existingData);
+                              toast({
+                                title: 'Already Enrolled!',
+                                description: 'You are already part of our loyalty program.',
+                              });
+                              return;
+                            } catch (fetchError) {
+                              // User not enrolled, continue with enrollment
+                              console.log('User not enrolled, proceeding with enrollment');
+                            }
+                            
+                            // Enroll the user (using userId for enrollment)
+                            await loyaltyService.enrollGuest(userId, 0);
+                            // Fetch loyalty data (using email for lookup)
+                            const data = await loyaltyService.getMemberByGuestId(guestId);
+                            setLoyaltyData(data);
+                            toast({
+                              title: 'Success!',
+                              description: 'You have been enrolled in our loyalty program.',
+                            });
+                          } catch (error: any) {
+                            console.error('Error enrolling:', error);
+                            toast({
+                              title: 'Error',
+                              description: error.message || 'Failed to enroll in loyalty program',
+                              variant: 'destructive'
+                            });
+                          } finally {
+                            setLoading(false);
+                          }
+                        }}
+                        className="bg-hms-primary hover:bg-hms-primary/90"
+                        disabled={loading}
+                      >
+                        {loading ? 'Enrolling...' : 'Enroll Now - It\'s Free!'}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          )}
         </div>
       </section>
+
+      {/* Rewards Catalog Modal */}
+      {user && user.role === 'guest' && loyaltyData && getGuestIdentifier() && (
+        <RewardsCatalogModal
+          isOpen={showRewardsModal}
+          onClose={() => setShowRewardsModal(false)}
+          userPoints={loyaltyData.points || 0}
+          userTier={loyaltyData.tier || 'Silver'}
+          userId={getGuestIdentifier()!}
+          onRedemptionSuccess={handleRedemptionSuccess}
+        />
+      )}
 
       {/* Conditional Footer - only show for guest users */}
       {!showBackButton && <Footer />}

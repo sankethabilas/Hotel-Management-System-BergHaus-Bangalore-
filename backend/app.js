@@ -16,6 +16,8 @@ const feedbackRoutes = require("./routes/feedback");
 const contactRoutes = require("./routes/contact");
 const inventoryRoutes = require("./routes/inventoryRoutes");
 const staffRequestRoutes = require("./routes/staffRequestRoutes");
+const crmReportsRoutes = require("./routes/crmReports");
+const crmReportsTestRoutes = require("./routes/crmReportsTest");
 
 const app = express();
 
@@ -40,6 +42,8 @@ app.use("/api/feedback", feedbackRoutes);
 app.use("/api/contact", contactRoutes);
 app.use("/api/inventory", inventoryRoutes);
 app.use("/api/staff-requests", staffRequestRoutes);
+app.use("/api/crm-reports", crmReportsRoutes);
+app.use("/api/crm-test", crmReportsTestRoutes); // Test routes without auth
 // Temporarily disabled: app.use("/api/attendance", attendanceRoutes);
 
 

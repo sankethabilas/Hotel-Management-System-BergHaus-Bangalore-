@@ -172,11 +172,15 @@ export default function FrontdeskDashboard() {
 
       // Fetch bookings with retry logic
       try {
+        // Get auth token
+        const token = localStorage.getItem('adminToken') || localStorage.getItem('staffToken') || localStorage.getItem('authToken');
+        
         const bookingsResponse = await retryApiCall(() => 
           fetch('/api/bookings?limit=20&page=1', {
             credentials: 'include',
             headers: {
-              'Content-Type': 'application/json'
+              'Content-Type': 'application/json',
+              ...(token ? { 'Authorization': `Bearer ${token}` } : {})
             }
           })
         );
