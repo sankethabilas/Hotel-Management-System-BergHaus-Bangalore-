@@ -713,6 +713,296 @@ const sendEmail = async (emailData) => {
   }
 };
 
+// Send reservation confirmation email
+const sendReservationConfirmation = async (reservation) => {
+  try {
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+      console.log('Email not configured - reservation confirmation would be sent to:', reservation.guestEmail);
+      console.log('Reservation ID:', reservation.reservationId);
+      return;
+    }
+
+    const checkInDate = new Date(reservation.checkInDate).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+    const checkOutDate = new Date(reservation.checkOutDate).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER || 'noreply@hms.com',
+      to: reservation.guestEmail,
+      subject: `Reservation Confirmation - ${reservation.reservationId}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: linear-gradient(135deg, #006bb8, #004d82); color: white; padding: 20px; text-align: center;">
+            <h1>Berghaus Bungalow</h1>
+            <h2>Reservation Confirmed</h2>
+          </div>
+          <div style="padding: 30px; background: #f8f9fa;">
+            <h3 style="color: #333; margin-bottom: 20px;">Dear ${reservation.guestName},</h3>
+            <p style="color: #666; line-height: 1.6;">Thank you for choosing Berghaus Bungalow! Your reservation has been confirmed.</p>
+            
+            <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+              <h4 style="color: #333; margin-bottom: 15px;">Reservation Details</h4>
+              <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                  <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold;">Reservation ID:</td>
+                  <td style="padding: 8px 0; border-bottom: 1px solid #eee;">${reservation.reservationId}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold;">Check-in:</td>
+                  <td style="padding: 8px 0; border-bottom: 1px solid #eee;">${checkInDate}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold;">Check-out:</td>
+                  <td style="padding: 8px 0; border-bottom: 1px solid #eee;">${checkOutDate}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold;">Room(s):</td>
+                  <td style="padding: 8px 0; border-bottom: 1px solid #eee;">${reservation.rooms.map(room => `${room.roomNumber} (${room.roomType})`).join(', ')}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold;">Guests:</td>
+                  <td style="padding: 8px 0; border-bottom: 1px solid #eee;">${reservation.guestCount.adults} adults, ${reservation.guestCount.children} children</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; font-weight: bold;">Total Amount:</td>
+                  <td style="padding: 8px 0; font-size: 18px; color: #006bb8; font-weight: bold;">$${reservation.totalPrice.toLocaleString()}</td>
+                </tr>
+              </table>
+            </div>
+
+            ${reservation.specialRequests ? `
+              <div style="background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                <h4 style="color: #1976d2; margin-bottom: 10px;">Special Requests</h4>
+                <p style="color: #666; margin: 0;">${reservation.specialRequests}</p>
+              </div>
+            ` : ''}
+
+            <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ffc107;">
+              <h4 style="color: #856404; margin-bottom: 10px;">Important Information</h4>
+              <ul style="color: #856404; margin: 0; padding-left: 20px;">
+                <li>Check-in time: 2:00 PM</li>
+                <li>Check-out time: 11:00 AM</li>
+                <li>Please bring a valid ID for check-in</li>
+                <li>Contact us if you need to modify your reservation</li>
+              </ul>
+            </div>
+
+            <p style="color: #666; line-height: 1.6;">We look forward to welcoming you to Berghaus Bungalow!</p>
+            <p style="color: #666; line-height: 1.6;">If you have any questions, please don't hesitate to contact us.</p>
+          </div>
+          <div style="background: #333; color: white; padding: 20px; text-align: center;">
+            <p style="margin: 0;">Berghaus Bungalow | Contact: +94 XX XXX XXXX | Email: info@berghaus.com</p>
+          </div>
+        </div>
+      `
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log('Reservation confirmation email sent to:', reservation.guestEmail);
+  } catch (error) {
+    console.error('Failed to send reservation confirmation email:', error);
+    throw error;
+  }
+};
+
+// Send reservation cancellation email
+const sendCancellationEmail = async (reservation, reason) => {
+  try {
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+      console.log('Email not configured - cancellation email would be sent to:', reservation.guestEmail);
+      console.log('Reservation ID:', reservation.reservationId);
+      return;
+    }
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER || 'noreply@hms.com',
+      to: reservation.guestEmail,
+      subject: `Reservation Cancelled - ${reservation.reservationId}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: linear-gradient(135deg, #dc3545, #c82333); color: white; padding: 20px; text-align: center;">
+            <h1>Berghaus Bungalow</h1>
+            <h2>Reservation Cancelled</h2>
+          </div>
+          <div style="padding: 30px; background: #f8f9fa;">
+            <h3 style="color: #333; margin-bottom: 20px;">Dear ${reservation.guestName},</h3>
+            <p style="color: #666; line-height: 1.6;">We regret to inform you that your reservation has been cancelled.</p>
+            
+            <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+              <h4 style="color: #333; margin-bottom: 15px;">Cancellation Details</h4>
+              <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                  <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold;">Reservation ID:</td>
+                  <td style="padding: 8px 0; border-bottom: 1px solid #eee;">${reservation.reservationId}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold;">Reason:</td>
+                  <td style="padding: 8px 0; border-bottom: 1px solid #eee;">${reason}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold;">Cancelled on:</td>
+                  <td style="padding: 8px 0; border-bottom: 1px solid #eee;">${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</td>
+                </tr>
+              </table>
+            </div>
+
+            <div style="background: #f8d7da; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #dc3545;">
+              <h4 style="color: #721c24; margin-bottom: 10px;">Refund Information</h4>
+              <p style="color: #721c24; margin: 0;">If you are eligible for a refund, it will be processed within 5-7 business days.</p>
+            </div>
+
+            <p style="color: #666; line-height: 1.6;">We apologize for any inconvenience caused.</p>
+            <p style="color: #666; line-height: 1.6;">If you have any questions, please contact us.</p>
+          </div>
+          <div style="background: #333; color: white; padding: 20px; text-align: center;">
+            <p style="margin: 0;">Berghaus Bungalow | Contact: +94 XX XXX XXXX | Email: info@berghaus.com</p>
+          </div>
+        </div>
+      `
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log('Cancellation email sent to:', reservation.guestEmail);
+  } catch (error) {
+    console.error('Failed to send cancellation email:', error);
+    throw error;
+  }
+};
+
+// Send check-in reminder email
+const sendCheckInReminder = async (reservation) => {
+  try {
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+      console.log('Email not configured - check-in reminder would be sent to:', reservation.guestEmail);
+      return;
+    }
+
+    const checkInDate = new Date(reservation.checkInDate).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER || 'noreply@hms.com',
+      to: reservation.guestEmail,
+      subject: `Check-in Reminder - ${reservation.reservationId}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: linear-gradient(135deg, #28a745, #20c997); color: white; padding: 20px; text-align: center;">
+            <h1>Berghaus Bungalow</h1>
+            <h2>Check-in Reminder</h2>
+          </div>
+          <div style="padding: 30px; background: #f8f9fa;">
+            <h3 style="color: #333; margin-bottom: 20px;">Dear ${reservation.guestName},</h3>
+            <p style="color: #666; line-height: 1.6;">This is a friendly reminder that your check-in is scheduled for <strong>${checkInDate}</strong>.</p>
+            
+            <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+              <h4 style="color: #333; margin-bottom: 15px;">Check-in Information</h4>
+              <ul style="color: #666; margin: 0; padding-left: 20px;">
+                <li>Check-in time: 2:00 PM</li>
+                <li>Please bring a valid ID</li>
+                <li>Early check-in may be available upon request</li>
+                <li>Contact us if you need to modify your arrival time</li>
+              </ul>
+            </div>
+
+            <div style="background: #d1ecf1; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #17a2b8;">
+              <h4 style="color: #0c5460; margin-bottom: 10px;">What to Expect</h4>
+              <p style="color: #0c5460; margin: 0;">Our friendly staff will welcome you and assist with your check-in process. We'll provide you with room keys and any additional information you may need.</p>
+            </div>
+
+            <p style="color: #666; line-height: 1.6;">We look forward to welcoming you to Berghaus Bungalow!</p>
+          </div>
+          <div style="background: #333; color: white; padding: 20px; text-align: center;">
+            <p style="margin: 0;">Berghaus Bungalow | Contact: +94 XX XXX XXXX | Email: info@berghaus.com</p>
+          </div>
+        </div>
+      `
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log('Check-in reminder email sent to:', reservation.guestEmail);
+  } catch (error) {
+    console.error('Failed to send check-in reminder email:', error);
+    throw error;
+  }
+};
+
+// Send payment reminder email
+const sendPaymentReminder = async (reservation) => {
+  try {
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+      console.log('Email not configured - payment reminder would be sent to:', reservation.guestEmail);
+      return;
+    }
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER || 'noreply@hms.com',
+      to: reservation.guestEmail,
+      subject: `Payment Reminder - ${reservation.reservationId}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: linear-gradient(135deg, #ffc107, #e0a800); color: white; padding: 20px; text-align: center;">
+            <h1>Berghaus Bungalow</h1>
+            <h2>Payment Reminder</h2>
+          </div>
+          <div style="padding: 30px; background: #f8f9fa;">
+            <h3 style="color: #333; margin-bottom: 20px;">Dear ${reservation.guestName},</h3>
+            <p style="color: #666; line-height: 1.6;">This is a friendly reminder that payment is required for your reservation.</p>
+            
+            <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+              <h4 style="color: #333; margin-bottom: 15px;">Payment Details</h4>
+              <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                  <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold;">Reservation ID:</td>
+                  <td style="padding: 8px 0; border-bottom: 1px solid #eee;">${reservation.reservationId}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-weight: bold;">Amount Due:</td>
+                  <td style="padding: 8px 0; border-bottom: 1px solid #eee; font-size: 18px; color: #dc3545; font-weight: bold;">$${reservation.totalPrice.toLocaleString()}</td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0; font-weight: bold;">Payment Status:</td>
+                  <td style="padding: 8px 0; color: #dc3545; font-weight: bold;">${reservation.paymentStatus.toUpperCase()}</td>
+                </tr>
+              </table>
+            </div>
+
+            <div style="background: #fff3cd; padding: 15px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #ffc107;">
+              <h4 style="color: #856404; margin-bottom: 10px;">Payment Methods</h4>
+              <ul style="color: #856404; margin: 0; padding-left: 20px;">
+                <li>Cash on arrival</li>
+                <li>Bank transfer</li>
+                <li>Credit card (at the property)</li>
+              </ul>
+            </div>
+
+            <p style="color: #666; line-height: 1.6;">Please ensure payment is made before your check-in date.</p>
+            <p style="color: #666; line-height: 1.6;">If you have any questions about payment, please contact us.</p>
+          </div>
+          <div style="background: #333; color: white; padding: 20px; text-align: center;">
+            <p style="margin: 0;">Berghaus Bungalow | Contact: +94 XX XXX XXXX | Email: info@berghaus.com</p>
+          </div>
+        </div>
+      `
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log('Payment reminder email sent to:', reservation.guestEmail);
+  } catch (error) {
+    console.error('Failed to send payment reminder email:', error);
+    throw error;
+  }
+};
+
 module.exports = {
   sendEmail,
   sendWelcomeEmail,
@@ -722,5 +1012,9 @@ module.exports = {
   sendCheckinEmail,
   sendCheckoutEmailWithAttachment,
   sendPaymentStatusEmail,
-  sendBillEmail
+  sendBillEmail,
+  sendReservationConfirmation,
+  sendCancellationEmail,
+  sendCheckInReminder,
+  sendPaymentReminder
 };

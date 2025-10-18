@@ -27,6 +27,12 @@ router.get('/', reservationController.getAllReservations);
 // Get reservation statistics (admin only)
 router.get('/stats', reservationController.getReservationStats);
 
+// Get reservation analytics (admin only)
+router.get('/analytics', reservationController.getReservationAnalytics);
+
+// Check room availability (public endpoint, but requires authentication for consistency)
+router.get('/rooms/availability', validateRoomAvailability, reservationController.checkRoomAvailability);
+
 // Get reservations by guest
 router.get('/guest/:guestId', ...validateMongoId('guestId'), reservationController.getReservationsByGuest);
 
@@ -42,7 +48,10 @@ router.put('/:id/status', ...validateMongoId('id'), validateUpdateReservationSta
 // Update payment status (admin only)
 router.put('/:id/payment', ...validateMongoId('id'), validateUpdatePaymentStatus, reservationController.updatePaymentStatus);
 
-// Check room availability (public endpoint, but requires authentication for consistency)
-router.get('/rooms/availability', validateRoomAvailability, reservationController.checkRoomAvailability);
+// Update reservation (admin only)
+router.put('/:id', ...validateMongoId('id'), reservationController.updateReservation);
+
+// Delete reservation (admin only)
+router.delete('/:id', ...validateMongoId('id'), reservationController.deleteReservation);
 
 module.exports = router;

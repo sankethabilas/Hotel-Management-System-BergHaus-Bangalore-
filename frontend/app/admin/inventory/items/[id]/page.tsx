@@ -5,7 +5,8 @@ import { getItem } from "../../../../../lib/inventoryApi";
 import Link from "next/link";
 
 export default function ItemOverview() {
-  const { id } = useParams();
+  const params = useParams();
+  const id = params?.id as string;
   const [item, setItem] = useState<any>(null);
   const [isSupplierExpanded, setIsSupplierExpanded] = useState(false);
   const [showEmailModal, setShowEmailModal] = useState(false);

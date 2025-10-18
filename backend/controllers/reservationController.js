@@ -111,8 +111,12 @@ class ReservationController {
    */
   async getAllReservations(req, res) {
     try {
+      console.log('🔍 getAllReservations called by user:', req.user?.email, 'role:', req.user?.role);
+      console.log('📋 Query params:', req.query);
+      
       // Check if user is admin
       if (req.user.role !== 'admin') {
+        console.log('❌ Access denied - user is not admin');
         return res.status(403).json({
           success: false,
           message: 'Access denied. Admin privileges required.'
@@ -120,7 +124,10 @@ class ReservationController {
       }
       
       const filters = req.query;
+      console.log('🔧 Calling reservationService.getAllReservations with filters:', filters);
+      
       const reservations = await reservationService.getAllReservations(filters);
+      console.log('📊 Service returned:', reservations);
       
       res.json({
         success: true,
@@ -280,15 +287,20 @@ class ReservationController {
    */
   async getReservationStats(req, res) {
     try {
+      console.log('📊 getReservationStats called by user:', req.user?.email, 'role:', req.user?.role);
+      
       // Check if user is admin
       if (req.user.role !== 'admin') {
+        console.log('❌ Access denied - user is not admin');
         return res.status(403).json({
           success: false,
           message: 'Access denied. Admin privileges required.'
         });
       }
       
+      console.log('🔧 Calling reservationService.getReservationStats');
       const stats = await reservationService.getReservationStats();
+      console.log('📈 Stats data:', stats);
       
       res.json({
         success: true,
@@ -299,6 +311,104 @@ class ReservationController {
       res.status(500).json({
         success: false,
         message: 'Failed to get reservation statistics'
+      });
+    }
+  }
+
+  /**
+   * Get reservation analytics
+   * GET /reservations/analytics
+   */
+  async getReservationAnalytics(req, res) {
+    try {
+      // Check if user is admin
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied. Admin privileges required.'
+        });
+      }
+      
+      const { period = 'month', startDate, endDate } = req.query;
+      const analytics = await reservationService.getReservationAnalytics({
+        period,
+        startDate,
+        endDate
+      });
+      
+      res.json({
+        success: true,
+        data: analytics
+      });
+    } catch (error) {
+      console.error('Error getting reservation analytics:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to get reservation analytics'
+      });
+    }
+  }
+
+  /**
+   * Update reservation
+   * PUT /reservations/:id
+   */
+  async updateReservation(req, res) {
+    try {
+      // Check if user is admin
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied. Admin privileges required.'
+        });
+      }
+      
+      const { id } = req.params;
+      const updateData = req.body;
+      
+      const reservation = await reservationService.updateReservation(id, updateData);
+      
+      res.json({
+        success: true,
+        message: 'Reservation updated successfully',
+        data: reservation
+      });
+    } catch (error) {
+      console.error('Error updating reservation:', error);
+      res.status(400).json({
+        success: false,
+        message: error.message || 'Failed to update reservation'
+      });
+    }
+  }
+
+  /**
+   * Delete reservation
+   * DELETE /reservations/:id
+   */
+  async deleteReservation(req, res) {
+    try {
+      // Check if user is admin
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({
+          success: false,
+          message: 'Access denied. Admin privileges required.'
+        });
+      }
+      
+      const { id } = req.params;
+      
+      await reservationService.deleteReservation(id);
+      
+      res.json({
+        success: true,
+        message: 'Reservation deleted successfully'
+      });
+    } catch (error) {
+      console.error('Error deleting reservation:', error);
+      res.status(400).json({
+        success: false,
+        message: error.message || 'Failed to delete reservation'
       });
     }
   }

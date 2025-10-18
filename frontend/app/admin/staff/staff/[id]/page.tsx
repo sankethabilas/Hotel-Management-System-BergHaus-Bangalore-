@@ -52,7 +52,7 @@ export default function StaffDetailPage() {
     if (confirm('Are you sure you want to delete this staff member?')) {
       try {
         if (params?.id) {
-          await staffAPI.deleteStaff(params.id);
+          await staffAPI.deleteStaff(params.id as string);
           router.push('/admin/staff');
         }
       } catch (error) {

@@ -23,7 +23,7 @@ import {
   EyeOff,
   RefreshCw
 } from 'lucide-react';
-import { CreateUserData, UserRole, UserDepartment } from '@/types';
+import { CreateUserData, UserRole, UserDepartment } from '@/types/index';
 import Link from 'next/link';
 
 export default function AddUserPage() {

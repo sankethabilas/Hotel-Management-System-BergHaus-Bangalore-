@@ -30,7 +30,7 @@ import {
   Download,
   RefreshCw
 } from 'lucide-react';
-import { User, UserManagementFilters } from '@/types';
+import { User, UserManagementFilters } from '@/types/index';
 import { getProfileImageUrl, getUserInitials } from '@/utils/profileImage';
 import Link from 'next/link';
 
@@ -66,9 +66,9 @@ export default function AllUsersPage() {
       if (filters.page) queryParams.append('page', filters.page.toString());
       if (filters.limit) queryParams.append('limit', filters.limit.toString());
       if (filters.search) queryParams.append('search', filters.search);
-      if (filters.role && filters.role !== 'all') queryParams.append('role', filters.role);
-      if (filters.department && filters.department !== 'all') queryParams.append('department', filters.department);
-      if (filters.status && filters.status !== 'all') {
+      if (filters.role && filters.role !== 'all' as any) queryParams.append('role', filters.role);
+      if (filters.department && filters.department !== 'all' as any) queryParams.append('department', filters.department);
+      if (filters.status && filters.status !== 'all' as any) {
         if (filters.status === 'active') queryParams.append('isActive', 'true');
         if (filters.status === 'inactive') queryParams.append('isActive', 'false');
         if (filters.status === 'banned') queryParams.append('isBanned', 'true');

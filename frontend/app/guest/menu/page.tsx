@@ -7,7 +7,7 @@ import Link from 'next/link'
 import Layout from '@/components/layout/Layout'
 import { formatCurrency } from '@/utils/currency'
 import { Search, Filter, ShoppingCart, Star, Clock, IndianRupee } from 'lucide-react'
-import { menuAPI, MenuItem } from '@/services/api'
+import api, { MenuItem } from '@/services/api'
 import { useCart } from '@/contexts/CartContext'
 import OrderCustomization from '@/components/OrderCustomization'
 import PromotionBanner from '@/components/PromotionBanner'
@@ -56,7 +56,7 @@ export default function MenuPage() {
         setLoading(true)
         setError(null)
         
-        const response = await menuAPI.getMenuItems()
+        const response = await api.getMenuItems()
         
         if (response.success && response.data) {
           setMenuItems(response.data)

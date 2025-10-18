@@ -20,7 +20,7 @@ import {
   RefreshCw,
   Download
 } from 'lucide-react';
-import { UserAnalytics } from '@/types';
+import { UserAnalytics } from '@/types/index';
 import { useUserAnalytics } from '@/hooks/useUserManagement';
 import LineChartComponent from '@/components/admin/LineChartComponent';
 
@@ -211,7 +211,7 @@ export default function UserAnalyticsPage() {
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Growth</p>
                 <p className="text-3xl font-bold text-gray-900">
-                  {analytics?.userGrowth?.reduce((sum, item) => sum + item.count, 0) || 0}
+                  {analytics?.userGrowth?.reduce((sum: number, item: any) => sum + item.count, 0) || 0}
                 </p>
                 <p className="text-xs text-gray-500 mt-1">New users in period</p>
               </div>
@@ -228,7 +228,7 @@ export default function UserAnalyticsPage() {
               <div>
                 <p className="text-sm font-medium text-gray-600">Login Trends</p>
                 <p className="text-3xl font-bold text-gray-900">
-                  {analytics?.loginTrends?.reduce((sum, item) => sum + item.count, 0) || 0}
+                  {analytics?.loginTrends?.reduce((sum: number, item: any) => sum + item.count, 0) || 0}
                 </p>
                 <p className="text-xs text-gray-500 mt-1">Login activities</p>
               </div>
@@ -285,7 +285,7 @@ export default function UserAnalyticsPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {analytics.roleDistribution.map((role, index) => (
+              {analytics.roleDistribution.map((role: any, index: number) => (
                 <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                   <div className="flex items-center space-x-3">
                     <div className="w-3 h-3 rounded-full bg-blue-500"></div>
@@ -297,7 +297,7 @@ export default function UserAnalyticsPage() {
                       <div 
                         className="bg-blue-500 h-2 rounded-full" 
                         style={{ 
-                          width: `${(role.count / Math.max(...analytics.roleDistribution.map(r => r.count))) * 100}%` 
+                          width: `${(role.count / Math.max(...analytics.roleDistribution.map((r: any) => r.count))) * 100}%` 
                         }}
                       ></div>
                     </div>
@@ -318,7 +318,7 @@ export default function UserAnalyticsPage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {analytics.departmentDistribution.map((dept, index) => (
+              {analytics.departmentDistribution.map((dept: any, index: number) => (
                 <div key={index} className="p-4 bg-gray-50 rounded-lg">
                   <div className="flex items-center justify-between">
                     <div>
@@ -372,7 +372,7 @@ export default function UserAnalyticsPage() {
               <h3 className="font-semibold text-gray-900">Growth Rate</h3>
               <p className="text-2xl font-bold text-green-600">
                 {analytics?.userGrowth?.length ? 
-                  `${Math.round((analytics.userGrowth.reduce((sum, item) => sum + item.count, 0) / analytics.userGrowth.length) * 100) / 100}` : 
+                  `${Math.round((analytics.userGrowth.reduce((sum: number, item: any) => sum + item.count, 0) / analytics.userGrowth.length) * 100) / 100}` : 
                   '0'
                 } users/day
               </p>

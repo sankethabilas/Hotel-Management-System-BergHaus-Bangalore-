@@ -135,6 +135,36 @@ const CRM_MANAGEMENT_ITEMS: DropdownItem[] = [
   { href: "/admin/crm/reports", label: "Reports" },
 ];
 
+const RESERVATION_MANAGEMENT_ITEMS: DropdownItem[] = [
+  { 
+    href: "/admin/reservations", 
+    label: "All Reservations",
+    icon: (
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+      </svg>
+    )
+  },
+  { 
+    href: "/admin/reservations/calendar", 
+    label: "Booking Calendar",
+    icon: (
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+      </svg>
+    )
+  },
+  { 
+    href: "/admin/reservations/analytics", 
+    label: "Analytics & Reports",
+    icon: (
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 8v8m-4-5v5m-4-2v2m-2 4h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+      </svg>
+    )
+  },
+];
+
 const AdminSidebar = memo(function AdminSidebar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
@@ -143,6 +173,7 @@ const AdminSidebar = memo(function AdminSidebar() {
   const [isInventoryDropdownOpen, setIsInventoryDropdownOpen] = useState(false);
   const [isUserManagementDropdownOpen, setIsUserManagementDropdownOpen] = useState(false);
   const [isCrmDropdownOpen, setIsCrmDropdownOpen] = useState(false);
+  const [isReservationDropdownOpen, setIsReservationDropdownOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const handleLogout = async () => {
@@ -564,6 +595,62 @@ const AdminSidebar = memo(function AdminSidebar() {
                         ) : (
                           <span className="inline-flex h-2 w-2 rounded-full"
                             style={{ backgroundColor: isActive ? "#ffc973" : "#fee3b3" }}
+                          />
+                        )}
+                        <span>{item.label}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Reservation Management Dropdown */}
+            <div className="space-y-1">
+              <button
+                onClick={() => setIsReservationDropdownOpen(!isReservationDropdownOpen)}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                  pathname === '/admin/reservations' || pathname?.startsWith('/admin/reservations')
+                    ? "bg-white/20 text-white" 
+                    : "text-white/90 hover:bg-white/10 hover:text-white"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <span className="inline-flex h-2.5 w-2.5 rounded-full"
+                    style={{ backgroundColor: (pathname === '/admin/reservations' || pathname?.startsWith('/admin/reservations')) ? "#3b82f6" : "#93c5fd" }}
+                  />
+                  <span>Reservation Management</span>
+                </div>
+                <svg
+                  className={`w-4 h-4 transition-transform ${isReservationDropdownOpen ? "rotate-180" : ""}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {isReservationDropdownOpen && (
+                <div className="ml-6 space-y-1">
+                  {RESERVATION_MANAGEMENT_ITEMS.map((item) => {
+                    const isActive = pathname === item.href || pathname?.startsWith(item.href);
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                          isActive 
+                            ? "bg-white/20 text-white" 
+                            : "text-white/80 hover:bg-white/10 hover:text-white"
+                        }`}
+                      >
+                        {item.icon ? (
+                          <span className="flex-shrink-0">
+                            {item.icon}
+                          </span>
+                        ) : (
+                          <span className="inline-flex h-2 w-2 rounded-full"
+                            style={{ backgroundColor: isActive ? "#3b82f6" : "#93c5fd" }}
                           />
                         )}
                         <span>{item.label}</span>

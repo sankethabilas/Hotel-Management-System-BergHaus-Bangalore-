@@ -14,6 +14,7 @@ import { EnhancedRoomCard } from '@/components/enhanced-room-card';
 import FacilityCard, { iconMap } from '@/components/facility-card';
 import ReviewCarousel from '@/components/review-carousel';
 import FeedbackShowcase from '@/components/feedback-showcase';
+import Chatbot from '@/components/chatbot/Chatbot';
 import { useAuth } from '@/contexts/AuthContext';
 import { roomAPI } from '@/lib/api';
 import { getRoomImages, getRoomPrimaryImage, getAllRoomImages, getRandomRoomImageWithSeed } from '@/lib/roomImageUtils';
@@ -626,6 +627,9 @@ export default function HomePage() {
       </section>
 
       <Footer />
+      
+      {/* Chatbot */}
+      <Chatbot />
     </div>
   );
 }

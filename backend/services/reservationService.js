@@ -131,7 +131,7 @@ class ReservationService {
   /**
    * Get all reservations with filters
    * @param {Object} filters - Filter options
-   * @returns {Promise<Array>} List of reservations
+   * @returns {Promise<Object>} Paginated reservations data
    */
   async getAllReservations(filters = {}) {
     const query = {};
@@ -145,15 +145,52 @@ class ReservationService {
     }
     
     if (filters.roomType) {
-      query['roomId.roomType'] = filters.roomType;
+      query['rooms.roomType'] = filters.roomType;
     }
     
-    const reservations = await Reservation.find(query)
-      .populate('guestId', 'firstName lastName email phone')
-      .populate('roomId', 'roomNumber roomType pricePerNight')
-      .sort({ createdAt: -1 });
+    if (filters.startDate && filters.endDate) {
+      query.checkInDate = {
+        $gte: new Date(filters.startDate),
+        $lte: new Date(filters.endDate)
+      };
+    }
     
-    return reservations;
+    if (filters.search) {
+      query.$or = [
+        { guestName: { $regex: filters.search, $options: 'i' } },
+        { guestEmail: { $regex: filters.search, $options: 'i' } },
+        { reservationId: { $regex: filters.search, $options: 'i' } }
+      ];
+    }
+    
+    // Pagination
+    const page = parseInt(filters.page) || 1;
+    const limit = parseInt(filters.limit) || 10;
+    const skip = (page - 1) * limit;
+    
+    console.log('🔍 getAllReservations query:', query);
+    console.log('📄 Pagination - page:', page, 'limit:', limit, 'skip:', skip);
+    
+    const [reservations, total] = await Promise.all([
+      Reservation.find(query)
+        .populate('guestId', 'firstName lastName email phone')
+        .populate('rooms.roomId', 'roomNumber roomType pricePerNight')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      Reservation.countDocuments(query)
+    ]);
+    
+    const pages = Math.ceil(total / limit);
+    
+    console.log('📊 Found reservations:', reservations.length, 'total:', total, 'pages:', pages);
+    
+    return {
+      reservations,
+      total,
+      page,
+      pages
+    };
   }
   
   /**
@@ -312,6 +349,10 @@ class ReservationService {
    * @returns {Promise<Object>} Reservation statistics
    */
   async getReservationStats() {
+    const now = new Date();
+    const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
     const stats = await Reservation.aggregate([
       {
         $group: {
@@ -333,8 +374,23 @@ class ReservationService {
         }
       }
     ]);
+
+    // Get additional stats
+    const upcomingCheckIns = await Reservation.countDocuments({
+      status: 'confirmed',
+      checkInDate: { $gte: now, $lte: sevenDaysFromNow }
+    });
+
+    const ongoingStays = await Reservation.countDocuments({
+      status: 'checked-in'
+    });
+
+    const checkedOutGuests = await Reservation.countDocuments({
+      status: 'checked-out',
+      checkOutDate: { $gte: thirtyDaysAgo }
+    });
     
-    return stats[0] || {
+    const baseStats = stats[0] || {
       totalReservations: 0,
       totalRevenue: 0,
       pendingReservations: 0,
@@ -342,6 +398,140 @@ class ReservationService {
       cancelledReservations: 0,
       paidReservations: 0
     };
+
+    return {
+      ...baseStats,
+      upcomingCheckIns,
+      ongoingStays,
+      checkedOutGuests
+    };
+  }
+
+  /**
+   * Get reservation analytics
+   * @param {Object} options - Analytics options
+   * @returns {Promise<Object>} Analytics data
+   */
+  async getReservationAnalytics(options = {}) {
+    const { period = 'month', startDate, endDate } = options;
+    
+    let dateFilter = {};
+    if (startDate && endDate) {
+      dateFilter = {
+        createdAt: {
+          $gte: new Date(startDate),
+          $lte: new Date(endDate)
+        }
+      };
+    } else {
+      const now = new Date();
+      let daysBack = 30; // Default to 30 days
+      
+      switch (period) {
+        case 'week':
+          daysBack = 7;
+          break;
+        case 'month':
+          daysBack = 30;
+          break;
+        case 'quarter':
+          daysBack = 90;
+          break;
+        case 'year':
+          daysBack = 365;
+          break;
+      }
+      
+      dateFilter = {
+        createdAt: {
+          $gte: new Date(now.getTime() - daysBack * 24 * 60 * 60 * 1000)
+        }
+      };
+    }
+
+    const analytics = await Reservation.aggregate([
+      { $match: dateFilter },
+      {
+        $group: {
+          _id: {
+            $dateToString: {
+              format: period === 'day' ? '%Y-%m-%d' : 
+                     period === 'week' ? '%Y-%U' : 
+                     period === 'month' ? '%Y-%m' : '%Y',
+              date: '$createdAt'
+            }
+          },
+          bookings: { $sum: 1 },
+          revenue: { $sum: '$totalPrice' },
+          cancellations: {
+            $sum: { $cond: [{ $eq: ['$status', 'cancelled'] }, 1, 0] }
+          }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]);
+
+    return {
+      bookings: analytics,
+      period,
+      dateRange: { startDate, endDate }
+    };
+  }
+
+  /**
+   * Update reservation
+   * @param {string} reservationId - Reservation ID
+   * @param {Object} updateData - Update data
+   * @returns {Promise<Object>} Updated reservation
+   */
+  async updateReservation(reservationId, updateData) {
+    const reservation = await Reservation.findById(reservationId);
+    if (!reservation) {
+      throw new Error('Reservation not found');
+    }
+
+    // Check for overlapping reservations if dates or room are being changed
+    if (updateData.checkInDate || updateData.checkOutDate || updateData.roomId) {
+      const checkIn = updateData.checkInDate || reservation.checkInDate;
+      const checkOut = updateData.checkOutDate || reservation.checkOutDate;
+      const roomId = updateData.roomId || reservation.roomId;
+
+      const overlapping = await Reservation.findOverlappingReservations(
+        roomId, checkIn, checkOut, reservationId
+      );
+
+      if (overlapping.length > 0) {
+        throw new Error('Room is not available for the selected dates');
+      }
+    }
+
+    const updatedReservation = await Reservation.findByIdAndUpdate(
+      reservationId,
+      updateData,
+      { new: true, runValidators: true }
+    ).populate('guestId', 'fullName email phone')
+     .populate('roomId', 'roomNumber roomType price');
+
+    return updatedReservation;
+  }
+
+  /**
+   * Delete reservation
+   * @param {string} reservationId - Reservation ID
+   * @returns {Promise<void>}
+   */
+  async deleteReservation(reservationId) {
+    const reservation = await Reservation.findById(reservationId);
+    if (!reservation) {
+      throw new Error('Reservation not found');
+    }
+
+    // Only allow deletion of pending or cancelled reservations
+    if (reservation.status === 'confirmed' || reservation.status === 'checked-in') {
+      throw new Error('Cannot delete confirmed or active reservations');
+    }
+
+    await Reservation.findByIdAndDelete(reservationId);
   }
 }
 
