@@ -53,7 +53,11 @@ const StaffMenuManagement: React.FC = () => {
     calories: '',
     isPopular: false,
     discount: 0,
-    tags: ''
+    tags: '',
+    // Portion pricing
+    portionPricingSmall: '',
+    portionPricingRegular: '0',
+    portionPricingLarge: ''
   });
 
   useEffect(() => {
@@ -133,7 +137,11 @@ const StaffMenuManagement: React.FC = () => {
       calories: '',
       isPopular: false,
       discount: 0,
-      tags: ''
+      tags: '',
+      // Portion pricing
+      portionPricingSmall: '',
+      portionPricingRegular: '0',
+      portionPricingLarge: ''
     });
     setEditingItem(null);
     setShowAddForm(false);
@@ -157,6 +165,11 @@ const StaffMenuManagement: React.FC = () => {
         availableHours: {
           start: formData.availableHoursStart,
           end: formData.availableHoursEnd
+        },
+        portionPricing: {
+          small: parseFloat(formData.portionPricingSmall) || 0,
+          regular: parseFloat(formData.portionPricingRegular) || 0,
+          large: parseFloat(formData.portionPricingLarge) || 0
         }
       };
 
@@ -218,7 +231,11 @@ const StaffMenuManagement: React.FC = () => {
       calories: item.calories?.toString() || '',
       isPopular: item.isPopular,
       discount: item.discount,
-      tags: item.tags?.join(', ') || ''
+      tags: item.tags?.join(', ') || '',
+      // Portion pricing
+      portionPricingSmall: (item as any).portionPricing?.small?.toString() || '',
+      portionPricingRegular: (item as any).portionPricing?.regular?.toString() || '0',
+      portionPricingLarge: (item as any).portionPricing?.large?.toString() || ''
     });
     setEditingItem(item);
     setShowAddForm(true);
@@ -394,6 +411,53 @@ const StaffMenuManagement: React.FC = () => {
                   <img src={`http://localhost:5000${formData.image}`} alt="Preview" className="w-32 h-32 object-cover rounded-md" />
                 </div>
               )}
+            </div>
+
+            {/* Portion Pricing */}
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h4 className="text-lg font-medium text-gray-900 mb-4">Portion Size Pricing</h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Small Portion (Rs)</label>
+                  <input
+                    type="number"
+                    name="portionPricingSmall"
+                    value={formData.portionPricingSmall}
+                    onChange={handleInputChange}
+                    step="0.01"
+                    placeholder="e.g., -50 (discount)"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Negative value = discount from base price</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Regular Portion (Rs)</label>
+                  <input
+                    type="number"
+                    name="portionPricingRegular"
+                    value={formData.portionPricingRegular}
+                    onChange={handleInputChange}
+                    min="0"
+                    step="0.01"
+                    placeholder="0 (base price)"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Base price (usually 0)</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Large Portion (Rs)</label>
+                  <input
+                    type="number"
+                    name="portionPricingLarge"
+                    value={formData.portionPricingLarge}
+                    onChange={handleInputChange}
+                    step="0.01"
+                    placeholder="e.g., 100 (extra charge)"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Positive value = extra charge</p>
+                </div>
+              </div>
             </div>
 
             <div className="space-y-4">

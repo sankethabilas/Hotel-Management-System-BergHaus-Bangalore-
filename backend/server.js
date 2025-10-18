@@ -3,6 +3,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const cookieParser = require('cookie-parser');
+const path = require('path');
 const connectDB = require('./config/database');
 require('dotenv').config();
 
@@ -24,10 +25,13 @@ app.use(cors({
   credentials: true
 }));
 
-// Rate limiting
+// Rate limiting - more lenient for development
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
+  max: 1000, // limit each IP to 1000 requests per windowMs (increased for development)
+  message: 'Too many requests, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 app.use(limiter);
 
@@ -39,7 +43,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 // Serve static files (uploaded images)
-app.use('/uploads', express.static('uploads'));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Import upload middleware
 const upload = require('./middleware/upload');

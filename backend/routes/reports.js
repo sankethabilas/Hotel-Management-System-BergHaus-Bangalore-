@@ -7,7 +7,7 @@ const MenuItem = require('../models/MenuItem');
 router.get('/daily-sales', async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
-    let query = { status: 'completed' };
+    let query = { status: { $in: ['completed', 'delivered'] } };
     
     if (startDate && endDate) {
       query.createdAt = {
@@ -26,7 +26,7 @@ router.get('/daily-sales', async (req, res) => {
     // Calculate summary data
     const totalRevenue = orders.reduce((sum, order) => sum + order.totalAmount, 0);
     const totalOrders = orders.length;
-    const completedOrders = orders.filter(order => order.status === 'completed').length;
+    const completedOrders = orders.filter(order => ['completed', 'delivered'].includes(order.status)).length;
     const cancelledOrders = orders.filter(order => order.status === 'cancelled').length;
     const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
     const completionRate = totalOrders > 0 ? (completedOrders / totalOrders) * 100 : 0;
@@ -184,7 +184,7 @@ router.get('/ingredient-forecast', async (req, res) => {
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     
     const recentOrders = await Order.find({
-      status: 'completed',
+      status: { $in: ['completed', 'delivered'] },
       createdAt: { $gte: thirtyDaysAgo }
     }).populate('items.menuItem');
 

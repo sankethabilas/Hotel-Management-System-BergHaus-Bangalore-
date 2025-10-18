@@ -56,7 +56,11 @@ const MenuManagement: React.FC = () => {
     calories: '',
     isPopular: false,
     discount: 0,
-    tags: ''
+    tags: '',
+    // Portion pricing
+    portionPricingSmall: '',
+    portionPricingRegular: '0',
+    portionPricingLarge: ''
   });
 
   useEffect(() => {
@@ -82,18 +86,28 @@ const MenuManagement: React.FC = () => {
   const loadMenuItems = async () => {
     try {
       setIsLoading(true);
+      setError(''); // Clear previous errors
       const token = localStorage.getItem('adminToken');
       const response = await fetch('http://localhost:5000/api/menu', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const data = await response.json();
       console.log('Menu items response:', data);
-      setMenuItems(data.data || []);
+      
+      // Ensure we always have valid menu items array
+      const items = Array.isArray(data.data) ? data.data : [];
+      setMenuItems(items);
+      
     } catch (error: any) {
       console.error('Error loading menu items:', error);
-      setError('Failed to load menu items');
+      setError('Failed to load menu items. ' + (error.message || 'Please try again.'));
       setMenuItems([]);
     } finally {
       setIsLoading(false);
@@ -157,7 +171,11 @@ const MenuManagement: React.FC = () => {
       calories: '',
       isPopular: false,
       discount: 0,
-      tags: ''
+      tags: '',
+      // Portion pricing
+      portionPricingSmall: '',
+      portionPricingRegular: '0',
+      portionPricingLarge: ''
     });
     setEditingItem(null);
     setShowAddForm(false);
@@ -189,6 +207,11 @@ const MenuManagement: React.FC = () => {
         availableHours: {
           start: formData.availableHoursStart,
           end: formData.availableHoursEnd
+        },
+        portionPricing: {
+          small: parseFloat(formData.portionPricingSmall) || 0,
+          regular: parseFloat(formData.portionPricingRegular) || 0,
+          large: parseFloat(formData.portionPricingLarge) || 0
         }
       };
 
@@ -253,7 +276,11 @@ const MenuManagement: React.FC = () => {
       calories: item.calories?.toString() || '',
       isPopular: item.isPopular,
       discount: item.discount,
-      tags: item.tags?.join(', ') || ''
+      tags: item.tags?.join(', ') || '',
+      // Portion pricing
+      portionPricingSmall: (item as any).portionPricing?.small?.toString() || '',
+      portionPricingRegular: (item as any).portionPricing?.regular?.toString() || '0',
+      portionPricingLarge: (item as any).portionPricing?.large?.toString() || ''
     });
     setEditingItem(item);
     setShowAddForm(true);
@@ -408,18 +435,94 @@ const MenuManagement: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Meal Type</label>
-                <select
-                  name="mealType"
-                  value={formData.mealType}
+                <label className="block text-sm font-medium text-gray-700 mb-1">Preparation Time (minutes) *</label>
+                <input
+                  type="number"
+                  name="preparationTime"
+                  value={formData.preparationTime}
                   onChange={handleInputChange}
+                  required
+                  min="1"
+                  placeholder="e.g., 15"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
-                >
-                  <option value="anytime">Available Anytime</option>
-                  <option value="breakfast">Breakfast Only</option>
-                  <option value="lunch">Lunch Only</option>
-                  <option value="dinner">Dinner Only</option>
-                </select>
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Image Upload</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                disabled={uploadingImage}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
+              />
+              {uploadingImage && (
+                <p className="text-sm text-blue-600 mt-2">Uploading image...</p>
+              )}
+              {formData.image && (
+                <div className="mt-3">
+                  <img 
+                    src={formData.image.startsWith('data:') ? formData.image : `http://localhost:5000${formData.image}`}
+                    alt="Preview" 
+                    className="w-32 h-32 object-cover rounded-md border-2 border-gray-200"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Portion Pricing */}
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h4 className="text-lg font-medium text-gray-900 mb-4">Portion Size Pricing</h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Small Portion (Rs)</label>
+                  <input
+                    type="number"
+                    name="portionPricingSmall"
+                    value={formData.portionPricingSmall}
+                    onChange={handleInputChange}
+                    min="0"
+                    step="0.01"
+                    placeholder="e.g., -50 (discount)"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Negative value = discount from base price</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Regular Portion (Rs)</label>
+                  <input
+                    type="number"
+                    name="portionPricingRegular"
+                    value={formData.portionPricingRegular}
+                    onChange={handleInputChange}
+                    min="0"
+                    step="0.01"
+                    placeholder="0 (base price)"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Base price (usually 0)</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Large Portion (Rs)</label>
+                  <input
+                    type="number"
+                    name="portionPricingLarge"
+                    value={formData.portionPricingLarge}
+                    onChange={handleInputChange}
+                    min="0"
+                    step="0.01"
+                    placeholder="e.g., 100 (extra charge)"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Positive value = extra charge</p>
+                </div>
+              </div>
+              <div className="mt-3 p-3 bg-blue-50 rounded-md">
+                <p className="text-sm text-blue-800">
+                  <strong>Example:</strong> If base price is Rs 500, Small (-50) = Rs 450, Regular (0) = Rs 500, Large (+100) = Rs 600
+                </p>
               </div>
             </div>
 
@@ -469,6 +572,248 @@ const MenuManagement: React.FC = () => {
         </div>
       )}
 
+      {/* Edit Item Form - Only for editing existing items */}
+      {showAddForm && editingItem && (
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <h3 className="text-lg font-semibold mb-4">Edit Menu Item</h3>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Price (Rs) *</label>
+                <input
+                  type="number"
+                  name="price"
+                  value={formData.price}
+                  onChange={handleInputChange}
+                  required
+                  min="0"
+                  step="0.01"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
+              <textarea
+                name="description"
+                value={formData.description}
+                onChange={handleInputChange}
+                required
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>
+                <select
+                  name="category"
+                  value={formData.category}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
+                >
+                  <option value="breakfast">Breakfast</option>
+                  <option value="lunch">Lunch</option>
+                  <option value="dinner">Dinner</option>
+                  <option value="beverages">Beverages</option>
+                  <option value="desserts">Desserts</option>
+                  <option value="snacks">Snacks</option>
+                  <option value="appetizers">Appetizers</option>
+                  <option value="specials">Chef's Specials</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Preparation Time (minutes) *</label>
+                <input
+                  type="number"
+                  name="preparationTime"
+                  value={formData.preparationTime}
+                  onChange={handleInputChange}
+                  required
+                  min="1"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Image Upload</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                disabled={uploadingImage}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
+              />
+              {uploadingImage && (
+                <p className="text-sm text-blue-600 mt-2">Uploading image...</p>
+              )}
+              {formData.image && (
+                <div className="mt-3">
+                  <p className="text-sm text-gray-600 mb-2">Current Image:</p>
+                  <img 
+                    src={formData.image.startsWith('data:') ? formData.image : `http://localhost:5000${formData.image}`}
+                    alt="Preview" 
+                    className="w-32 h-32 object-cover rounded-md border-2 border-gray-200"
+                  />
+                </div>
+              )}
+              {!formData.image && (
+                <p className="text-sm text-gray-500 mt-2">No image uploaded yet. Add one to make this item more appealing!</p>
+              )}
+            </div>
+
+            {/* Portion Pricing */}
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h4 className="text-lg font-medium text-gray-900 mb-4">Portion Size Pricing</h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Small Portion (Rs)</label>
+                  <input
+                    type="number"
+                    name="portionPricingSmall"
+                    value={formData.portionPricingSmall}
+                    onChange={handleInputChange}
+                    min="0"
+                    step="0.01"
+                    placeholder="e.g., -50 (discount)"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Negative value = discount from base price</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Regular Portion (Rs)</label>
+                  <input
+                    type="number"
+                    name="portionPricingRegular"
+                    value={formData.portionPricingRegular}
+                    onChange={handleInputChange}
+                    min="0"
+                    step="0.01"
+                    placeholder="0 (base price)"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Base price (usually 0)</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Large Portion (Rs)</label>
+                  <input
+                    type="number"
+                    name="portionPricingLarge"
+                    value={formData.portionPricingLarge}
+                    onChange={handleInputChange}
+                    min="0"
+                    step="0.01"
+                    placeholder="e.g., 100 (extra charge)"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Positive value = extra charge</p>
+                </div>
+              </div>
+              <div className="mt-3 p-3 bg-blue-50 rounded-md">
+                <p className="text-sm text-blue-800">
+                  <strong>Example:</strong> If base price is Rs 500, Small (-50) = Rs 450, Regular (0) = Rs 500, Large (+100) = Rs 600
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-4 mb-4">
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  name="isAvailable"
+                  checked={formData.isAvailable}
+                  onChange={handleInputChange}
+                  className="mr-2"
+                />
+                Available
+              </label>
+              <label className="flex items-center">
+                <input
+                  type="checkbox"
+                  name="isPopular"
+                  checked={formData.isPopular}
+                  onChange={handleInputChange}
+                  className="mr-2"
+                />
+                Popular
+              </label>
+            </div>
+
+            <div>
+              <h4 className="text-sm font-medium text-gray-700 mb-3">Dietary Preferences</h4>
+              <div className="flex items-center space-x-6">
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    name="isVegetarian"
+                    checked={formData.isVegetarian}
+                    onChange={handleInputChange}
+                    className="mr-2"
+                  />
+                  🥬 Vegetarian
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    name="isVegan"
+                    checked={formData.isVegan}
+                    onChange={handleInputChange}
+                    className="mr-2"
+                  />
+                  🌱 Vegan
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    name="isGlutenFree"
+                    checked={formData.isGlutenFree}
+                    onChange={handleInputChange}
+                    className="mr-2"
+                  />
+                  🌾 Gluten-Free
+                </label>
+              </div>
+            </div>
+
+            <div className="flex space-x-4">
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition duration-200 font-semibold disabled:opacity-50"
+              >
+                {isSubmitting ? 'Updating...' : 'Save Changes'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingItem(null);
+                  setShowAddForm(false);
+                  resetForm();
+                }}
+                className="bg-gray-300 text-gray-700 px-6 py-3 rounded-md hover:bg-gray-400 transition duration-200 font-semibold"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
       {/* Menu Items List */}
       {isLoading ? (
         <div className="text-center py-12">
@@ -496,21 +841,25 @@ const MenuManagement: React.FC = () => {
                         {item.image && (
                           <img 
                             src={`http://localhost:5000${item.image}`} 
-                            alt={item.name}
+                            alt={item.name || 'Menu item'}
                             className="w-12 h-12 object-cover rounded-md mr-4"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                            }}
                           />
                         )}
                         <div>
-                          <div className="text-sm font-medium text-gray-900">{item.name}</div>
-                          <div className="text-sm text-gray-500">{item.description}</div>
+                          <div className="text-sm font-medium text-gray-900">{item.name || 'Unnamed Item'}</div>
+                          <div className="text-sm text-gray-500">{item.description || 'No description'}</div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 capitalize">
-                      {item.category}
+                      {item.category || 'uncategorized'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      Rs. {item.price}
+                      Rs. {item.price || 0}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${

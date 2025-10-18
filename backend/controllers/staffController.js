@@ -273,7 +273,7 @@ const staffLogin = async (req, res) => {
         employeeId: staff.employeeId,
         role: 'staff' 
       },
-      process.env.JWT_SECRET,
+      process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production',
       { expiresIn: '24h' }
     );
 

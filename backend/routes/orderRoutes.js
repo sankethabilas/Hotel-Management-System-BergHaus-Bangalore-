@@ -197,7 +197,7 @@ router.patch('/:id/status', async (req, res) => {
     const { id } = req.params;
     const { status, notes } = req.body;
 
-    const validStatuses = ['pending', 'confirmed', 'preparing', 'ready', 'delivered', 'cancelled'];
+    const validStatuses = ['pending', 'confirmed', 'preparing', 'ready', 'delivered', 'completed', 'cancelled'];
     if (!validStatuses.includes(status)) {
       return res.status(400).json({
         success: false,
@@ -366,6 +366,62 @@ router.put('/:id/cancel', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to cancel order',
+      error: error.message
+    });
+  }
+});
+
+// Get orders by customer email (for guest orders page)
+router.get('/customer/:email', async (req, res) => {
+  try {
+    const { email } = req.params;
+    const { status, paymentStatus, page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'desc' } = req.query;
+    
+    // Build filter object
+    const filter = {
+      'customerInfo.email': email
+    };
+    
+    if (status) {
+      filter.status = status;
+    }
+    
+    if (paymentStatus) {
+      filter.paymentStatus = paymentStatus;
+    }
+
+    // Build sort object
+    const sort = {};
+    sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
+
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    const orders = await Order.find(filter)
+      .populate('items.menuItem', 'name price image')
+      .populate('assignedTo', 'fullName username')
+      .populate('createdBy', 'fullName username')
+      .sort(sort)
+      .skip(skip)
+      .limit(parseInt(limit))
+      .lean();
+
+    const total = await Order.countDocuments(filter);
+
+    res.json({
+      success: true,
+      data: orders,
+      pagination: {
+        current: parseInt(page),
+        pages: Math.ceil(total / parseInt(limit)),
+        total,
+        limit: parseInt(limit)
+      }
+    });
+  } catch (error) {
+    console.error('Get customer orders error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch customer orders',
       error: error.message
     });
   }

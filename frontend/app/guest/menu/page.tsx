@@ -76,14 +76,14 @@ export default function MenuPage() {
 
   // Filter menu items based on search, category, and dietary preferences
   const filteredItems = menuItems.filter(item => {
-    const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         item.description.toLowerCase().includes(searchTerm.toLowerCase())
+    const matchesSearch = (item.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (item.description || '').toLowerCase().includes(searchTerm.toLowerCase())
     const matchesCategory = selectedCategory === 'All' || item.category === selectedCategory
     const matchesDietary = selectedDietary.length === 0 || 
                           selectedDietary.some(diet => {
-                            if (diet === 'Vegetarian') return item.isVegetarian
-                            if (diet === 'Vegan') return item.isVegan
-                            if (diet === 'Gluten-Free') return item.isGlutenFree
+                            if (diet === 'Vegetarian') return item.isVegetarian || false
+                            if (diet === 'Vegan') return item.isVegan || false
+                            if (diet === 'Gluten-Free') return item.isGlutenFree || false
                             return false
                           })
     

@@ -104,6 +104,15 @@ export default function OrderCustomization({
                   src={`http://localhost:5000${menuItem.image}`}
                   alt={menuItem.name}
                   className="w-full h-full object-cover rounded-lg"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = 'none';
+                    // Show fallback emoji
+                    const parent = target.parentElement;
+                    if (parent) {
+                      parent.innerHTML = '<span class="text-2xl">🍽️</span>';
+                    }
+                  }}
                 />
               ) : (
                 <span className="text-2xl">🍽️</span>

@@ -8,18 +8,21 @@ import Layout from '@/components/layout/Layout';
 import { useCart } from '@/contexts/CartContext';
 import { formatCurrency } from '@/utils/currency';
 import { Plus, Minus, Trash2, ShoppingBag, ArrowLeft } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function CartPage() {
   const router = useRouter();
+  const { user, isAuthenticated } = useAuth();
   const { cartItems, updateQuantity, removeFromCart, clearCart, getTotalPrice, getEstimatedDelivery, isLoaded } = useCart();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [customerInfo, setCustomerInfo] = useState({
-    name: '',
-    email: '',
+    name: user?.fullName || user?.username || '',
+    email: user?.email || '',
     phone: '',
     roomNumber: '',
     specialInstructions: ''
   });
+  const [phoneError, setPhoneError] = useState('');
 
   const handleQuantityChange = (itemId: string, newQuantity: number) => {
     if (newQuantity <= 0) {
@@ -29,9 +32,39 @@ export default function CartPage() {
     }
   };
 
+  const validatePhone = (phone: string) => {
+    const phoneRegex = /^\d{10}$/;
+    if (phone && !phoneRegex.test(phone)) {
+      setPhoneError('Please enter a valid 10-digit phone number');
+    } else {
+      setPhoneError('');
+    }
+  };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // Only allow digits and limit to 10 characters
+    const numericValue = value.replace(/\D/g, '').slice(0, 10);
+    setCustomerInfo(prev => ({ ...prev, phone: numericValue }));
+    validatePhone(numericValue);
+  };
+
   const handleCheckout = async () => {
+    // Check if user is authenticated
+    if (!isAuthenticated) {
+      alert('Please log in to place an order.');
+      router.push('/login');
+      return;
+    }
+
     if (!customerInfo.name || !customerInfo.email || !customerInfo.phone) {
       alert('Please fill in all required fields (Name, Email, Phone)');
+      return;
+    }
+
+    // Validate phone number - must be exactly 10 digits
+    if (phoneError || customerInfo.phone.length !== 10) {
+      alert('Please enter a valid 10-digit phone number');
       return;
     }
 
@@ -143,15 +176,22 @@ export default function CartPage() {
                 <div className="space-y-4">
                   {cartItems.map((item) => (
                     <div key={item._id} className="flex items-center space-x-4 p-4 border border-gray-200 rounded-lg">
-                      {item.image && (
-                        <Image
-                          src={`http://localhost:5000${item.image}`}
-                          alt={item.name}
-                          width={80}
-                          height={80}
-                          className="object-cover rounded-lg"
-                        />
-                      )}
+                      <div className="w-20 h-20 bg-gray-200 rounded-lg flex items-center justify-center">
+                        {item.image ? (
+                          <Image
+                            src={`http://localhost:5000${item.image}`}
+                            alt={item.name}
+                            width={80}
+                            height={80}
+                            className="object-cover rounded-lg"
+                            onError={() => {
+                              // This will be handled by the fallback below
+                            }}
+                          />
+                        ) : (
+                          <span className="text-2xl">🍽️</span>
+                        )}
+                      </div>
                       <div className="flex-1">
                         <h3 className="font-semibold text-gray-900">{item.name}</h3>
                         <p className="text-gray-600">{formatCurrency(item.price)} each</p>
@@ -225,10 +265,19 @@ export default function CartPage() {
                     <input
                       type="tel"
                       value={customerInfo.phone}
-                      onChange={(e) => setCustomerInfo(prev => ({ ...prev, phone: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-600"
+                      onChange={handlePhoneChange}
+                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                        phoneError 
+                          ? 'border-red-300 focus:ring-red-600' 
+                          : 'border-gray-300 focus:ring-blue-600'
+                      }`}
+                      placeholder="Enter 10-digit phone number"
+                      maxLength={10}
                       required
                     />
+                    {phoneError && (
+                      <p className="mt-1 text-sm text-red-600">{phoneError}</p>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -276,14 +325,6 @@ export default function CartPage() {
                       <span className="text-lg font-bold text-gray-900">{formatCurrency(total)}</span>
                     </div>
                   </div>
-                </div>
-
-                {/* Estimated Delivery */}
-                <div className="mb-6 p-3 bg-blue-50 rounded-lg">
-                  <p className="text-sm text-blue-800">
-                    <strong>Estimated Delivery:</strong><br />
-                    {getEstimatedDelivery().toLocaleTimeString()} today
-                  </p>
                 </div>
 
                 {/* Checkout Button */}

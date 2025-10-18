@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Search, X, Clock, CheckCircle, XCircle, Eye } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
 import { formatCurrency } from '@/utils/currency';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface OrderItem {
   menuItem: {
@@ -50,6 +51,7 @@ interface Order {
 
 export default function GuestOrdersPage() {
   const router = useRouter();
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -58,26 +60,28 @@ export default function GuestOrdersPage() {
   const [billGenerating, setBillGenerating] = useState<string | null>(null);
   const [billMessages, setBillMessages] = useState<{[key: string]: string}>({});
 
-  // Get guest info from localStorage (you might want to implement proper guest session management)
-  const [guestInfo, setGuestInfo] = useState<{name: string, roomNumber: string, phone: string} | null>(null);
-
   useEffect(() => {
-    // Get guest info from localStorage or session
-    if (typeof window !== 'undefined') {
-      const savedGuestInfo = localStorage.getItem('guestInfo');
-      if (savedGuestInfo) {
-        setGuestInfo(JSON.parse(savedGuestInfo));
-      }
+    // Redirect to login if not authenticated
+    if (!authLoading && !isAuthenticated) {
+      router.push('/login');
+      return;
     }
-  }, []);
+  }, [isAuthenticated, authLoading, router]);
 
   const fetchOrders = async () => {
     setLoading(true);
     setError(null);
     
+    // Check if user is authenticated
+    if (!user?.email) {
+      setError('Please log in to view your orders.');
+      setLoading(false);
+      return;
+    }
+    
     try {
-      // Fetch all orders from the API
-      const response = await fetch('http://localhost:5000/api/orders');
+      // Fetch orders for this specific user only
+      const response = await fetch(`http://localhost:5000/api/orders/customer/${encodeURIComponent(user.email)}`);
       
       if (!response.ok) {
         throw new Error('Failed to fetch orders');
@@ -120,8 +124,10 @@ export default function GuestOrdersPage() {
   };
 
   useEffect(() => {
-    fetchOrders();
-  }, []);
+    if (user?.email && isAuthenticated) {
+      fetchOrders();
+    }
+  }, [user, isAuthenticated]);
 
   const cancelOrder = async (orderId: string) => {
     if (!confirm('Are you sure you want to cancel this order?')) {
@@ -263,6 +269,11 @@ export default function GuestOrdersPage() {
           <div className="mb-8">
             <h1 className="text-3xl font-bold text-gray-900">My Orders</h1>
             <p className="mt-2 text-gray-600">Track and manage your food orders</p>
+            {user && (
+              <p className="mt-1 text-sm text-blue-600">
+                Logged in as: {user.fullName || user.username} ({user.email})
+              </p>
+            )}
           </div>
 
           {/* Search and Filter */}
@@ -319,9 +330,11 @@ export default function GuestOrdersPage() {
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-2">No orders found</h3>
               <p className="text-gray-600 mb-6">
-                {searchTerm || filterStatus !== 'all' 
-                  ? 'No orders match your search criteria.'
-                  : 'You haven\'t placed any orders yet.'}
+                {!user?.email 
+                  ? 'Please log in to view your order history.'
+                  : searchTerm || filterStatus !== 'all' 
+                    ? 'No orders match your search criteria.'
+                    : 'You haven\'t placed any orders yet.'}
               </p>
               <button
                 onClick={() => router.push('/guest/menu')}
@@ -375,13 +388,26 @@ export default function GuestOrdersPage() {
                     <div className="space-y-3">
                       {order.items.map((item, index) => (
                         <div key={index} className="flex items-start gap-4 p-3 bg-gray-50 rounded-lg">
-                          {item.menuItem?.image && (
-                            <img
-                              src={`http://localhost:5000${item.menuItem.image}`}
-                              alt={item.menuItem.name || 'Menu item'}
-                              className="w-16 h-16 object-cover rounded-lg"
-                            />
-                          )}
+                          <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center">
+                            {item.menuItem?.image ? (
+                              <img
+                                src={`http://localhost:5000${item.menuItem.image}`}
+                                alt={item.menuItem.name || 'Menu item'}
+                                className="w-full h-full object-cover rounded-lg"
+                                onError={(e) => {
+                                  const target = e.target as HTMLImageElement;
+                                  target.style.display = 'none';
+                                  // Show fallback emoji
+                                  const parent = target.parentElement;
+                                  if (parent) {
+                                    parent.innerHTML = '<span class="text-xl">🍽️</span>';
+                                  }
+                                }}
+                              />
+                            ) : (
+                              <span className="text-xl">🍽️</span>
+                            )}
+                          </div>
                           <div className="flex-1">
                             <div className="flex justify-between items-start">
                               <div>

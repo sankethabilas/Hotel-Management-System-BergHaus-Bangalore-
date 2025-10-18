@@ -45,14 +45,27 @@ router.get('/', async (req, res) => {
     }
 
     const menuItems = await MenuItem.find(filter)
-      .populate('createdBy', 'fullName username')
+      .populate({
+        path: 'createdBy',
+        select: 'fullName username',
+        options: { strictPopulate: false }
+      })
       .sort(sort)
       .lean();
 
+    // Filter out any items with missing data and ensure they have valid structure
+    const validMenuItems = menuItems.map(item => ({
+      ...item,
+      createdBy: item.createdBy || null,
+      ingredients: item.ingredients || [],
+      allergens: item.allergens || [],
+      tags: item.tags || []
+    }));
+
     res.json({
       success: true,
-      data: menuItems,
-      count: menuItems.length
+      data: validMenuItems,
+      count: validMenuItems.length
     });
   } catch (error) {
     console.error('Get menu items error:', error);
@@ -70,7 +83,11 @@ router.get('/:id', async (req, res) => {
     const { id } = req.params;
     
     const menuItem = await MenuItem.findById(id)
-      .populate('createdBy', 'fullName username')
+      .populate({
+        path: 'createdBy',
+        select: 'fullName username',
+        options: { strictPopulate: false }
+      })
       .lean();
 
     if (!menuItem) {
@@ -80,9 +97,18 @@ router.get('/:id', async (req, res) => {
       });
     }
 
+    // Ensure valid structure
+    const validMenuItem = {
+      ...menuItem,
+      createdBy: menuItem.createdBy || null,
+      ingredients: menuItem.ingredients || [],
+      allergens: menuItem.allergens || [],
+      tags: menuItem.tags || []
+    };
+
     res.json({
       success: true,
-      data: menuItem
+      data: validMenuItem
     });
   } catch (error) {
     console.error('Get menu item error:', error);
@@ -106,12 +132,16 @@ router.post('/', async (req, res) => {
     await menuItem.save();
 
     const populatedItem = await MenuItem.findById(menuItem._id)
-      .populate('createdBy', 'fullName username')
+      .populate({
+        path: 'createdBy',
+        select: 'fullName username',
+        options: { strictPopulate: false }
+      })
       .lean();
 
     res.status(201).json({
       success: true,
-      data: populatedItem,
+      data: populatedItem || menuItem.toObject(),
       message: 'Menu item created successfully'
     });
   } catch (error) {
@@ -134,7 +164,11 @@ router.put('/:id', async (req, res) => {
       id,
       updateData,
       { new: true, runValidators: true }
-    ).populate('createdBy', 'fullName username');
+    ).populate({
+      path: 'createdBy',
+      select: 'fullName username',
+      options: { strictPopulate: false }
+    });
 
     if (!menuItem) {
       return res.status(404).json({
@@ -209,7 +243,11 @@ router.get('/categories/list', async (req, res) => {
 router.get('/popular/items', async (req, res) => {
   try {
     const popularItems = await MenuItem.find({ isPopular: true, isAvailable: true })
-      .populate('createdBy', 'fullName username')
+      .populate({
+        path: 'createdBy',
+        select: 'fullName username',
+        options: { strictPopulate: false }
+      })
       .sort({ createdAt: -1 })
       .limit(10)
       .lean();

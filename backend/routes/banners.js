@@ -171,14 +171,23 @@ router.patch('/:id/toggle-status', async (req, res) => {
       });
     }
     
-    banner.isActive = !banner.isActive;
-    banner.updatedAt = new Date();
-    await banner.save();
+    // Use findByIdAndUpdate to avoid validation issues with required fields
+    const updatedBanner = await Banner.findByIdAndUpdate(
+      req.params.id,
+      { 
+        isActive: !banner.isActive,
+        updatedAt: new Date()
+      },
+      { 
+        new: true,
+        runValidators: false // Skip validation since we're only updating specific fields
+      }
+    );
     
     res.json({
       success: true,
-      message: `Banner ${banner.isActive ? 'activated' : 'deactivated'} successfully`,
-      data: banner
+      message: `Banner ${updatedBanner.isActive ? 'activated' : 'deactivated'} successfully`,
+      data: updatedBanner
     });
   } catch (error) {
     console.error('Toggle banner status error:', error);
