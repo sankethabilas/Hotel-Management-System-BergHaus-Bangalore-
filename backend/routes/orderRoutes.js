@@ -135,8 +135,9 @@ router.post('/', optionalAuth, async (req, res) => {
 
     for (const item of items) {
       console.log(`Processing menu item: ${item.menuItem}`);
+      let menuItem;
       try {
-        const menuItem = await MenuItem.findById(item.menuItem);
+        menuItem = await MenuItem.findById(item.menuItem);
         if (!menuItem) {
           console.log(`Menu item not found: ${item.menuItem}`);
           return res.status(400).json({
@@ -192,17 +193,11 @@ router.post('/', optionalAuth, async (req, res) => {
     }));
     const estimatedDelivery = new Date(Date.now() + (maxPrepTime + 15) * 60000); // Add 15 min buffer
 
-    // Generate order number manually
-    const today = new Date();
-    const dateStr = today.toISOString().slice(0, 10).replace(/-/g, '');
-    const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    const todayEnd = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
-    
-    const count = await Order.countDocuments({
-      createdAt: { $gte: todayStart, $lt: todayEnd }
-    });
-    
-    const orderNumber = `BH${dateStr}${String(count + 1).padStart(3, '0')}`;
+    // Generate unique order number using timestamp and random component
+    const now = new Date();
+    const timestamp = now.getTime();
+    const random = Math.floor(Math.random() * 1000);
+    const orderNumber = `BH${timestamp}${random}`;
 
     const orderData = {
       orderNumber,
@@ -233,7 +228,7 @@ router.post('/', optionalAuth, async (req, res) => {
     });
   } catch (error) {
     console.error('Create order error:', error);
-    console.error('Order data:', { customerInfo, items });
+    console.error('Order data:', { customerInfo: req.body?.customerInfo, items: req.body?.items });
     res.status(400).json({
       success: false,
       message: 'Failed to create order',
