@@ -8,17 +8,7 @@ require('dotenv').config();
 
 const app = express();
 
-// Security middleware - temporarily disabled for debugging
-// app.use(helmet({
-//   contentSecurityPolicy: {
-//     directives: {
-//       defaultSrc: ["'self'"],
-//       imgSrc: ["'self'", "data:", "http://localhost:5000"],
-//       scriptSrc: ["'self'"],
-//       styleSrc: ["'self'", "'unsafe-inline'"],
-//     },
-//   },
-// }));
+
 app.use(cors({
   origin: ['http://localhost:3000', 'http://localhost:3001'],
   credentials: true
@@ -27,7 +17,11 @@ app.use(cors({
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
+  max: process.env.NODE_ENV === 'development' ? 1000 : 100, // More lenient for development
+  message: {
+    success: false,
+    message: 'Too many requests from this IP, please try again later.'
+  }
 });
 app.use(limiter);
 
@@ -103,6 +97,7 @@ app.use('/api/inventory', require('./routes/inventoryRoutes'));
 app.use('/api/staff-requests', require('./routes/staffRequestRoutes'));
 app.use('/api/contact', require('./routes/contact'));
 app.use('/api/feedback', require('./routes/feedback'));
+app.use('/api/activity-logs', require('./routes/activityLogs'));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

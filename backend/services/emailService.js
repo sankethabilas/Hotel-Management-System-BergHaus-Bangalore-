@@ -693,9 +693,9 @@ const sendEmail = async (emailData) => {
   try {
     // Check if email is configured
     if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
-      console.log('Email not configured - email would be sent to:', emailData.to);
-      console.log('Subject:', emailData.subject);
-      return;
+      const error = new Error('Email service not configured. Please set EMAIL_USER and EMAIL_PASSWORD environment variables.');
+      console.error('Email configuration error:', error.message);
+      throw error;  // Throw instead of silent return
     }
 
     const mailOptions = {
