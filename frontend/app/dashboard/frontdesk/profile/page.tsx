@@ -775,6 +775,11 @@ export default function FrontdeskProfilePage() {
                       <span>Change Password</span>
                     </h3>
                     <div className="space-y-4">
+                      {/* Hidden dummy fields to trick password managers */}
+                      <div style={{ display: 'none' }}>
+                        <input type="text" name="username" autoComplete="username" />
+                        <input type="password" name="password" autoComplete="current-password" />
+                      </div>
                       <div>
                         <Label htmlFor="currentPassword">Current Password</Label>
                         <Input
@@ -782,11 +787,21 @@ export default function FrontdeskProfilePage() {
                           type="password"
                           value={passwordData.currentPassword}
                           onChange={(e) => handlePasswordChange('currentPassword', e.target.value)}
+                          onFocus={(e) => {
+                            // Clear any auto-filled value on focus
+                            if (e.target.value && !passwordData.currentPassword) {
+                              e.target.value = '';
+                              handlePasswordChange('currentPassword', '');
+                            }
+                          }}
                           className={`mt-1 transition-all duration-200 ${
                             passwordErrors.currentPassword ? 'animate-shake border-red-500 focus:border-red-500' : 
                             'border-gray-300 focus:border-hms-primary'
                           }`}
                           placeholder="Enter your current password"
+                          autoComplete="new-password"
+                          data-form-type="other"
+                          data-lpignore="true"
                         />
                         {passwordErrors.currentPassword && (
                           <p className="text-sm text-red-600 animate-fade-in flex items-center gap-1 mt-1">

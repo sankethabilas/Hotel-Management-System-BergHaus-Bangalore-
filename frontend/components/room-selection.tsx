@@ -221,15 +221,15 @@ export function RoomSelection({ rooms, checkIn, checkOut, nights, onBookingSucce
                 <div className="flex items-center justify-between">
                   <div>
                     <div className="text-2xl font-bold text-hms-primary">
-                      ₹{room.finalPrice.toLocaleString()}
+                      Rs {room.finalPrice.toLocaleString()}
                     </div>
                     <div className="text-sm text-gray-600 dark:text-gray-400">
-                      {nights} night{nights > 1 ? 's' : ''} • ₹{room.pricePerNight.toLocaleString()}/night
+                      {nights} night{nights > 1 ? 's' : ''} • Rs {room.pricePerNight.toLocaleString()}/night
                     </div>
                   </div>
                   <div className="text-right text-sm text-gray-600 dark:text-gray-400">
-                    <div>Subtotal: ₹{room.totalPrice.toLocaleString()}</div>
-                    <div>Tax: ₹{room.tax.toLocaleString()}</div>
+                    <div>Subtotal: Rs {room.totalPrice.toLocaleString()}</div>
+                    <div>Tax: Rs {room.tax.toLocaleString()}</div>
                   </div>
                 </div>
               </div>
@@ -315,19 +315,19 @@ export function RoomSelection({ rooms, checkIn, checkOut, nights, onBookingSucce
                 </div>
                 <div className="flex justify-between">
                   <span>Price per night:</span>
-                  <span>₹{selectedRoom.pricePerNight.toLocaleString()}</span>
+                  <span>Rs {selectedRoom.pricePerNight.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Subtotal:</span>
-                  <span>₹{selectedRoom.totalPrice.toLocaleString()}</span>
+                  <span>Rs {selectedRoom.totalPrice.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Tax (10%):</span>
-                  <span>₹{selectedRoom.tax.toLocaleString()}</span>
+                  <span>Rs {selectedRoom.tax.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between font-semibold text-lg border-t pt-2">
                   <span>Total:</span>
-                  <span>₹{selectedRoom.finalPrice.toLocaleString()}</span>
+                  <span>Rs {selectedRoom.finalPrice.toLocaleString()}</span>
                 </div>
               </div>
             </div>

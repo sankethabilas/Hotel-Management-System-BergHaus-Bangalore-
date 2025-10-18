@@ -243,20 +243,30 @@ const staffLogin = async (req, res) => {
     }
 
     // Password logic:
-    // 1. If staff hasn't changed password yet (password = employeeId), use employeeId
-    // 2. If staff has changed password (password != employeeId), use ONLY the new password
+    // 1. If staff hasn't changed password yet (password is hashed employeeId), use employeeId
+    // 2. If staff has changed password, use the new password
     let isPasswordValid;
     
-    if (staff.password === employeeId) {
-      // Staff hasn't changed password yet, use employee ID
-      isPasswordValid = password === employeeId;
+    // Check if password is hashed (starts with $2a$)
+    const isHashed = staff.password.startsWith('$2a$');
+    
+    if (isHashed) {
+      // Password is hashed, use bcrypt to compare
+      const bcrypt = require('bcryptjs');
+      isPasswordValid = await bcrypt.compare(password, staff.password);
     } else {
-      // Staff has changed password, use ONLY the new password
-      isPasswordValid = password === staff.password;
+      // Password is plain text, compare directly
+      if (staff.password === employeeId) {
+        // Staff hasn't changed password yet, use Employee ID
+        isPasswordValid = password === employeeId;
+      } else {
+        // Staff has changed password, use the new password
+        isPasswordValid = password === staff.password;
+      }
     }
 
     if (!isPasswordValid) {
-      const message = staff.password === employeeId 
+      const message = isHashed 
         ? 'Invalid password. Use your Employee ID as password'
         : 'Invalid password. Use your custom password';
       
@@ -372,6 +382,17 @@ const changePassword = async (req, res) => {
       });
     }
 
+    // Check for uppercase letter and number
+    const hasUppercase = /[A-Z]/.test(newPassword);
+    const hasNumber = /[0-9]/.test(newPassword);
+    
+    if (!hasUppercase || !hasNumber) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password must contain at least one uppercase letter and one number'
+      });
+    }
+
     // Find staff member
     const staff = await Staff.findById(staffId);
     if (!staff) {
@@ -382,9 +403,9 @@ const changePassword = async (req, res) => {
     }
 
     // Verify current password
-    // Current password could be either their employee ID (default) or their custom password
-    const isCurrentPasswordValid = (currentPassword === staff.employeeId) || 
-                                  (staff.password && currentPassword === staff.password);
+    // The current password should match whatever is stored in staff.password field
+    // (which could be the employeeId initially, or a custom password if changed)
+    const isCurrentPasswordValid = (currentPassword === staff.password);
 
     if (!isCurrentPasswordValid) {
       return res.status(401).json({

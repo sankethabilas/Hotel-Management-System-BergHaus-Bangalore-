@@ -11,6 +11,7 @@ import {
   ChangePasswordData,
   UserQueryParams 
 } from '@/types/index';
+import { safeJsonParse, getErrorMessage } from './safeJsonParse';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
@@ -45,8 +46,28 @@ api.interceptors.response.use(
     console.log('API Response interceptor - Success:', response.status, response.config.url);
     return response;
   },
-  (error) => {
+  async (error) => {
     console.log('API Response interceptor - Error:', error.response?.status, error.config?.url, error.message);
+    
+    // Handle JSON parsing errors
+    if (error.response && error.response.data) {
+      try {
+        // Try to parse the response data as JSON
+        if (typeof error.response.data === 'string') {
+          const parsedData = JSON.parse(error.response.data);
+          error.response.data = parsedData;
+        }
+      } catch (parseError) {
+        console.warn('Non-JSON error response received:', error.response.data);
+        // Convert non-JSON error to a proper error format
+        error.response.data = {
+          success: false,
+          message: error.response.data || 'Server error occurred',
+          rawResponse: error.response.data
+        };
+      }
+    }
+    
     if (error.response?.status === 401) {
       console.log('401 Unauthorized - removing token and redirecting');
       // Token expired or invalid
@@ -132,16 +153,98 @@ export const usersAPI = {
 
   // Upload profile picture
   uploadProfilePicture: async (userId: string, file: File): Promise<ApiResponse<{ user: User }>> => {
+    console.log('API uploadProfilePicture called with userId:', userId);
+    console.log('File details:', {
+      name: file.name,
+      size: file.size,
+      type: file.type
+    });
+    
     const formData = new FormData();
     formData.append('profileImage', file);
     
-    const response: AxiosResponse<ApiResponse<{ user: User }>> = await api.post(`/users/${userId}/upload`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    console.log('FormData created, making API call to:', `/users/${userId}/upload`);
     
-    return response.data;
+    try {
+      const response: AxiosResponse<ApiResponse<{ user: User }>> = await api.post(`/users/${userId}/upload`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      
+      console.log('API response received:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('API upload error:', error);
+      console.error('Error response:', error.response?.data);
+      throw error;
+    }
+  },
+};
+
+// Room API functions
+export const roomAPI = {
+  // Get all rooms
+  getAllRooms: async () => {
+    try {
+      const response = await api.get('/rooms');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching rooms:', error);
+      throw error;
+    }
+  },
+
+  // Get room by ID
+  getRoomById: async (roomId: string) => {
+    try {
+      const response = await api.get(`/rooms/${roomId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching room:', error);
+      throw error;
+    }
+  },
+
+  // Upload room image
+  uploadRoomImage: async (roomId: string, imageFile: File) => {
+    try {
+      const formData = new FormData();
+      formData.append('image', imageFile);
+
+      const response = await api.post(`/rooms/${roomId}/upload-image`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      
+      return response.data;
+    } catch (error) {
+      console.error('Error uploading room image:', error);
+      throw error;
+    }
+  },
+
+  // Remove room image
+  removeRoomImage: async (roomId: string, imageIndex: number) => {
+    try {
+      const response = await api.delete(`/rooms/${roomId}/images/${imageIndex}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error removing room image:', error);
+      throw error;
+    }
+  },
+
+  // Set primary room image
+  setPrimaryRoomImage: async (roomId: string, imageIndex: number) => {
+    try {
+      const response = await api.put(`/rooms/${roomId}/images/${imageIndex}/set-primary`);
+      return response.data;
+    } catch (error) {
+      console.error('Error setting primary room image:', error);
+      throw error;
+    }
   },
 };
 
@@ -265,14 +368,16 @@ export const bookingAPI = {
   },
 
   // Cancel a booking
-  cancelBooking: async (bookingId: string): Promise<ApiResponse<{
+  cancelBooking: async (bookingId: string, reason?: string): Promise<ApiResponse<{
     reservation: {
       id: string;
       status: string;
       bookingReference: string;
     };
   }>> => {
-    const response: AxiosResponse<ApiResponse<any>> = await api.post(`/booking/${bookingId}/cancel`);
+    const response: AxiosResponse<ApiResponse<any>> = await api.post(`/booking/${bookingId}/cancel`, {
+      reason: reason || 'Cancelled by guest'
+    });
     return response.data;
   },
 

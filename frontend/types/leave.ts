@@ -25,6 +25,7 @@ export interface LeaveFormData {
   endDate: string;
   reason: string;
   emergencyContact?: string;
+  staffId?: string; // Optional for backward compatibility
 }
 
 export interface LeaveWithStaffInfo extends Leave {

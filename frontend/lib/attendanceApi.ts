@@ -1,3 +1,5 @@
+import { safeJsonParse, getErrorMessage } from './safeJsonParse';
+
 const API_BASE_URL = 'http://localhost:5000/api/attendance';
 
 export interface AttendanceRecord {
@@ -60,11 +62,11 @@ class AttendanceAPI {
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        const errorData = await safeJsonParse(response);
+        throw new Error(getErrorMessage(errorData) || `HTTP error! status: ${response.status}`);
       }
 
-      return await response.json();
+      return await safeJsonParse(response);
     } catch (error) {
       console.error('API request failed:', error);
       throw error;

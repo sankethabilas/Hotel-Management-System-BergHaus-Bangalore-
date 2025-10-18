@@ -2,7 +2,7 @@ export function formatCurrency(amount: number): string {
   return new Intl.NumberFormat('en-LK', {
     style: 'currency',
     currency: 'LKR',
-    minimumFractionDigits: 2,
+    minimumFractionDigits: 0,
   }).format(amount);
 }
 

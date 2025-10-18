@@ -16,7 +16,8 @@ import {
   Plus,
   Bed,
   Mail,
-  Phone
+  Phone,
+  X
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -85,9 +86,24 @@ export default function ReservationsPage() {
 
   const { toast } = useToast();
 
+  // Check if user has the right role for this page
+  useEffect(() => {
+    // This is a frontdesk page, so we'll let the backend handle the role check
+    // and redirect if needed
+  }, []);
+
   useEffect(() => {
     fetchReservations();
   }, [statusFilter]);
+
+  // Handle search query from URL parameters
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const searchParam = urlParams.get('search');
+    if (searchParam) {
+      setSearchQuery(searchParam);
+    }
+  }, []);
 
   const fetchReservations = async () => {
     try {
@@ -101,6 +117,8 @@ export default function ReservationsPage() {
       // Authentication is handled by cookies automatically
       
       console.log('Fetching reservations with params:', params.toString());
+      console.log('Current URL:', window.location.href);
+      console.log('Cookies:', document.cookie);
       
       const response = await fetch(`/api/frontdesk/reservations?${params.toString()}`, {
         credentials: 'include',
@@ -110,6 +128,7 @@ export default function ReservationsPage() {
       });
       
       console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
       
       if (response.ok) {
         const data = await response.json();
@@ -128,6 +147,21 @@ export default function ReservationsPage() {
       } else {
         const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
         console.error('API Error:', errorData);
+        
+        // Check if this is a role-based access issue
+        if (response.status === 403 && errorData.redirectTo) {
+          toast({
+            title: "Access Denied",
+            description: errorData.message,
+            variant: "destructive",
+          });
+          // Redirect to the user reservations page
+          setTimeout(() => {
+            window.location.href = errorData.redirectTo;
+          }, 2000);
+          return;
+        }
+        
         toast({
           title: "Error",
           description: errorData.message || `Failed to load reservations (${response.status})`,
@@ -293,6 +327,16 @@ export default function ReservationsPage() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
               />
+              {searchQuery && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-48">
@@ -321,6 +365,11 @@ export default function ReservationsPage() {
           <CardTitle className="flex items-center text-[#006bb8]">
             <Calendar className="w-5 h-5 mr-2" />
             Reservations ({filteredReservations.length})
+            {searchQuery && (
+              <Badge variant="secondary" className="ml-2">
+                Search: "{searchQuery}"
+              </Badge>
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -390,7 +439,7 @@ export default function ReservationsPage() {
                   </TableCell>
                   <TableCell>{getStatusBadge(reservation.status)}</TableCell>
                   <TableCell>{getPaymentStatusBadge(reservation.paymentStatus)}</TableCell>
-                  <TableCell className="font-medium">${reservation.totalPrice}</TableCell>
+                  <TableCell className="font-medium">Rs {reservation.totalPrice}</TableCell>
                   <TableCell>
                     <div className="flex space-x-2">
                       <Button
@@ -465,7 +514,7 @@ export default function ReservationsPage() {
                       <p className="font-medium">Reservation Details</p>
                       <p><strong>ID:</strong> {actionDialog.reservation.reservationId}</p>
                       <p><strong>Status:</strong> {actionDialog.reservation.status}</p>
-                      <p><strong>Total:</strong> ${actionDialog.reservation.totalPrice}</p>
+                      <p><strong>Total:</strong> Rs {actionDialog.reservation.totalPrice}</p>
                     </div>
                   </div>
                   

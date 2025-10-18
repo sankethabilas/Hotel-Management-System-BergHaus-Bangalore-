@@ -5,8 +5,11 @@ import Link from 'next/link';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { getRequests } from '../../../lib/alertApi';
+import { useAuth } from '../../../contexts/AuthContext';
+import { LogOut, Home } from 'lucide-react';
 
 export default function AdminDashboardPage() {
+  const { user, logout } = useAuth();
   const [stats, setStats] = useState({
     totalStaff: 0,
     activeStaff: 0,
@@ -16,6 +19,20 @@ export default function AdminDashboardPage() {
     occupiedRooms: 0
   });
   const [staffRequests, setStaffRequests] = useState([]);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
+  const handleLogout = async () => {
+    setShowLogoutConfirm(true);
+  };
+
+  const confirmLogout = async () => {
+    setShowLogoutConfirm(false);
+    await logout();
+  };
+
+  const cancelLogout = () => {
+    setShowLogoutConfirm(false);
+  };
 
   useEffect(() => {
     loadDashboardStats();
@@ -37,7 +54,7 @@ export default function AdminDashboardPage() {
         paymentsRes.json(),
         bookingsRes.json(),
         leavesRes.json(),
-        requestsRes.json()
+        requestsRes.data
       ]);
 
       setStats({
@@ -92,7 +109,39 @@ export default function AdminDashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <>
+      {/* Logout Confirmation Dialog */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                <LogOut className="w-5 h-5 text-red-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Confirm Logout</h3>
+                <p className="text-sm text-gray-600">Are you sure you want to logout?</p>
+              </div>
+            </div>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={cancelLogout}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmLogout}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 transition-colors"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -102,16 +151,26 @@ export default function AdminDashboardPage() {
               <p className="text-sm text-gray-600">Admin Dashboard</p>
             </div>
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-700">Welcome, Admin</span>
+              <span className="text-sm text-gray-700">
+                Welcome, {user?.firstName ? `${user.firstName} ${user.lastName}` : 'Admin'}
+              </span>
               <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
                 Administrator
               </span>
-              <a
+              <Link
                 href="/"
-                className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 transition duration-200"
+                className="flex items-center gap-2 bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 transition duration-200"
               >
+                <Home className="w-4 h-4" />
                 Home
-              </a>
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition duration-200"
+              >
+                <LogOut className="w-4 h-4" />
+                Logout
+              </button>
             </div>
           </div>
         </div>
@@ -343,7 +402,8 @@ export default function AdminDashboardPage() {
             </div>
           </div>
         </div>
-      </main>
-    </div>
+        </main>
+      </div>
+    </>
   );
 }

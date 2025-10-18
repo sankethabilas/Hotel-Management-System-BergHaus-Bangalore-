@@ -7,12 +7,12 @@ const staffRequestSchema = new mongoose.Schema({
   quantity: { type: Number, required: true },
   reason: { 
     type: String, 
-    enum: ["Request a new item", "Item was damaged", "Other"], 
+    enum: ["Request a new item", "Item was damaged", "Item was lost", "Replacement needed", "Additional quantity needed", "Other"], 
     required: true 
   },
   category: { 
     type: String, 
-    enum: ["Kitchen", "Housekeeping", "Maintenance"], 
+    enum: ["Kitchen", "Housekeeping", "Maintenance", "Front Desk", "Administration"], 
     required: true 
   },
   concern: { type: String }, // optional

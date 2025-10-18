@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { 
   Users, 
-  Bed, 
   Clock, 
   AlertTriangle, 
   CheckCircle, 
@@ -26,7 +25,7 @@ import {
   Eye,
   UserCheck,
   UserX,
-  DollarSign
+  IndianRupee
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -53,11 +52,7 @@ interface DashboardStats {
   currentGuests: number;
   todaysDepartures: number;
   pendingPayments: number;
-  roomOccupancy: {
-    occupied: number;
-    total: number;
-    rate: string;
-  };
+  totalBookings: number;
 }
 
 interface Booking {
@@ -96,58 +91,138 @@ export default function FrontdeskDashboard() {
 
   const { user } = useAuth();
   const { toast } = useToast();
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
+    // Check if user is authenticated and has frontdesk role
+    if (!user) {
+      console.log('No user found, redirecting to login');
+      return;
+    }
+    
+    if (user.role !== 'frontdesk' && user.role !== 'admin') {
+      console.log('User does not have frontdesk access:', user.role);
+      toast({
+        title: "Access Denied",
+        description: "You don't have permission to access the frontdesk dashboard",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     fetchDashboardData();
-  }, []);
+  }, [user]);
+
+  // Helper function to retry API calls with exponential backoff
+  const retryApiCall = async (apiCall: () => Promise<Response>, maxRetries = 3, baseDelay = 1000) => {
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      try {
+        const response = await apiCall();
+        
+        if (response.status === 429) {
+          // Rate limited - wait and retry
+          const delay = baseDelay * Math.pow(2, attempt);
+          console.log(`Rate limited. Retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries})`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          continue;
+        }
+        
+        return response;
+      } catch (error) {
+        if (attempt === maxRetries - 1) throw error;
+        const delay = baseDelay * Math.pow(2, attempt);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+    throw new Error('Max retries exceeded');
+  };
 
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
       
       // Fetch dashboard stats
-      const statsResponse = await fetch('/api/frontdesk/dashboard/stats', {
-        credentials: 'include'
-      });
+      const statsResponse = await retryApiCall(() => 
+        fetch('/api/frontdesk/dashboard/stats', {
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        })
+      );
+      
+      console.log('Dashboard stats response status:', statsResponse.status);
       
       if (statsResponse.ok) {
         const statsData = await statsResponse.json();
+        console.log('Dashboard stats data:', statsData);
         setStats(statsData.data);
-      }
-
-      // Fetch bookings
-      const bookingsResponse = await fetch('/api/bookings?limit=20&page=1', {
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      if (bookingsResponse.ok) {
-        const bookingsData = await bookingsResponse.json();
-        console.log('Dashboard bookings data:', bookingsData);
-        
-        if (bookingsData.success && bookingsData.data && Array.isArray(bookingsData.data.bookings)) {
-          setBookings(bookingsData.data.bookings);
-          console.log('Successfully loaded', bookingsData.data.bookings.length, 'bookings');
-        } else if (bookingsData.success && Array.isArray(bookingsData.data)) {
-          // Fallback: data might be directly in data array
-          setBookings(bookingsData.data);
-          console.log('Fallback: loaded', bookingsData.data.length, 'bookings');
-        } else {
-          console.error('Invalid bookings data structure:', bookingsData);
-          toast({
-            title: "Warning",
-            description: "Unexpected data format from server",
-            variant: "destructive",
-          });
-        }
       } else {
-        const errorText = await bookingsResponse.text();
-        console.error('Failed to fetch bookings:', bookingsResponse.status, errorText);
+        const errorData = await statsResponse.json();
+        console.error('Dashboard stats error:', errorData);
         toast({
           title: "Error",
-          description: `Failed to load bookings: ${bookingsResponse.status}`,
+          description: `Failed to load dashboard stats: ${errorData.message || 'Unknown error'}`,
+          variant: "destructive",
+        });
+      }
+
+      // Add a small delay before fetching bookings to avoid rate limiting
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Fetch bookings with retry logic
+      try {
+        const bookingsResponse = await retryApiCall(() => 
+          fetch('/api/bookings?limit=20&page=1', {
+            credentials: 'include',
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          })
+        );
+        
+        if (bookingsResponse.ok) {
+          const bookingsData = await bookingsResponse.json();
+          console.log('Dashboard bookings data:', bookingsData);
+          
+          if (bookingsData.success && bookingsData.data && Array.isArray(bookingsData.data.bookings)) {
+            setBookings(bookingsData.data.bookings);
+            console.log('Successfully loaded', bookingsData.data.bookings.length, 'bookings');
+          } else if (bookingsData.success && Array.isArray(bookingsData.data)) {
+            // Fallback: data might be directly in data array
+            setBookings(bookingsData.data);
+            console.log('Fallback: loaded', bookingsData.data.length, 'bookings');
+          } else {
+            console.error('Invalid bookings data structure:', bookingsData);
+            toast({
+              title: "Warning",
+              description: "Unexpected data format from server",
+              variant: "destructive",
+            });
+          }
+        } else {
+          const errorText = await bookingsResponse.text();
+          console.error('Failed to fetch bookings:', bookingsResponse.status, errorText);
+          
+          if (bookingsResponse.status === 429) {
+            toast({
+              title: "Rate Limited",
+              description: "Too many requests. Bookings will load when available.",
+              variant: "destructive",
+            });
+          } else {
+            toast({
+              title: "Warning",
+              description: `Failed to load bookings: ${bookingsResponse.status}. Dashboard stats are still available.`,
+              variant: "destructive",
+            });
+          }
+        }
+      } catch (bookingsError) {
+        console.error('Error fetching bookings (non-critical):', bookingsError);
+        toast({
+          title: "Warning",
+          description: "Could not load recent bookings, but dashboard stats are available.",
           variant: "destructive",
         });
       }
@@ -160,6 +235,22 @@ export default function FrontdeskDashboard() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Debounced refresh function to prevent too many rapid API calls
+  const debouncedRefresh = async () => {
+    if (isRefreshing) {
+      console.log('Refresh already in progress, skipping...');
+      return;
+    }
+    
+    setIsRefreshing(true);
+    try {
+      await fetchDashboardData();
+    } finally {
+      // Add a small delay before allowing another refresh
+      setTimeout(() => setIsRefreshing(false), 2000);
     }
   };
 
@@ -251,8 +342,25 @@ export default function FrontdeskDashboard() {
         </div>
       </div>
 
+      {/* Manual Refresh Button */}
+      <div className="flex justify-end mb-4">
+        <Button
+          onClick={debouncedRefresh}
+          disabled={loading || isRefreshing}
+          variant="outline"
+          className="flex items-center gap-2"
+        >
+          {(loading || isRefreshing) ? (
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#006bb8]"></div>
+          ) : (
+            <TrendingUp className="w-4 h-4" />
+          )}
+          {isRefreshing ? 'Refreshing...' : 'Refresh Data'}
+        </Button>
+      </div>
+
       {/* Stats Cards */}
-      {stats && (
+      {stats ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 lg:gap-6">
           <Card className="border-l-4 border-l-[#006bb8]">
             <CardContent className="p-6">
@@ -306,11 +414,72 @@ export default function FrontdeskDashboard() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Room Occupancy</p>
-                  <p className="text-2xl font-bold text-purple-600">{stats.roomOccupancy.rate}%</p>
-                  <p className="text-xs text-gray-500">{stats.roomOccupancy.occupied}/{stats.roomOccupancy.total} rooms</p>
+                  <p className="text-sm font-medium text-gray-600">Total Bookings</p>
+                  <p className="text-2xl font-bold text-purple-600">{stats.totalBookings}</p>
                 </div>
-                <Bed className="w-8 h-8 text-purple-500" />
+                <Calendar className="w-8 h-8 text-purple-500" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 lg:gap-6">
+          <Card className="border-l-4 border-l-[#006bb8]">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Today's Arrivals</p>
+                  <p className="text-2xl font-bold text-[#006bb8]">-</p>
+                </div>
+                <Calendar className="w-8 h-8 text-[#006bb8]" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-l-4 border-l-green-500">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Current Guests</p>
+                  <p className="text-2xl font-bold text-green-600">-</p>
+                </div>
+                <Users className="w-8 h-8 text-green-500" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-l-4 border-l-yellow-500">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Today's Departures</p>
+                  <p className="text-2xl font-bold text-yellow-600">-</p>
+                </div>
+                <Clock className="w-8 h-8 text-yellow-500" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-l-4 border-l-red-500">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Pending Payments</p>
+                  <p className="text-2xl font-bold text-red-600">-</p>
+                </div>
+                <CreditCard className="w-8 h-8 text-red-500" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-l-4 border-l-purple-500">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-600">Total Bookings</p>
+                  <p className="text-2xl font-bold text-purple-600">-</p>
+                </div>
+                <Calendar className="w-8 h-8 text-purple-500" />
               </div>
             </CardContent>
           </Card>
@@ -405,7 +574,7 @@ export default function FrontdeskDashboard() {
                   <p><strong>Check-in:</strong> {new Date(actionDialog.booking.checkInDate).toLocaleDateString()}</p>
                   <p><strong>Check-out:</strong> {new Date(actionDialog.booking.checkOutDate).toLocaleDateString()}</p>
                   <p><strong>Guests:</strong> {actionDialog.booking.numberOfGuests}</p>
-                  <p><strong>Total:</strong> ${actionDialog.booking.totalAmount}</p>
+                  <p><strong>Total:</strong> Rs {actionDialog.booking.totalAmount}</p>
                 </div>
               )}
             </DialogDescription>

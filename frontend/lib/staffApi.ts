@@ -1,4 +1,5 @@
 import { Staff, StaffFormData, ApiResponse } from '@/types/staff';
+import { safeJsonParse, getErrorMessage } from './safeJsonParse';
 
 const API_BASE_URL = 'http://localhost:5000/api/staff';
 
@@ -35,27 +36,21 @@ class StaffAPI {
       const response = await fetch(url, config);
       
       if (!response.ok) {
-        let errorData;
-        try {
-          errorData = await response.json();
-        } catch {
-          errorData = { message: `HTTP error! status: ${response.status}` };
+        const errorData = await safeJsonParse(response);
+        console.error('API Error Response:', errorData);
+        
+        // Handle validation errors specifically
+        if (errorData.errors && Array.isArray(errorData.errors)) {
+          const validationErrors = errorData.errors.map((err: any) => err.msg || err.message).join(', ');
+          throw new Error(`Validation failed: ${validationErrors}`);
         }
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        
+        throw new Error(getErrorMessage(errorData) || `HTTP error! status: ${response.status}`);
       }
 
-      // Handle empty responses
-      const text = await response.text();
-      if (!text) {
-        return {} as T;
-      }
-      
-      try {
-        return JSON.parse(text);
-      } catch (parseError) {
-        console.error('JSON parse error:', parseError, 'Response text:', text);
-        throw new Error('Invalid JSON response from server');
-      }
+      // Parse response safely
+      const data = await safeJsonParse(response);
+      return data as T;
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
         throw new Error('Request timeout - server took too long to respond');
@@ -67,38 +62,38 @@ class StaffAPI {
 
   // Get all staff (admin only)
   async getAllStaff(): Promise<Staff[]> {
-    const response = await this.request<ApiResponse<Staff[]>>('/');
-    return response.data || [];
+    const response = await this.request<{success: boolean, staff: Staff[]}>('/');
+    return response.staff || [];
   }
 
   // Get active staff (public - for attendance scanner)
   async getActiveStaff(): Promise<Staff[]> {
-    const response = await this.request<ApiResponse<Staff[]>>('/active');
-    return response.data || [];
+    const response = await this.request<{success: boolean, staff: Staff[]}>('/active');
+    return response.staff || [];
   }
 
   // Get staff by ID
   async getStaffById(id: string): Promise<Staff> {
-    const response = await this.request<ApiResponse<Staff>>(`/${id}`);
-    return response.data!;
+    const response = await this.request<{success: boolean, staff: Staff}>(`/${id}`);
+    return response.staff!;
   }
 
   // Create new staff
   async createStaff(staffData: StaffFormData): Promise<Staff> {
-    const response = await this.request<ApiResponse<Staff>>('/', {
+    const response = await this.request<{success: boolean, staff: Staff}>('/', {
       method: 'POST',
       body: JSON.stringify(staffData),
     });
-    return response.data!;
+    return response.staff!;
   }
 
   // Update staff
   async updateStaff(id: string, staffData: StaffFormData): Promise<Staff> {
-    const response = await this.request<ApiResponse<Staff>>(`/${id}`, {
+    const response = await this.request<{success: boolean, staff: Staff}>(`/${id}`, {
       method: 'PUT',
       body: JSON.stringify(staffData),
     });
-    return response.data!;
+    return response.staff!;
   }
 
   // Delete staff

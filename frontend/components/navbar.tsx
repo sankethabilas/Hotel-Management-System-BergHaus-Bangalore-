@@ -4,9 +4,12 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Menu, X, User, LogOut } from 'lucide-react';
+import { Menu, X, User, LogOut, MessageSquare } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { ThemeToggle } from '@/components/theme-toggle';
+import MessagesDropdown from '@/components/messages-dropdown';
+import { safeJsonParse } from '@/lib/safeJsonParse';
+import { getProfileImageUrl, getUserInitials } from '@/utils/profileImage';
 
 interface NavbarProps {
   className?: string;
@@ -14,6 +17,8 @@ interface NavbarProps {
 
 export default function Navbar({ className }: NavbarProps) {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+  const [isMessagesOpen, setIsMessagesOpen] = React.useState(false);
+  const [unreadCount, setUnreadCount] = React.useState(0);
   const { user, isAuthenticated, logout, loading } = useAuth();
 
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
@@ -23,28 +28,44 @@ export default function Navbar({ className }: NavbarProps) {
     setIsMenuOpen(false);
   };
 
-  const getUserInitials = (user: any) => {
-    if (!user) return 'U';
-    const firstName = user.firstName || '';
-    const lastName = user.lastName || '';
-    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase() || 'U';
+  const fetchUnreadCount = async () => {
+    if (!isAuthenticated) return;
+    
+    try {
+      const response = await fetch('http://localhost:5000/api/contact/user/messages?status=new', {
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const data = await safeJsonParse(response);
+        if (data.success) {
+          const unreadMessages = data.data?.docs?.filter((msg: any) => !msg.isRead) || [];
+          setUnreadCount(unreadMessages.length);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching unread count:', error);
+    }
   };
 
-  const getProfileImageUrl = (user: any) => {
-    if (!user) return undefined;
-    
-    // If user has a custom profile image (uploaded to backend)
-    if (user.profileImage && user.profileImage.startsWith('/uploads/')) {
-      return `http://localhost:5000${user.profileImage}`;
+  React.useEffect(() => {
+    if (isAuthenticated) {
+      fetchUnreadCount();
+      // Refresh unread count every 30 seconds
+      const interval = setInterval(fetchUnreadCount, 30000);
+      return () => clearInterval(interval);
     }
-    
-    // If user has a Google profile image (external URL)
-    if (user.profileImage && user.profileImage.startsWith('http')) {
-      return user.profileImage;
-    }
-    
-    // Fallback to undefined (will show initials)
-    return undefined;
+  }, [isAuthenticated]);
+
+  const getUserInitialsForUser = (user: any) => {
+    return getUserInitials(user?.firstName, user?.lastName);
+  };
+
+  const getProfileImageUrlForUser = (user: any) => {
+    return getProfileImageUrl(user?.profileImage);
   };
 
   return (
@@ -102,7 +123,7 @@ export default function Navbar({ className }: NavbarProps) {
               href="/contact" 
               className="text-sm text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary transition-colors duration-200 font-medium"
             >
-              Contact
+              Contact Us
             </Link>
             {isAuthenticated ? (
               <Link 
@@ -141,11 +162,11 @@ export default function Navbar({ className }: NavbarProps) {
                     <Button variant="ghost" className="relative h-10 w-10 rounded-full">
                       <Avatar className="h-10 w-10">
                         <AvatarImage 
-                          src={getProfileImageUrl(user)} 
+                          src={getProfileImageUrlForUser(user)} 
                           alt={`${user?.firstName} ${user?.lastName}`} 
                         />
                         <AvatarFallback className="bg-hms-primary text-white">
-                          {getUserInitials(user)}
+                          {getUserInitialsForUser(user)}
                         </AvatarFallback>
                       </Avatar>
                     </Button>
@@ -165,6 +186,15 @@ export default function Navbar({ className }: NavbarProps) {
                         <User className="mr-2 h-4 w-4" />
                         <span>Profile</span>
                       </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setIsMessagesOpen(true)} className="cursor-pointer">
+                      <MessageSquare className="mr-2 h-4 w-4" />
+                      <span>Messages</span>
+                      {unreadCount > 0 && (
+                        <span className="ml-auto bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
+                          {unreadCount}
+                        </span>
+                      )}
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
@@ -241,7 +271,7 @@ export default function Navbar({ className }: NavbarProps) {
                 className="block px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary hover:bg-gray-50 dark:hover:bg-gray-600 rounded-md transition-colors duration-200"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Contact
+                Contact Us
               </Link>
               {isAuthenticated ? (
                 <Link
@@ -285,11 +315,11 @@ export default function Navbar({ className }: NavbarProps) {
                     <div className="flex items-center space-x-3 mb-3">
                       <Avatar className="h-10 w-10">
                         <AvatarImage 
-                          src={getProfileImageUrl(user)} 
+                          src={getProfileImageUrlForUser(user)} 
                           alt={`${user?.firstName} ${user?.lastName}`} 
                         />
                         <AvatarFallback className="bg-hms-primary text-white">
-                          {getUserInitials(user)}
+                          {getUserInitialsForUser(user)}
                         </AvatarFallback>
                       </Avatar>
                       <div>
@@ -305,6 +335,20 @@ export default function Navbar({ className }: NavbarProps) {
                       >
                         Profile
                       </Link>
+                      <button
+                        onClick={() => {
+                          setIsMessagesOpen(true);
+                          setIsMenuOpen(false);
+                        }}
+                        className="flex items-center justify-between w-full text-left px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary hover:bg-gray-50 dark:hover:bg-gray-600 rounded-md transition-colors duration-200"
+                      >
+                        <span>Messages</span>
+                        {unreadCount > 0 && (
+                          <span className="bg-red-500 text-white text-xs rounded-full px-2 py-1 min-w-[20px] text-center">
+                            {unreadCount}
+                          </span>
+                        )}
+                      </button>
                       <button
                         onClick={handleLogout}
                         className="block w-full text-left px-3 py-2 text-gray-700 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md transition-colors duration-200"
@@ -327,6 +371,13 @@ export default function Navbar({ className }: NavbarProps) {
           </div>
         )}
       </div>
+
+      {/* Messages Dropdown */}
+      <MessagesDropdown 
+        isOpen={isMessagesOpen} 
+        onClose={() => setIsMessagesOpen(false)}
+        onUnreadCountChange={setUnreadCount}
+      />
     </nav>
   );
 }

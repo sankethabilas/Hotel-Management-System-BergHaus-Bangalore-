@@ -164,17 +164,30 @@ export default function SignUp() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-hms-highlight via-white to-hms-accent/20 flex items-center justify-center p-4" style={{
-      backgroundImage: "url('/IMG-20250815-WA0005.jpg')",
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
-      backgroundAttachment: 'fixed'
-    }}>
-      {/* Background Overlay */}
-      <div className="absolute inset-0 z-0 bg-gradient-to-br from-hms-highlight/30 via-transparent to-hms-accent/20"></div>
+    <div className="min-h-screen relative flex items-center justify-center p-4 overflow-hidden">
+      {/* Blurred Background Image */}
+      <div 
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+        style={{
+          backgroundImage: "url('/IMG-20250815-WA0005.jpg')",
+          filter: 'blur(8px)',
+          transform: 'scale(1.1)'
+        }}
+      ></div>
+      
+      {/* Dark Overlay for Better Contrast */}
+      <div className="absolute inset-0 bg-black/40"></div>
+      
+      {/* Subtle Pattern Overlay */}
+      <div className="absolute inset-0 opacity-20">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgba(255,255,255,0.3)_1px,transparent_0)] bg-[length:24px_24px]"></div>
+      </div>
+      
+      {/* Gradient Overlay for Better Form Visibility */}
+      <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-blue-50/30 to-indigo-100/40"></div>
 
       <div className="relative z-10 w-full max-w-md py-8">
-        <Card className="shadow-2xl border-0 bg-white/95 backdrop-blur-sm animate-slide-up">
+        <Card className="shadow-2xl border border-white/30 bg-white/90 backdrop-blur-lg animate-slide-up ring-1 ring-white/20">
           <CardHeader className="text-center space-y-4 pb-6">
             {/* Logo */}
             <div className="flex justify-center mb-2">

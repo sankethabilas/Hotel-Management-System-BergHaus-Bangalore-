@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Staff, StaffFormData } from '@/types/staff';
 import { staffAPI } from '@/lib/staffApi';
+import { StaffValidator } from '@/lib/staffValidation';
 
 interface StaffFormProps {
   staffId?: string;
@@ -81,11 +82,36 @@ export default function StaffForm({ staffId, isEdit = false, basePathPrefix = ''
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
     
+    let processedValue = value;
+    
+    // Apply input formatting based on field type
+    if (typeof value === 'string') {
+      switch (name) {
+        case 'phone':
+          processedValue = StaffValidator.formatPhoneInput(value);
+          break;
+        case 'nicPassport':
+          processedValue = StaffValidator.formatNicPassportInput(value);
+          break;
+        case 'bankAccount':
+          processedValue = StaffValidator.formatBankAccountInput(value);
+          break;
+        case 'salary':
+        case 'overtimeRate':
+          processedValue = StaffValidator.formatNumberInput(value);
+          break;
+        case 'fullName':
+        case 'jobRole':
+          processedValue = StaffValidator.formatNameInput(value);
+          break;
+      }
+    }
+    
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'number' ? Number(value) : 
+      [name]: type === 'number' ? Number(processedValue) : 
               type === 'checkbox' ? (e.target as HTMLInputElement).checked :
-              value
+              processedValue
     }));
   };
 
@@ -100,11 +126,17 @@ export default function StaffForm({ staffId, isEdit = false, basePathPrefix = ''
       } else {
         // Remove employeeId from formData when creating new staff (backend auto-generates it)
         const { employeeId, ...createData } = formData;
+        console.log('Submitting staff data:', createData);
         await staffAPI.createStaff(createData as StaffFormData);
       }
       router.push(`${basePathPrefix}/staff` || '/admin/staff');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save staff');
+      console.error('Staff creation error:', err);
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('Failed to save staff');
+      }
     } finally {
       setLoading(false);
     }

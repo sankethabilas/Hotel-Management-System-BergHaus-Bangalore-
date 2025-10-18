@@ -71,6 +71,7 @@ export default function BookingConfirmationPage() {
       const data = await response.json();
 
       if (data.success) {
+        console.log('Booking data received:', data.data.booking);
         setBooking(data.data.booking);
       } else {
         toast({
@@ -277,12 +278,12 @@ export default function BookingConfirmationPage() {
         <div class="section">
             <h3>Payment Summary</h3>
             <div class="info-row">
-                <span class="label">Room Rate (${booking.totalNights} nights):</span>
-                <span>$${(booking.roomPrice * booking.totalNights).toFixed(2)}</span>
+                <span class="label">Room Rate (${booking.totalNights || 1} nights):</span>
+                <span>Rs ${((booking.roomPrice || 0) * (booking.totalNights || 1)).toFixed(2)}</span>
             </div>
             <div class="info-row">
                 <span class="label">Tax (10%):</span>
-                <span>$${booking.taxAmount.toFixed(2)}</span>
+                <span>Rs ${(booking.taxAmount || 0).toFixed(2)}</span>
             </div>
             <div class="info-row">
                 <span class="label">Payment Method:</span>
@@ -295,7 +296,7 @@ export default function BookingConfirmationPage() {
         </div>
 
         <div class="total">
-            Total Amount: $${booking.totalAmount.toFixed(2)}
+            Total Amount: Rs ${(booking.totalAmount || 0).toFixed(2)}
         </div>
 
         ${booking.specialRequests ? `
@@ -539,16 +540,16 @@ export default function BookingConfirmationPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex justify-between">
-                  <span>Room Rate ({booking.totalNights} nights)</span>
-                  <span>${(booking.roomPrice * booking.totalNights).toFixed(2)}</span>
+                  <span>Room Rate ({booking.totalNights || 1} nights)</span>
+                  <span>Rs {((booking.roomPrice || 0) * (booking.totalNights || 1)).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Tax (10%)</span>
-                  <span>${booking.taxAmount.toFixed(2)}</span>
+                  <span>Rs {(booking.taxAmount || 0).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between font-semibold text-lg border-t pt-2">
                   <span>Total</span>
-                  <span>${booking.totalAmount.toFixed(2)}</span>
+                  <span>Rs {(booking.totalAmount || 0).toFixed(2)}</span>
                 </div>
                 <div className="mt-3">
                   <Label className="text-sm font-medium text-gray-500">Payment Method</Label>

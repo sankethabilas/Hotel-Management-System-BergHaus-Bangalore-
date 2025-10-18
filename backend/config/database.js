@@ -3,9 +3,16 @@ require('dotenv').config();
 
 const connectDB = async () => {
   try {
-    // Hardcoded MongoDB connection string
-    const mongoURI = 'mongodb+srv://Sanketh:Gv5T0YzYqgFCI6th@cluster0.6vyj3nr.mongodb.net/hms_database?retryWrites=true&w=majority';
-    console.log('🔗 Using hardcoded MongoDB URI:', mongoURI);
+    // Get MongoDB URI from environment variables
+    const mongoURI = process.env.MONGODB_URI;
+    
+    if (!mongoURI) {
+      throw new Error('MONGODB_URI environment variable is not defined. Please check your .env file.');
+    }
+
+    // Don't log the full connection string for security
+    const maskedURI = mongoURI.replace(/\/\/[^:]+:[^@]+@/, '//***:***@');
+    console.log('🔗 Connecting to MongoDB:', maskedURI);
 
     const conn = await mongoose.connect(mongoURI, {
       serverSelectionTimeoutMS: 5000, // Keep trying to send operations for 5 seconds

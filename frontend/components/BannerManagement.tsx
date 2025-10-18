@@ -32,22 +32,11 @@ const BannerManagement: React.FC = () => {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [formData, setFormData] = useState<{
-    title: string;
-    description: string;
-    image: string;
-    type: 'deal' | 'promotion' | 'announcement' | 'feature';
-    isActive: boolean;
-    priority: number;
-    buttonText: string;
-    buttonLink: string;
-    startDate: string;
-    endDate: string;
-  }>({
+  const [formData, setFormData] = useState({
     title: '',
     description: '',
     image: '',
-    type: 'deal',
+    type: 'deal' as 'deal' | 'promotion' | 'announcement' | 'feature',
     isActive: true,
     priority: 0,
     buttonText: 'Learn More',
@@ -299,20 +288,12 @@ const BannerManagement: React.FC = () => {
           <h2 className="text-2xl font-bold text-gray-900">Banner Management</h2>
           <p className="text-gray-600">Create and manage promotional banners for the homepage</p>
         </div>
-        <div className="flex space-x-3">
-          <button
-            onClick={() => window.location.href = '/admin/banners/settings'}
-            className="bg-gray-600 text-white px-6 py-3 rounded-md hover:bg-gray-700 transition duration-200 flex items-center"
-          >
-            ⚙️ Banner Settings
-          </button>
-          <button
-            onClick={() => setShowAddForm(true)}
-            className="bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition duration-200 flex items-center"
-          >
-            ✨ Create Banner
-          </button>
-        </div>
+        <button
+          onClick={() => setShowAddForm(true)}
+          className="bg-blue-600 text-white px-6 py-3 rounded-md hover:bg-blue-700 transition duration-200 flex items-center"
+        >
+          ✨ Create Banner
+        </button>
       </div>
 
       {/* Success/Error Messages */}

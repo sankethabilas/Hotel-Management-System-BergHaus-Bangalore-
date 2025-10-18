@@ -1,0 +1,895 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import Navbar from '@/components/navbar';
+import { safeApiFetch } from '@/lib/safeFetch';
+import { 
+  Phone, 
+  Mail, 
+  MapPin, 
+  Clock, 
+  AlertTriangle, 
+  Facebook, 
+  Instagram, 
+  ExternalLink,
+  Send,
+  Loader2,
+  CheckCircle,
+  MessageSquare,
+  Users,
+  Calendar,
+  Star,
+  User
+} from 'lucide-react';
+
+interface ContactFormData {
+  fullName: string;
+  email: string;
+  phone: string;
+  subject: string;
+  message: string;
+  reasonForContact: string;
+}
+
+const ContactUsPage = () => {
+  const [formData, setFormData] = useState<ContactFormData>({
+    fullName: '',
+    email: '',
+    phone: '',
+    subject: '',
+    message: '',
+    reasonForContact: ''
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAutoFilled, setIsAutoFilled] = useState(false);
+  const [errors, setErrors] = useState<{[key: string]: string}>({});
+  const { toast } = useToast();
+  const { user, isAuthenticated } = useAuth();
+
+  // Auto-fill form with user session data
+  useEffect(() => {
+    if (isAuthenticated && user && !isAutoFilled) {
+      setFormData(prev => ({
+        ...prev,
+        fullName: (user as any).fullName || `${user.firstName || ''} ${user.lastName || ''}`.trim() || '',
+        email: user.email || '',
+        phone: (user as any).phone || ''
+      }));
+      setIsAutoFilled(true);
+      
+      // Show auto-fill notification
+      toast({
+        title: "Form Auto-filled",
+        description: "Your contact information has been automatically filled from your account.",
+        variant: "default"
+      });
+    }
+  }, [isAuthenticated, user, isAutoFilled, toast]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
+  };
+
+  const validateField = (name: string, value: string): string => {
+    switch (name) {
+      case 'fullName':
+        if (!value.trim()) return 'Full name is required';
+        if (value.trim().length < 2) return 'Full name must be at least 2 characters long';
+        if (value.trim().length > 100) return 'Full name must be less than 100 characters';
+        if (!/^[a-zA-Z\s'-]+$/.test(value.trim())) return 'Full name can only contain letters, spaces, hyphens, and apostrophes';
+        return '';
+      
+      case 'email':
+        if (!value.trim()) return 'Email is required';
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())) return 'Please enter a valid email address';
+        if (value.trim().length > 100) return 'Email must be less than 100 characters';
+        return '';
+      
+      case 'phone':
+        if (value.trim()) {
+          // Remove all non-digit characters and check if only numbers
+          const digitsOnly = value.trim().replace(/\D/g, '');
+          if (!/^\d+$/.test(value.trim().replace(/\D/g, ''))) return 'Phone number must contain only numbers';
+          if (digitsOnly.length < 7) return 'Phone number must have at least 7 digits';
+          if (digitsOnly.length > 15) return 'Phone number must have no more than 15 digits';
+        }
+        return '';
+      
+      case 'subject':
+        if (!value.trim()) return 'Subject is required';
+        if (value.trim().length < 5) return 'Subject must be at least 5 characters long';
+        if (value.trim().length > 200) return 'Subject must be less than 200 characters';
+        return '';
+      
+      case 'message':
+        if (!value.trim()) return 'Message is required';
+        if (value.trim().length < 10) return 'Message must be at least 10 characters long';
+        if (value.trim().length > 2000) return 'Message must be less than 2000 characters';
+        return '';
+      
+      default:
+        return '';
+    }
+  };
+
+  const handleSelectChange = (value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      reasonForContact: value
+    }));
+  };
+
+  const validateForm = (): boolean => {
+    // Full name validation
+    if (!formData.fullName.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Full name is required",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    if (formData.fullName.trim().length < 2) {
+      toast({
+        title: "Validation Error",
+        description: "Full name must be at least 2 characters long",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    if (formData.fullName.trim().length > 100) {
+      toast({
+        title: "Validation Error",
+        description: "Full name must be less than 100 characters",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    // Name format validation (letters, spaces, hyphens, apostrophes only)
+    const nameRegex = /^[a-zA-Z\s'-]+$/;
+    if (!nameRegex.test(formData.fullName.trim())) {
+      toast({
+        title: "Validation Error",
+        description: "Full name can only contain letters, spaces, hyphens, and apostrophes",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    // Email validation
+    if (!formData.email.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Email is required",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email.trim())) {
+      toast({
+        title: "Validation Error",
+        description: "Please enter a valid email address",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    if (formData.email.trim().length > 100) {
+      toast({
+        title: "Validation Error",
+        description: "Email must be less than 100 characters",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    // Phone validation (if provided)
+    if (formData.phone.trim()) {
+      // Remove all non-digit characters and check if only numbers
+      const digitsOnly = formData.phone.trim().replace(/\D/g, '');
+      if (!/^\d+$/.test(formData.phone.trim().replace(/\D/g, ''))) {
+        toast({
+          title: "Validation Error",
+          description: "Phone number must contain only numbers",
+          variant: "destructive"
+        });
+        return false;
+      }
+
+      if (digitsOnly.length < 7) {
+        toast({
+          title: "Validation Error",
+          description: "Phone number must have at least 7 digits",
+          variant: "destructive"
+        });
+        return false;
+      }
+
+      if (digitsOnly.length > 15) {
+        toast({
+          title: "Validation Error",
+          description: "Phone number must have no more than 15 digits",
+          variant: "destructive"
+        });
+        return false;
+      }
+    }
+
+    // Subject validation
+    if (!formData.subject.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Subject is required",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    if (formData.subject.trim().length < 5) {
+      toast({
+        title: "Validation Error",
+        description: "Subject must be at least 5 characters long",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    if (formData.subject.trim().length > 200) {
+      toast({
+        title: "Validation Error",
+        description: "Subject must be less than 200 characters",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    // Message validation
+    if (!formData.message.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Message is required",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    if (formData.message.trim().length < 10) {
+      toast({
+        title: "Validation Error",
+        description: "Message must be at least 10 characters long",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    if (formData.message.trim().length > 2000) {
+      toast({
+        title: "Validation Error",
+        description: "Message must be less than 2000 characters",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    // Reason for contact validation
+    if (!formData.reasonForContact) {
+      toast({
+        title: "Validation Error",
+        description: "Please select a reason for contact",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validateForm()) return;
+
+    setIsSubmitting(true);
+    
+    try {
+      const result = await safeApiFetch('/contact/submit', {
+        method: 'POST',
+        body: JSON.stringify(formData)
+      });
+
+      if (result.success && result.data?.success) {
+        toast({
+          title: "Success!",
+          description: "✅ Your message has been sent successfully. We will get back to you shortly.",
+          variant: "default"
+        });
+        
+        // Reset form
+        setFormData({
+          fullName: '',
+          email: '',
+          phone: '',
+          subject: '',
+          message: '',
+          reasonForContact: ''
+        });
+      } else {
+        toast({
+          title: "Error",
+          description: result.error || result.data?.message || "Failed to send message. Please try again.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error submitting contact form:', error);
+      toast({
+        title: "Error",
+        description: "Failed to send message. Please try again later.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const faqData = [
+    {
+      question: "What kind of breakfast is served?",
+      answer: "We serve a delicious continental breakfast with fresh fruits, pastries, local Sri Lankan specialties, eggs cooked to order, and a variety of beverages. Our breakfast is included in your room rate and served from 7:00 AM to 10:00 AM daily."
+    },
+    {
+      question: "What type of rooms are available?",
+      answer: "We offer a variety of room types including Standard Rooms, Deluxe Rooms, Family Suites, and our signature Bungalow Suites. All rooms are equipped with modern amenities, air conditioning, private bathrooms, and stunning views of the surrounding landscape."
+    },
+    {
+      question: "How much does it cost to stay?",
+      answer: "Our room rates vary by season and room type. Standard rooms start from Rs 9,432 per night, Deluxe rooms from Rs 10,478 per night, and our Bungalow Suites from Rs 12,807 per night. All rates include breakfast and complimentary Wi-Fi. Please contact us for current pricing and special offers."
+    },
+    {
+      question: "What activities are available?",
+      answer: "We offer a range of activities including guided nature walks, bird watching tours, hiking to nearby viewpoints, cycling tours, cooking classes featuring local cuisine, and cultural experiences. We can also arrange day trips to Ella Rock, Nine Arch Bridge, and other popular attractions."
+    },
+    {
+      question: "How far from Ella town center?",
+      answer: "Berghaus Bungalow is located just 2.5 kilometers from Ella town center, approximately a 5-minute drive or 30-minute walk. We provide complimentary shuttle service to and from the town center for our guests."
+    },
+    {
+      question: "Is Berghaus Bungalow popular with families?",
+      answer: "Yes! We are very family-friendly and welcome guests of all ages. We have family rooms, a children's play area, and can arrange family-friendly activities. Our staff is experienced in catering to families and ensuring a comfortable stay for everyone."
+    }
+  ];
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 overflow-y-auto">
+      {/* Navigation Bar */}
+      <Navbar />
+      
+      {/* Header */}
+      <div className="bg-gradient-to-r from-[#006bb8] to-[#2fa0df] text-white py-12">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4">
+            📞 Contact Us – Berghaus Bungalow HMS
+          </h1>
+          <p className="text-lg sm:text-xl lg:text-2xl text-blue-100 max-w-4xl mx-auto leading-relaxed">
+            We're here to help! Get in touch with our friendly team for any inquiries, bookings, or assistance.
+          </p>
+          {isAuthenticated && (
+            <div className="mt-6 inline-flex items-center bg-white/20 backdrop-blur-sm rounded-full px-4 py-2 text-base">
+              <User className="mr-2 h-5 w-5" />
+              <span>Welcome back, {user?.firstName || (user as any)?.fullName || 'User'}!</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          
+          {/* Left Side - Contact Details & FAQs */}
+          <div className="space-y-8">
+            
+            {/* Contact Details Card */}
+            <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-sm">
+              <CardHeader className="bg-gradient-to-r from-[#006bb8] to-[#2fa0df] text-white rounded-t-xl p-6">
+                <CardTitle className="flex items-center text-xl lg:text-2xl">
+                  <MessageSquare className="mr-2 h-6 w-6" />
+                  Contact Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6 space-y-6">
+                
+                {/* Phone Numbers */}
+                <div>
+                  <h3 className="font-bold text-gray-800 mb-3 flex items-center text-base">
+                    <Phone className="mr-2 h-5 w-5 text-[#006bb8]" />
+                    Phone Numbers
+                  </h3>
+                  <div className="space-y-2 text-sm">
+                    <p className="flex justify-between items-center py-2 px-3 bg-gray-50 rounded-lg">
+                      <span className="font-semibold">Front Desk:</span> 
+                      <span className="text-[#006bb8] font-mono text-xs">+94 77 123 4567</span>
+                    </p>
+                    <p className="flex justify-between items-center py-2 px-3 bg-gray-50 rounded-lg">
+                      <span className="font-semibold">Reservations:</span> 
+                      <span className="text-[#006bb8] font-mono text-xs">+94 77 123 4568</span>
+                    </p>
+                    <p className="flex justify-between items-center py-2 px-3 bg-gray-50 rounded-lg">
+                      <span className="font-semibold">Manager:</span> 
+                      <span className="text-[#006bb8] font-mono text-xs">+94 77 123 4569</span>
+                    </p>
+                  </div>
+                </div>
+
+                {/* Email Addresses */}
+                <div>
+                  <h3 className="font-bold text-gray-800 mb-3 flex items-center text-base">
+                    <Mail className="mr-2 h-5 w-5 text-[#006bb8]" />
+                    Email Addresses
+                  </h3>
+                  <div className="space-y-2 text-sm">
+                    <p className="flex justify-between items-center py-2 px-3 bg-gray-50 rounded-lg">
+                      <span className="font-semibold">General Inquiries:</span> 
+                      <span className="text-[#006bb8] font-mono text-xs">info@berghausbungalow.com</span>
+                    </p>
+                    <p className="flex justify-between items-center py-2 px-3 bg-gray-50 rounded-lg">
+                      <span className="font-semibold">Reservations:</span> 
+                      <span className="text-[#006bb8] font-mono text-xs">bookings@berghausbungalow.com</span>
+                    </p>
+                    <p className="flex justify-between items-center py-2 px-3 bg-gray-50 rounded-lg">
+                      <span className="font-semibold">Events:</span> 
+                      <span className="text-[#006bb8] font-mono text-xs">events@berghausbungalow.com</span>
+                    </p>
+                  </div>
+                </div>
+
+                {/* Address */}
+                <div>
+                  <h3 className="font-bold text-gray-800 mb-3 flex items-center text-base">
+                    <MapPin className="mr-2 h-5 w-5 text-[#006bb8]" />
+                    Address
+                  </h3>
+                  <div className="py-2 px-3 bg-gray-50 rounded-lg">
+                    <p className="text-sm text-gray-700 leading-relaxed">
+                      <strong>Berghaus Bungalow</strong><br />
+                      Ella, Uva Province<br />
+                      Sri Lanka 90090
+                    </p>
+                  </div>
+                </div>
+
+                {/* Operating Hours */}
+                <div>
+                  <h3 className="font-bold text-gray-800 mb-3 flex items-center text-base">
+                    <Clock className="mr-2 h-5 w-5 text-[#006bb8]" />
+                    Operating Hours
+                  </h3>
+                  <div className="space-y-2 text-sm">
+                    <p className="flex justify-between items-center py-2 px-3 bg-gray-50 rounded-lg">
+                      <span className="font-semibold">Reception:</span> 
+                      <span className="text-green-600 font-semibold text-xs">24/7</span>
+                    </p>
+                    <p className="flex justify-between items-center py-2 px-3 bg-gray-50 rounded-lg">
+                      <span className="font-semibold">Check-in:</span> 
+                      <span className="text-gray-700 text-xs">2:00 PM - 11:00 PM</span>
+                    </p>
+                    <p className="flex justify-between items-center py-2 px-3 bg-gray-50 rounded-lg">
+                      <span className="font-semibold">Check-out:</span> 
+                      <span className="text-gray-700 text-xs">6:00 AM - 12:00 PM</span>
+                    </p>
+                  </div>
+                </div>
+
+                {/* Emergency Contacts */}
+                <div>
+                  <h3 className="font-bold text-gray-800 mb-3 flex items-center text-base">
+                    <AlertTriangle className="mr-2 h-5 w-5 text-red-500" />
+                    Emergency Contacts
+                  </h3>
+                  <div className="space-y-2 text-sm">
+                    <p className="flex justify-between items-center py-2 px-3 bg-red-50 rounded-lg">
+                      <span className="font-semibold">Fire:</span> 
+                      <span className="text-red-600 font-mono font-bold text-xs">110</span>
+                    </p>
+                    <p className="flex justify-between items-center py-2 px-3 bg-red-50 rounded-lg">
+                      <span className="font-semibold">Police:</span> 
+                      <span className="text-red-600 font-mono font-bold text-xs">119</span>
+                    </p>
+                    <p className="flex justify-between items-center py-2 px-3 bg-red-50 rounded-lg">
+                      <span className="font-semibold">Medical:</span> 
+                      <span className="text-red-600 font-mono font-bold text-xs">110</span>
+                    </p>
+                    <p className="flex justify-between items-center py-2 px-3 bg-red-50 rounded-lg">
+                      <span className="font-semibold">Hotel Emergency:</span> 
+                      <span className="text-red-600 font-mono font-bold text-xs">+94 77 123 4567</span>
+                    </p>
+                  </div>
+                </div>
+
+                {/* Social Media */}
+                <div>
+                  <h3 className="font-bold text-gray-800 mb-3 flex items-center text-base">
+                    <Users className="mr-2 h-5 w-5 text-[#006bb8]" />
+                    Follow Us
+                  </h3>
+                  <div className="flex space-x-4">
+                    <a href="#" className="text-[#006bb8] hover:text-[#2fa0df] transition-colors transform hover:scale-110">
+                      <Facebook className="h-6 w-6" />
+                    </a>
+                    <a href="#" className="text-[#006bb8] hover:text-[#2fa0df] transition-colors transform hover:scale-110">
+                      <Instagram className="h-6 w-6" />
+                    </a>
+                    <a href="#" className="text-[#006bb8] hover:text-[#2fa0df] transition-colors transform hover:scale-110">
+                      <ExternalLink className="h-6 w-6" />
+                    </a>
+                    <a href="#" className="text-[#006bb8] hover:text-[#2fa0df] transition-colors transform hover:scale-110">
+                      <Star className="h-6 w-6" />
+                    </a>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* FAQ Section */}
+            <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-sm">
+              <CardHeader className="bg-gradient-to-r from-[#ffc973] to-[#fee3b3] text-gray-800 rounded-t-xl p-6">
+                <CardTitle className="flex items-center text-xl lg:text-2xl">
+                  <MessageSquare className="mr-2 h-6 w-6" />
+                  Frequently Asked Questions
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <Accordion type="single" collapsible className="w-full">
+                  {faqData.map((faq, index) => (
+                    <AccordionItem key={index} value={`item-${index}`}>
+                      <AccordionTrigger className="text-left font-medium text-gray-800 hover:text-[#006bb8]">
+                        {faq.question}
+                      </AccordionTrigger>
+                      <AccordionContent className="text-gray-600 pt-2">
+                        {faq.answer}
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Right Side - Contact Form & Map */}
+          <div className="space-y-8">
+            
+            {/* Contact Form */}
+            <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-sm">
+              <CardHeader className="bg-gradient-to-r from-[#2fa0df] to-[#006bb8] text-white rounded-t-xl p-6">
+                <CardTitle className="flex items-center text-xl lg:text-2xl">
+                  <Send className="mr-2 h-6 w-6" />
+                  Send us a Message
+                </CardTitle>
+                {isAuthenticated && (
+                  <p className="text-blue-100 text-base mt-2">
+                    Your information has been pre-filled from your account
+                  </p>
+                )}
+              </CardHeader>
+              <CardContent className="p-6">
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  
+                  {/* Full Name */}
+                  <div>
+                    <Label htmlFor="fullName" className="text-sm font-semibold text-gray-700 block mb-2">
+                      Full Name *
+                    </Label>
+                    <Input
+                      id="fullName"
+                      name="fullName"
+                      type="text"
+                      value={formData.fullName}
+                      onChange={handleInputChange}
+                      onBlur={(e) => {
+                        const error = validateField('fullName', e.target.value);
+                        setErrors(prev => ({ ...prev, fullName: error }));
+                      }}
+                      placeholder="Enter your full name"
+                      className={`h-10 text-sm px-3 border-2 focus:ring-2 rounded-lg transition-all duration-200 ${
+                        errors.fullName 
+                          ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' 
+                          : 'border-gray-200 focus:border-[#006bb8] focus:ring-[#006bb8]/20'
+                      }`}
+                      required
+                    />
+                    {errors.fullName && (
+                      <p className="text-sm text-red-600 mt-1 flex items-center gap-1">
+                        <span className="w-1 h-1 bg-red-600 rounded-full"></span>
+                        {errors.fullName}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Email */}
+                  <div>
+                    <Label htmlFor="email" className="text-sm font-semibold text-gray-700 block mb-2">
+                      Email Address *
+                    </Label>
+                    <Input
+                      id="email"
+                      name="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      onBlur={(e) => {
+                        const error = validateField('email', e.target.value);
+                        setErrors(prev => ({ ...prev, email: error }));
+                      }}
+                      placeholder="Enter your email address"
+                      className={`h-10 text-sm px-3 border-2 focus:ring-2 rounded-lg transition-all duration-200 ${
+                        errors.email 
+                          ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' 
+                          : 'border-gray-200 focus:border-[#006bb8] focus:ring-[#006bb8]/20'
+                      }`}
+                      required
+                    />
+                    {errors.email && (
+                      <p className="text-sm text-red-600 mt-1 flex items-center gap-1">
+                        <span className="w-1 h-1 bg-red-600 rounded-full"></span>
+                        {errors.email}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Phone */}
+                  <div>
+                    <Label htmlFor="phone" className="text-sm font-semibold text-gray-700 block mb-2">
+                      Phone Number
+                    </Label>
+                    <Input
+                      id="phone"
+                      name="phone"
+                      type="tel"
+                      value={formData.phone}
+                      onChange={(e) => {
+                        // Only allow numbers
+                        const value = e.target.value.replace(/\D/g, '');
+                        setFormData(prev => ({
+                          ...prev,
+                          phone: value
+                        }));
+                        
+                        // Clear error when user starts typing
+                        if (errors.phone) {
+                          setErrors(prev => ({
+                            ...prev,
+                            phone: ''
+                          }));
+                        }
+                      }}
+                      onBlur={(e) => {
+                        const error = validateField('phone', e.target.value);
+                        setErrors(prev => ({ ...prev, phone: error }));
+                      }}
+                      placeholder="Enter your phone number (7-15 digits)"
+                      className={`h-10 text-sm px-3 border-2 focus:ring-2 rounded-lg transition-all duration-200 ${
+                        errors.phone 
+                          ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' 
+                          : 'border-gray-200 focus:border-[#006bb8] focus:ring-[#006bb8]/20'
+                      }`}
+                    />
+                    {errors.phone && (
+                      <p className="text-sm text-red-600 mt-1 flex items-center gap-1">
+                        <span className="w-1 h-1 bg-red-600 rounded-full"></span>
+                        {errors.phone}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Reason for Contact */}
+                  <div>
+                    <Label className="text-sm font-semibold text-gray-700 block mb-2">
+                      Reason for Contact *
+                    </Label>
+                    <Select value={formData.reasonForContact} onValueChange={handleSelectChange}>
+                      <SelectTrigger className="h-10 text-sm px-3 border-2 border-gray-200 focus:border-[#006bb8] focus:ring-2 focus:ring-[#006bb8]/20 rounded-lg transition-all duration-200">
+                        <SelectValue placeholder="Select a reason" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="booking">Booking Inquiry</SelectItem>
+                        <SelectItem value="complaint">Complaint</SelectItem>
+                        <SelectItem value="corporate">Corporate</SelectItem>
+                        <SelectItem value="event">Event</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Subject */}
+                  <div>
+                    <Label htmlFor="subject" className="text-sm font-semibold text-gray-700 block mb-2">
+                      Subject *
+                    </Label>
+                    <Input
+                      id="subject"
+                      name="subject"
+                      type="text"
+                      value={formData.subject}
+                      onChange={handleInputChange}
+                      placeholder="Enter message subject"
+                      className="h-10 text-sm px-3 border-2 border-gray-200 focus:border-[#006bb8] focus:ring-2 focus:ring-[#006bb8]/20 rounded-lg transition-all duration-200"
+                      required
+                    />
+                  </div>
+
+                  {/* Message */}
+                  <div>
+                    <Label htmlFor="message" className="text-sm font-semibold text-gray-700 block mb-2">
+                      Message *
+                    </Label>
+                    <Textarea
+                      id="message"
+                      name="message"
+                      value={formData.message}
+                      onChange={handleInputChange}
+                      placeholder="Enter your message here..."
+                      className="min-h-[120px] text-sm px-3 py-2 border-2 border-gray-200 focus:border-[#006bb8] focus:ring-2 focus:ring-[#006bb8]/20 rounded-lg transition-all duration-200 resize-none"
+                      required
+                    />
+                  </div>
+
+                  {/* Submit Button */}
+                  <Button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full bg-gradient-to-r from-[#006bb8] to-[#2fa0df] hover:from-[#0056a3] hover:to-[#1e8bc4] text-white font-bold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 text-base h-12"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                        Sending Message...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="mr-2 h-5 w-5" />
+                        Send Message
+                      </>
+                    )}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+
+            {/* Map & Directions */}
+            <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-sm">
+              <CardHeader className="bg-gradient-to-r from-[#ffc973] to-[#fee3b3] text-gray-800 rounded-t-xl p-6">
+                <CardTitle className="flex items-center text-xl lg:text-2xl">
+                  <MapPin className="mr-2 h-6 w-6" />
+                  Find Us
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="space-y-4">
+                  {/* Google Maps Embed */}
+                  <div className="relative w-full h-64 lg:h-80 rounded-lg overflow-hidden shadow-lg">
+                    <iframe
+                      src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3960.123456789!2d81.0444!3d6.8667!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNsKwNTInMDAuMCJOIDgxwrAwMic0MC4wIkU!5e0!3m2!1sen!2slk!4v1234567890123!5m2!1sen!2slk"
+                      width="100%"
+                      height="100%"
+                      style={{ border: 0 }}
+                      allowFullScreen
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                      title="Berghaus Bungalow Location"
+                    />
+                  </div>
+                  
+                  {/* Get Directions Button */}
+                  <div className="text-center">
+                    <Button
+                      onClick={() => window.open('https://maps.google.com/?q=Berghaus+Bungalow+Ella+Sri+Lanka', '_blank')}
+                      className="bg-gradient-to-r from-[#ffc973] to-[#fee3b3] hover:from-[#ffb84d] hover:to-[#fdd89f] text-gray-800 font-bold py-2 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 text-base h-10"
+                    >
+                      <ExternalLink className="mr-2 h-4 w-4" />
+                      Get Directions
+                    </Button>
+                  </div>
+                  
+                  <div className="text-center bg-gray-50 rounded-lg p-3">
+                    <p className="text-sm text-gray-700 font-medium">
+                      <MapPin className="inline h-4 w-4 mr-2 text-[#006bb8]" />
+                      Berghaus Bungalow, Ella, Uva Province, Sri Lanka
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Feedback Section */}
+            <Card className="shadow-xl border-0 bg-white/90 backdrop-blur-sm">
+              <CardHeader className="bg-gradient-to-r from-[#ffc973] to-[#fee3b3] text-gray-800 rounded-t-xl p-6">
+                <CardTitle className="flex items-center text-xl lg:text-2xl">
+                  <Star className="mr-2 h-6 w-6" />
+                  Share Your Feedback
+                </CardTitle>
+                <p className="text-base text-gray-700 mt-2">
+                  Help us improve by sharing your experience with Berghaus Bungalow
+                </p>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="text-center space-y-4">
+                  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-3">
+                      We Value Your Opinion
+                    </h3>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Your feedback helps us enhance our services and create better experiences for all our guests. 
+                      Share your thoughts about your stay, dining experience, or any suggestions you might have.
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                      <Button
+                        onClick={() => window.open('/feedback', '_blank')}
+                        className="bg-gradient-to-r from-[#006bb8] to-[#2fa0df] hover:from-[#0056a3] hover:to-[#1e8bc4] text-white font-bold py-2 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 text-base h-10"
+                      >
+                        <Star className="mr-2 h-4 w-4" />
+                        Submit Feedback
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => window.open('/feedback', '_blank')}
+                        className="border-2 border-[#006bb8] text-[#006bb8] hover:bg-[#006bb8] hover:text-white font-bold py-2 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 text-base h-10"
+                      >
+                        <MessageSquare className="mr-2 h-4 w-4" />
+                        Rate Your Experience
+                      </Button>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                    <div className="text-center p-3 bg-gray-50 rounded-lg">
+                      <div className="text-2xl mb-2">⭐</div>
+                      <h4 className="font-semibold text-gray-800 mb-1 text-sm">Rate Your Stay</h4>
+                      <p className="text-xs text-gray-600">Share ratings for different aspects of your experience</p>
+                    </div>
+                    <div className="text-center p-3 bg-gray-50 rounded-lg">
+                      <div className="text-2xl mb-2">💬</div>
+                      <h4 className="font-semibold text-gray-800 mb-1 text-sm">Leave Comments</h4>
+                      <p className="text-xs text-gray-600">Tell us what you loved or what we can improve</p>
+                    </div>
+                    <div className="text-center p-3 bg-gray-50 rounded-lg">
+                      <div className="text-2xl mb-2">📸</div>
+                      <h4 className="font-semibold text-gray-800 mb-1 text-sm">Share Photos</h4>
+                      <p className="text-xs text-gray-600">Upload photos from your stay (optional)</p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ContactUsPage;

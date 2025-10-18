@@ -26,7 +26,14 @@ const emailConfig = {
   },
   
   // Frontend URL for email links
-  frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000'
+  frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
+  
+  // Rate limiting configuration
+  rateLimits: {
+    delayBetweenEmails: 1000,      // 1 second between emails
+    batchSize: 10,                  // Process 10 emails before longer pause
+    batchDelayMultiplier: 2         // 2x delay after each batch
+  }
 };
 
 module.exports = emailConfig;

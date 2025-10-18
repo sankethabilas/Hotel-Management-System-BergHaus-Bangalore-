@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -45,13 +45,25 @@ const BookingForm: React.FC<BookingFormProps> = ({
   const { user, isAuthenticated } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
-    guestName: isAuthenticated && user ? `${user.firstName} ${user.lastName}`.trim() : '',
-    guestEmail: isAuthenticated && user ? user.email : '',
-    guestPhone: isAuthenticated && user ? user.phone : '',
+    guestName: '',
+    guestEmail: '',
+    guestPhone: '',
     guestIdPassport: '',
     paymentMethod: '',
     specialRequests: ''
   });
+
+  // Update form data when user authentication state changes
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      setFormData(prev => ({
+        ...prev,
+        guestName: `${user.firstName || ''} ${user.lastName || ''}`.trim(),
+        guestEmail: user.email || '',
+        guestPhone: user.phone || ''
+      }));
+    }
+  }, [isAuthenticated, user]);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
@@ -253,7 +265,7 @@ const BookingForm: React.FC<BookingFormProps> = ({
                 <Input
                   id="guestName"
                   type="text"
-                  value={formData.guestName}
+                  value={formData.guestName || ''}
                   onChange={(e) => handleInputChange('guestName', e.target.value)}
                   className="pl-10"
                   placeholder="Enter your full name"
@@ -269,7 +281,7 @@ const BookingForm: React.FC<BookingFormProps> = ({
                 <Input
                   id="guestEmail"
                   type="email"
-                  value={formData.guestEmail}
+                  value={formData.guestEmail || ''}
                   onChange={(e) => handleInputChange('guestEmail', e.target.value)}
                   className="pl-10"
                   placeholder="Enter your email"
@@ -287,7 +299,7 @@ const BookingForm: React.FC<BookingFormProps> = ({
                 <Input
                   id="guestPhone"
                   type="tel"
-                  value={formData.guestPhone}
+                  value={formData.guestPhone || ''}
                   onChange={(e) => handleInputChange('guestPhone', e.target.value)}
                   className="pl-10"
                   placeholder="+1234567890"
@@ -303,7 +315,7 @@ const BookingForm: React.FC<BookingFormProps> = ({
                 <Input
                   id="guestIdPassport"
                   type="text"
-                  value={formData.guestIdPassport}
+                  value={formData.guestIdPassport || ''}
                   onChange={(e) => handleInputChange('guestIdPassport', e.target.value)}
                   className="pl-10"
                   placeholder="Enter your ID or Passport number"
@@ -323,10 +335,8 @@ const BookingForm: React.FC<BookingFormProps> = ({
                     <SelectValue placeholder="Select payment method" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="card">Credit/Debit Card</SelectItem>
-                    <SelectItem value="online">Online Payment</SelectItem>
-                    <SelectItem value="cash">Cash on Arrival</SelectItem>
                     <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                    <SelectItem value="cash_on_property">Cash on Property</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -337,14 +347,14 @@ const BookingForm: React.FC<BookingFormProps> = ({
             <Label htmlFor="specialRequests">Special Requests</Label>
             <Textarea
               id="specialRequests"
-              value={formData.specialRequests}
+              value={formData.specialRequests || ''}
               onChange={(e) => handleInputChange('specialRequests', e.target.value)}
               placeholder="Any special requests or notes..."
               rows={3}
               maxLength={500}
             />
             <div className="text-sm text-gray-500">
-              {formData.specialRequests.length}/500 characters
+              {(formData.specialRequests || '').length}/500 characters
             </div>
           </div>
         </CardContent>
@@ -361,7 +371,7 @@ const BookingForm: React.FC<BookingFormProps> = ({
           disabled={isSubmitting}
           className="flex-1"
         >
-          {isSubmitting ? 'Processing Booking...' : `Confirm Booking - $${calculateTotalPrice().toFixed(2)}`}
+          {isSubmitting ? 'Processing Booking...' : `Confirm Booking - Rs ${calculateTotalPrice().toFixed(2)}`}
         </Button>
       </div>
 

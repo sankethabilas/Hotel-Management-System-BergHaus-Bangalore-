@@ -3,6 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import { Staff } from '../../types/staff';
 import { Leave } from '../../types/leave';
+import { leaveAPI } from '@/lib/leaveApi';
+import { attendanceAPI } from '@/lib/attendanceApi';
+import { paymentAPI } from '@/lib/paymentApi';
 
 // Global styles to reduce scrollbar visibility
 const globalStyles = `
@@ -69,9 +72,9 @@ const CalendarIcon = ({ className }: { className: string }) => (
   </svg>
 );
 
-const CurrencyDollarIcon = ({ className }: { className: string }) => (
+const CurrencyRupeeIcon = ({ className }: { className: string }) => (
   <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" />
   </svg>
 );
 
@@ -141,6 +144,158 @@ export default function StaffDashboard() {
   });
   const [passwordLoading, setPasswordLoading] = useState(false);
 
+  // Dashboard data states
+  const [hoursToday, setHoursToday] = useState({ hours: 0, status: 'Not started' });
+  const [leaveBalance, setLeaveBalance] = useState({ used: 0, total: 24, remaining: 24 });
+  const [monthlyEarnings, setMonthlyEarnings] = useState({ salary: 0, overtime: 0 });
+  const [tasksToday, setTasksToday] = useState({ completed: 0, total: 0, remaining: 0 });
+
+  // Fetch dashboard data functions
+  const fetchHoursToday = async () => {
+    try {
+      const staffData = JSON.parse(localStorage.getItem('staffData') || '{}');
+      console.log('Staff data for attendance:', staffData);
+      
+      if (staffData._id) {
+        console.log('Fetching today\'s attendance for staffId:', staffData._id);
+        
+        const response = await attendanceAPI.getTodayAttendance();
+        console.log('Today attendance API response:', response);
+        
+        if (response.success && response.attendance && response.attendance.length > 0) {
+          // Filter attendance records for the current staff member
+          const staffAttendance = response.attendance.find(record => {
+            // Handle both cases: staffId as string or as object with _id
+            const recordStaffId = typeof record.staffId === 'string' 
+              ? record.staffId 
+              : record.staffId._id;
+            return recordStaffId === staffData._id;
+          });
+          
+          console.log('Staff attendance record:', staffAttendance);
+          
+          if (staffAttendance) {
+            let hours = 0;
+            let status = 'Not started';
+            
+            if (staffAttendance.checkInTime && staffAttendance.checkOutTime) {
+              // Both check in and out - use calculated working hours
+              hours = staffAttendance.workingHours || 0;
+              status = 'Completed';
+            } else if (staffAttendance.checkInTime) {
+              // Only checked in - calculate current hours
+              const checkIn = new Date(staffAttendance.checkInTime);
+              const now = new Date();
+              hours = (now.getTime() - checkIn.getTime()) / (1000 * 60 * 60);
+              status = 'In progress';
+            }
+            
+            console.log('Calculated hours:', hours, 'status:', status);
+            
+            setHoursToday({ 
+              hours: Math.round(hours * 10) / 10, // Round to 1 decimal
+              status 
+            });
+          } else {
+            console.log('No attendance record found for this staff member today');
+            setHoursToday({ hours: 0, status: 'Not started' });
+          }
+        } else {
+          // No attendance records for today
+          console.log('No attendance records found for today');
+          setHoursToday({ hours: 0, status: 'Not started' });
+        }
+      } else {
+        console.log('No staff ID found in localStorage');
+      }
+    } catch (error) {
+      console.error('Error fetching today\'s hours:', error);
+      setHoursToday({ hours: 0, status: 'Not started' });
+    }
+  };
+
+  const fetchLeaveBalance = async () => {
+    try {
+      const staffData = JSON.parse(localStorage.getItem('staffData') || '{}');
+      if (staffData._id) {
+        const response = await leaveAPI.getMyLeaves();
+        
+        if (response.success && response.leaves) {
+          // Count approved leaves for this year
+          const currentYear = new Date().getFullYear();
+          const approvedLeaves = response.leaves.filter(leave => 
+            leave.status === 'approved' && 
+            new Date(leave.createdAt).getFullYear() === currentYear
+          );
+          
+          const totalDaysUsed = approvedLeaves.reduce((total, leave) => {
+            const startDate = new Date(leave.startDate);
+            const endDate = new Date(leave.endDate);
+            const daysDiff = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+            return total + daysDiff;
+          }, 0);
+          
+          const totalAllowed = 24; // Standard leave allowance
+          const remaining = totalAllowed - totalDaysUsed;
+          
+          setLeaveBalance({
+            used: totalDaysUsed,
+            total: totalAllowed,
+            remaining: Math.max(0, remaining)
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching leave balance:', error);
+    }
+  };
+
+  const fetchMonthlyEarnings = async () => {
+    try {
+      const staffData = JSON.parse(localStorage.getItem('staffData') || '{}');
+      if (staffData._id) {
+        const currentDate = new Date();
+        const currentYear = currentDate.getFullYear();
+        const currentMonth = currentDate.getMonth() + 1; // JavaScript months are 0-based
+        
+        const response = await paymentAPI.getPaymentsByStaff(staffData._id, { 
+          year: currentYear,
+          limit: 12 
+        });
+        
+        if (response.success && response.payments) {
+          // Find current month's payment
+          const currentMonthPayment = response.payments.find(payment => 
+            payment.paymentPeriod.month === currentMonth && 
+            payment.paymentPeriod.year === currentYear
+          );
+          
+          if (currentMonthPayment) {
+            setMonthlyEarnings({
+              salary: currentMonthPayment.baseSalary || 0,
+              overtime: currentMonthPayment.overtimePay || 0
+            });
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching monthly earnings:', error);
+    }
+  };
+
+  // Initialize dashboard data
+  const initializeDashboardData = async () => {
+    await Promise.all([
+      fetchHoursToday(),
+      fetchLeaveBalance(),
+      fetchMonthlyEarnings()
+    ]);
+    
+    // For tasks, we'll use a placeholder since no task management system exists yet
+    // This can be connected to a real task system later
+    setTasksToday({ completed: 0, total: 0, remaining: 0 });
+  };
+
   // Handle logout
   const handleLogout = () => {
     // Clear local storage
@@ -162,6 +317,15 @@ export default function StaffDashboard() {
 
     if (passwordForm.newPassword.length < 4) {
       alert('New password must be at least 4 characters long');
+      return;
+    }
+
+    // Check for uppercase letter and number
+    const hasUppercase = /[A-Z]/.test(passwordForm.newPassword);
+    const hasNumber = /[0-9]/.test(passwordForm.newPassword);
+    
+    if (!hasUppercase || !hasNumber) {
+      alert('Password must contain at least one uppercase letter and one number');
       return;
     }
 
@@ -236,6 +400,9 @@ export default function StaffDashboard() {
 
       setStaffData(completeStaffData);
       console.log('Staff department:', completeStaffData.department);
+      
+      // Initialize dashboard data
+      initializeDashboardData();
     } catch (error) {
       console.error('Error parsing staff data:', error);
       // Redirect to login if data is corrupted
@@ -405,8 +572,12 @@ export default function StaffDashboard() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600 mb-1">Hours Today</p>
-                    <p className="text-2xl font-bold text-gray-900">8.5</p>
-                    <p className="text-sm text-green-600 font-medium">On track</p>
+                    <p className="text-2xl font-bold text-gray-900">{hoursToday.hours}</p>
+                    <p className={`text-sm font-medium ${
+                      hoursToday.status === 'Completed' ? 'text-green-600' : 
+                      hoursToday.status === 'In progress' ? 'text-blue-600' : 
+                      'text-gray-500'
+                    }`}>{hoursToday.status}</p>
                   </div>
                   <div className="p-3 bg-blue-100 rounded-lg">
                     <ClockIcon className="h-6 w-6 text-blue-600" />
@@ -419,7 +590,7 @@ export default function StaffDashboard() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600 mb-1">Leave Balance</p>
-                    <p className="text-2xl font-bold text-gray-900">18</p>
+                    <p className="text-2xl font-bold text-gray-900">{leaveBalance.remaining}/{leaveBalance.total}</p>
                     <p className="text-sm text-gray-500">days remaining</p>
                   </div>
                   <div className="p-3 bg-green-100 rounded-lg">
@@ -433,11 +604,20 @@ export default function StaffDashboard() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600 mb-1">This Month</p>
-                    <p className="text-2xl font-bold text-gray-900">Rs. 80,500</p>
-                    <p className="text-sm text-green-600">+Rs. 15,500 overtime</p>
+                    <p className="text-2xl font-bold text-gray-900">
+                      Rs. {monthlyEarnings.salary.toLocaleString()}
+                    </p>
+                    {monthlyEarnings.overtime > 0 && (
+                      <p className="text-sm text-green-600">
+                        +Rs. {monthlyEarnings.overtime.toLocaleString()} overtime
+                      </p>
+                    )}
+                    {monthlyEarnings.salary === 0 && (
+                      <p className="text-sm text-gray-500">No payment record</p>
+                    )}
                   </div>
                   <div className="p-3 bg-yellow-100 rounded-lg">
-                    <CurrencyDollarIcon className="h-6 w-6 text-yellow-600" />
+                    <CurrencyRupeeIcon className="h-6 w-6 text-yellow-600" />
                   </div>
                 </div>
               </div>
@@ -447,8 +627,12 @@ export default function StaffDashboard() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600 mb-1">Tasks Today</p>
-                    <p className="text-2xl font-bold text-gray-900">7/10</p>
-                    <p className="text-sm text-blue-600">3 remaining</p>
+                    <p className="text-2xl font-bold text-gray-900">{tasksToday.completed}/{tasksToday.total}</p>
+                    {tasksToday.total > 0 ? (
+                      <p className="text-sm text-blue-600">{tasksToday.remaining} remaining</p>
+                    ) : (
+                      <p className="text-sm text-gray-500">No tasks assigned</p>
+                    )}
                   </div>
                   <div className="p-3 bg-purple-100 rounded-lg">
                     <CheckCircleIcon className="h-6 w-6 text-purple-600" />
@@ -501,7 +685,7 @@ export default function StaffDashboard() {
                       <button className="w-full bg-yellow-600 text-white rounded-lg p-4 hover:bg-yellow-700 transition-colors">
                         <div className="flex items-center space-x-3">
                           <div className="p-2 bg-yellow-500 rounded-lg">
-                            <CurrencyDollarIcon className="h-5 w-5" />
+                            <CurrencyRupeeIcon className="h-5 w-5" />
                           </div>
                           <div className="text-left">
                             <h3 className="font-semibold">Payment History</h3>
@@ -727,6 +911,11 @@ export default function StaffDashboard() {
               </div>
 
               <form onSubmit={handleChangePassword} className="space-y-4">
+                {/* Hidden dummy fields to trick password managers */}
+                <div style={{ display: 'none' }}>
+                  <input type="text" name="username" autoComplete="username" />
+                  <input type="password" name="password" autoComplete="current-password" />
+                </div>
                 <div>
                   <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700 mb-1">
                     Current Password
@@ -736,9 +925,19 @@ export default function StaffDashboard() {
                     id="currentPassword"
                     value={passwordForm.currentPassword}
                     onChange={(e) => setPasswordForm(prev => ({ ...prev, currentPassword: e.target.value }))}
+                    onFocus={(e) => {
+                      // Clear any auto-filled value on focus
+                      if (e.target.value && !passwordForm.currentPassword) {
+                        e.target.value = '';
+                        setPasswordForm(prev => ({ ...prev, currentPassword: '' }));
+                      }
+                    }}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     required
                     disabled={passwordLoading}
+                    autoComplete="new-password"
+                    data-form-type="other"
+                    data-lpignore="true"
                   />
                 </div>
 

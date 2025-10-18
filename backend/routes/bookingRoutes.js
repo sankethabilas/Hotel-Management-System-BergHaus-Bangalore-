@@ -64,8 +64,8 @@ const bookingValidation = [
     .isInt({ min: 1, max: 10 })
     .withMessage('Number of guests must be between 1 and 10'),
   body('paymentMethod')
-    .isIn(['card', 'cash', 'online', 'bank_transfer'])
-    .withMessage('Payment method must be one of: card, cash, online, bank_transfer'),
+    .isIn(['bank_transfer', 'cash_on_property'])
+    .withMessage('Payment method must be one of: bank_transfer, cash_on_property'),
   body('specialRequests')
     .optional()
     .isLength({ max: 500 })
