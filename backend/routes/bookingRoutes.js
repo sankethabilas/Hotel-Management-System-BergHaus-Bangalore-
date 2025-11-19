@@ -92,8 +92,10 @@ const arrivalTimeValidation = [
 
 // Public routes
 router.post('/search', searchValidation, searchAvailableRooms);
-router.post('/', bookingValidation, createBooking);
 router.get('/:reference', getBookingByReference);
+
+// Protected routes - require authentication for booking
+router.post('/', protect, bookingValidation, createBooking);
 
 // Protected routes
 router.get('/user/bookings', protect, getUserBookings);

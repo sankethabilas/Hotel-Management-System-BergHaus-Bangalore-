@@ -165,7 +165,8 @@ class ReservationService {
     data: Reservation;
     message: string;
   }> {
-    const response = await fetch(`${API_BASE_URL}/reservations`, {
+    // Use the frontdesk manual reservation endpoint for manual reservations
+    const response = await fetch(`${API_BASE_URL}/frontdesk/create-reservation`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

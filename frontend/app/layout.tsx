@@ -11,6 +11,11 @@ export const metadata: Metadata = {
   description: 'Experience luxury hospitality at Berghaus Bungalow. Seamless booking, exceptional service, and unforgettable memories await.',
   keywords: 'hotel, management, booking, hospitality, luxury, reservation',
   authors: [{ name: 'HMS Team' }],
+  icons: {
+    icon: '/logo.png',
+    shortcut: '/logo.png',
+    apple: '/logo.png',
+  },
   openGraph: {
     title: 'Berghaus Bungalow - Hotel Management System',
     description: 'Experience luxury hospitality at Berghaus Bungalow.',

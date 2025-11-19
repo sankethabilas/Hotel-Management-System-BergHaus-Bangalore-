@@ -66,7 +66,11 @@ const validateRegister = [
     .optional()
     .trim()
     .isLength({ max: 10 })
-    .withMessage('Zip code cannot exceed 10 characters')
+    .withMessage('Zip code cannot exceed 10 characters'),
+
+  body('verificationId')
+    .notEmpty()
+    .withMessage('Verification ID is required. Please verify your email before signing up.')
 ];
 
 // User login validation
@@ -281,10 +285,32 @@ const validateUserUpdate = [
     .withMessage('isActive must be a boolean value')
 ];
 
+// Email verification request validation
+const validateEmailVerificationRequest = [
+  body('email')
+    .isEmail()
+    .withMessage('Please provide a valid email')
+    .normalizeEmail(),
+];
+
+// Email code verification validation
+const validateVerifyEmailCode = [
+  body('email')
+    .isEmail()
+    .withMessage('Please provide a valid email')
+    .normalizeEmail(),
+  body('code')
+    .trim()
+    .isLength({ min: 6, max: 6 })
+    .withMessage('Verification code must be 6 digits'),
+];
+
 module.exports = {
   validateRegister,
   validateLogin,
   validateProfileUpdate,
   validatePasswordChange,
-  validateUserUpdate
+  validateUserUpdate,
+  validateEmailVerificationRequest,
+  validateVerifyEmailCode
 };

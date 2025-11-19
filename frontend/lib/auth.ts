@@ -154,6 +154,30 @@ export class AuthService {
   static hasRole(user: User | null, role: string): boolean {
     return user?.role === role;
   }
+
+  static async requestEmailVerification(email: string): Promise<ApiResponse<{ verificationId: string; expiresIn?: number }>> {
+    try {
+      return await authAPI.requestEmailVerification(email);
+    } catch (error: any) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to send verification code',
+        errors: error.response?.data?.errors,
+      };
+    }
+  }
+
+  static async verifyEmailCode(email: string, code: string): Promise<ApiResponse<{ verificationId: string }>> {
+    try {
+      return await authAPI.verifyEmailCode({ email, code });
+    } catch (error: any) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Failed to verify code',
+        errors: error.response?.data?.errors,
+      };
+    }
+  }
 }
 
 // Validation helpers

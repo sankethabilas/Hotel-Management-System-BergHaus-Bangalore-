@@ -115,6 +115,8 @@ export default function ReservationFormModal({
     setLoading(true);
 
     try {
+      // For manual reservations, we'll let the backend handle room lookup
+      // by room number, so we don't need to include roomId in the submission
       const submitData = {
         guestName: formData.guestName,
         guestEmail: formData.guestEmail,
@@ -125,11 +127,10 @@ export default function ReservationFormModal({
           adults: formData.adults,
           children: formData.children
         },
-        rooms: [{
-          roomId: '', // This would be populated from room selection
-          roomNumber: formData.roomNumber,
-          roomType: formData.roomType
-        }],
+        // Only include room information without roomId for manual reservations
+        // The backend will handle room lookup by room number
+        roomNumber: formData.roomNumber,
+        roomType: formData.roomType,
         totalPrice: formData.totalPrice,
         paymentMethod: formData.paymentMethod,
         paymentStatus: formData.paymentStatus,

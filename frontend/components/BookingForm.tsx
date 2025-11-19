@@ -11,6 +11,8 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { User, Mail, Phone, CreditCard, ArrowLeft, CheckCircle, IdCard } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useRouter } from 'next/navigation';
+import { fetchWithAuth } from '@/utils/fetchWithAuth';
 
 interface Room {
   _id: string;
@@ -43,6 +45,7 @@ const BookingForm: React.FC<BookingFormProps> = ({
 }) => {
   const { toast } = useToast();
   const { user, isAuthenticated } = useAuth();
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     guestName: '',
@@ -122,6 +125,20 @@ const BookingForm: React.FC<BookingFormProps> = ({
   };
 
   const handleSubmit = async () => {
+    // Check authentication before proceeding
+    if (!isAuthenticated || !user) {
+      toast({
+        title: "Login Required",
+        description: "Please log in to book a room. You will be redirected to the login page.",
+        variant: "destructive"
+      });
+      // Redirect to login with return URL
+      setTimeout(() => {
+        router.push(`/auth/signin?redirect=${encodeURIComponent('/booking')}`);
+      }, 1500);
+      return;
+    }
+
     if (!validateForm()) return;
 
     setIsSubmitting(true);
@@ -129,7 +146,7 @@ const BookingForm: React.FC<BookingFormProps> = ({
     try {
       // For multiple rooms, create separate bookings
       const bookingPromises = selectedRooms.map(room => 
-        fetch('/api/bookings', {
+        fetchWithAuth('/api/bookings', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -150,7 +167,27 @@ const BookingForm: React.FC<BookingFormProps> = ({
       );
 
       const responses = await Promise.all(bookingPromises);
-      const results = await Promise.all(responses.map(res => res.json()));
+      const results = await Promise.all(responses.map(async res => {
+        const data = await res.json();
+        // Check for authentication errors
+        if (res.status === 401) {
+          toast({
+            title: "Authentication Required",
+            description: "Your session has expired. Please log in again.",
+            variant: "destructive"
+          });
+          router.push(`/auth/signin?redirect=${encodeURIComponent('/booking')}`);
+          return { success: false, requiresAuth: true };
+        }
+        return data;
+      }));
+
+      // Check if any booking requires authentication
+      const authRequired = results.some(result => result.requiresAuth);
+      if (authRequired) {
+        setIsSubmitting(false);
+        return;
+      }
 
       // Check if all bookings were successful
       const failedBookings = results.filter(result => !result.success);

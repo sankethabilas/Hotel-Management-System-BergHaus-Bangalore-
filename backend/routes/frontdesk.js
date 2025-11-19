@@ -714,6 +714,132 @@ router.put('/payment/:reservationId', async (req, res) => {
   }
 });
 
+// POST /api/frontdesk/create-reservation - Create manual reservation
+router.post('/create-reservation', async (req, res) => {
+  try {
+    const {
+      guestName,
+      guestEmail,
+      guestPhone,
+      checkInDate,
+      checkOutDate,
+      roomNumber,
+      roomType,
+      totalPrice,
+      paymentMethod,
+      paymentStatus,
+      specialRequests,
+      notes,
+      guestCount
+    } = req.body;
+
+    // Validate required fields
+    if (!guestName || !guestEmail || !checkInDate || !checkOutDate || !roomNumber) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required fields: guestName, guestEmail, checkInDate, checkOutDate, roomNumber'
+      });
+    }
+
+    // Validate dates
+    const checkIn = new Date(checkInDate);
+    const checkOut = new Date(checkOutDate);
+    
+    if (checkIn >= checkOut) {
+      return res.status(400).json({
+        success: false,
+        message: 'Check-out date must be after check-in date'
+      });
+    }
+    
+    if (checkIn <= new Date()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Check-in date must be in the future'
+      });
+    }
+
+    // Find room by room number
+    const room = await Room.findOne({ roomNumber });
+    if (!room) {
+      return res.status(404).json({
+        success: false,
+        message: `Room ${roomNumber} not found`
+      });
+    }
+
+    // Check if room is available for the selected dates
+    const overlappingReservations = await Reservation.find({
+      $or: [
+        { roomId: room._id },
+        { 'rooms.roomId': room._id }
+      ],
+      status: { $in: ['confirmed', 'checked-in', 'pending'] },
+      $or: [
+        {
+          checkInDate: { $lt: checkOut },
+          checkOutDate: { $gt: checkIn }
+        },
+        {
+          checkIn: { $lt: checkOut },
+          checkOut: { $gt: checkIn }
+        }
+      ]
+    });
+
+    if (overlappingReservations.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Room is not available for the selected dates'
+      });
+    }
+
+    // Create reservation
+    const reservation = new Reservation({
+      guestName,
+      guestEmail,
+      guestPhone,
+      rooms: [{
+        roomId: room._id,
+        roomNumber: room.roomNumber,
+        roomType: room.roomType
+      }],
+      roomId: room._id, // Legacy field
+      checkInDate: checkIn,
+      checkOutDate: checkOut,
+      checkIn: checkIn, // Legacy field
+      checkOut: checkOut, // Legacy field
+      totalPrice: totalPrice || 0,
+      status: 'confirmed',
+      paymentStatus: paymentStatus || 'unpaid',
+      paymentMethod: paymentMethod || 'cash_on_property',
+      guestCount: guestCount || { adults: 1, children: 0 },
+      specialRequests: specialRequests || '',
+      notes: notes || '',
+      source: 'frontdesk'
+    });
+
+    await reservation.save();
+
+    // Update room status to reserved
+    room.status = 'reserved';
+    await room.save();
+
+    res.status(201).json({
+      success: true,
+      message: 'Reservation created successfully',
+      data: reservation
+    });
+  } catch (error) {
+    console.error('Error creating manual reservation:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error creating reservation',
+      error: error.message
+    });
+  }
+});
+
 // POST /api/frontdesk/charges/:reservationId - Add custom charges
 router.post('/charges/:reservationId', async (req, res) => {
   try {

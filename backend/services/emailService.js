@@ -256,6 +256,52 @@ const sendBookingReminder = async (booking) => {
   }
 };
 
+// Send email verification code
+const sendVerificationCodeEmail = async (email, code) => {
+  try {
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
+      console.log('Email not configured - verification code would be sent to:', email, 'Code:', code);
+      return;
+    }
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER || 'noreply@hms.com',
+      to: email,
+      subject: 'Verify your email address - Berghaus Bungalow',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: linear-gradient(135deg, #006bb8, #004d82); color: white; padding: 20px; text-align: center;">
+            <h1>Berghaus Bungalow</h1>
+            <h2>Email Verification</h2>
+          </div>
+
+          <div style="padding: 20px; background: #f9f9f9;">
+            <p>Hello,</p>
+            <p>Thank you for creating an account with Berghaus Bungalow. Please use the verification code below to complete your registration:</p>
+
+            <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center; border: 1px dashed #006bb8;">
+              <p style="font-size: 32px; letter-spacing: 8px; font-weight: bold; color: #006bb8; margin: 0;">${code}</p>
+              <p style="margin: 10px 0 0; color: #777;">This code expires in 10 minutes.</p>
+            </div>
+
+            <p style="color: #555;">If you did not request this code, you can safely ignore this email.</p>
+          </div>
+
+          <div style="background: #006bb8; color: white; padding: 15px; text-align: center;">
+            <p>Need help? Contact us at support@berghausbungalow.com</p>
+          </div>
+        </div>
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log('Verification code email sent successfully to:', email);
+  } catch (error) {
+    console.error('Failed to send verification code email:', error);
+    throw error;
+  }
+};
+
 // Send welcome email
 const sendWelcomeEmail = async (user) => {
   try {
@@ -1016,5 +1062,6 @@ module.exports = {
   sendReservationConfirmation,
   sendCancellationEmail,
   sendCheckInReminder,
-  sendPaymentReminder
+  sendPaymentReminder,
+  sendVerificationCodeEmail
 };

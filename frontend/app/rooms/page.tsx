@@ -1,115 +1,130 @@
 'use client';
 
-import React from 'react';
-import Image from 'next/image';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Navbar from '@/components/navbar';
 import Footer from '@/components/footer';
-import { 
-  Users, 
-  Bed, 
-  Mountain, 
-  Star,
-  CheckCircle,
-  ArrowRight
-} from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
-import { getRoomPrimaryImage } from '@/lib/roomImageUtils';
+import { EnhancedRoomCard } from '@/components/enhanced-room-card';
+import { useAuth } from '@/contexts/AuthContext';
+import { roomAPI } from '@/lib/api';
+import { 
+  getAllRoomImages, 
+  getRandomRoomImageWithSeed, 
+  getRoomImages, 
+  getRoomPrimaryImage 
+} from '@/lib/roomImageUtils';
 
-const roomTypes = [
+const defaultRooms = [
   {
     id: '1',
     name: 'Double Room with Mountain View',
     description: 'Spacious double room with stunning mountain views, extra-large double bed, and modern amenities.',
     image: getRoomPrimaryImage('Double'),
-    bedType: '1 extra-large double bed',
-    maxPersons: 2,
-    originalPrice: 13608,
-    currentPrice: 10478,
-    discount: 23,
-    available: 1,
-    amenities: [
-      'Balcony', 'Garden view', 'Mountain view', 'Patio', 'Ensuite bathroom', 
-      'Flat-screen TV', 'Terrace', 'Free toiletries', 'Shower', 'Safety deposit box', 
-      'Toilet', 'Sofa', 'Towels', 'Linen', 'Socket near the bed', 'Seating Area', 
-      'Private entrance', 'TV', 'Fan', 'Carpeted', 'Electric kettle', 'Outdoor furniture', 
-      'Outdoor dining area', 'Dining area', 'Dining table', 'Upper floors accessible by stairs only', 
-      'Clothes rack', 'Toilet paper', 'Books, DVDs, or music for children'
-    ],
-    features: ['Free breakfast for Geniuses', 'No prepayment needed', 'No credit card needed', '13% Genius discount']
+    capacity: 2,
+    amenities: ['Mountain View', 'Balcony', 'Patio', 'Ensuite Bathroom', 'Flat-screen TV', 'Terrace'],
+    rating: 9.4,
+    isPopular: true,
+    images: getAllRoomImages('Double')
   },
   {
     id: '2',
     name: 'Family Room with Mountain View',
     description: 'Perfect for families with bunk bed and large double bed, featuring mountain views and family amenities.',
     image: getRoomPrimaryImage('Family'),
-    bedType: '1 bunk bed and 1 large double bed',
-    maxPersons: 4,
-    originalPrice: 16632,
-    currentPrice: 12807,
-    discount: 23,
-    available: 1,
-    amenities: [
-      'Balcony', 'Garden view', 'Mountain view', 'Patio', 'Ensuite bathroom', 
-      'Flat-screen TV', 'Terrace', 'Free toiletries', 'Shower', 'Safety deposit box', 
-      'Toilet', 'Sofa', 'Towels', 'Linen', 'Socket near the bed', 'Seating Area', 
-      'Private entrance', 'TV', 'Fan', 'Carpeted', 'Electric kettle', 'Outdoor furniture', 
-      'Outdoor dining area', 'Dining area', 'Dining table', 'Clothes rack', 'Toilet paper', 
-      'Books, DVDs, or music for children'
-    ],
-    features: ['Free breakfast for Geniuses', 'No prepayment needed', 'No credit card needed', '13% Genius discount']
+    capacity: 4,
+    amenities: ['Mountain View', 'Bunk Bed', 'Large Double Bed', 'Family Friendly', 'Flat-screen TV', 'Terrace'],
+    rating: 9.2,
+    isPopular: true,
+    images: getAllRoomImages('Family')
   },
   {
     id: '3',
     name: 'Double or Twin Room',
     description: 'Flexible room configuration with two futon beds, mountain views, and outdoor spaces.',
     image: getRoomPrimaryImage('Twin'),
-    bedType: '2 futon beds',
-    maxPersons: 2,
-    originalPrice: 13608,
-    currentPrice: 10478,
-    discount: 23,
-    available: 1,
-    amenities: [
-      'Balcony', 'Garden view', 'Mountain view', 'Patio', 'Ensuite bathroom', 
-      'Terrace', 'Free toiletries', 'Shower', 'Safety deposit box', 'Toilet', 
-      'Towels', 'Linen', 'Socket near the bed', 'Seating Area', 'Private entrance', 
-      'TV', 'Fan', 'Carpeted', 'Electric kettle', 'Outdoor furniture', 
-      'Outdoor dining area', 'Dining area', 'Dining table', 'Clothes rack', 'Toilet paper'
-    ],
-    features: ['Free breakfast for Geniuses', 'No prepayment needed', 'No credit card needed', '13% Genius discount']
+    capacity: 2,
+    amenities: ['Mountain View', 'Twin Beds', 'Balcony', 'Patio', 'Ensuite Bathroom', 'Terrace'],
+    rating: 9.6,
+    isPopular: true,
+    images: getAllRoomImages('Twin')
   },
   {
     id: '4',
     name: 'Single Room with Mountain View',
     description: 'Perfect for solo travelers with large double bed and all the amenities you need.',
     image: getRoomPrimaryImage('Single'),
-    bedType: '1 large double bed',
-    maxPersons: 1,
-    originalPrice: 12247,
-    currentPrice: 9432,
-    discount: 23,
-    available: 1,
-    amenities: [
-      'Mountain View', 'Single Occupancy', 'Large Double Bed', 'Balcony', 'Patio', 'Terrace',
-      'Ensuite bathroom', 'Free toiletries', 'Shower', 'Safety deposit box', 'Toilet', 
-      'Towels', 'Linen', 'Socket near the bed', 'Seating Area', 'Private entrance', 
-      'TV', 'Fan', 'Carpeted', 'Electric kettle', 'Outdoor furniture', 
-      'Outdoor dining area', 'Dining area', 'Dining table', 'Clothes rack', 'Toilet paper'
-    ],
-    features: ['Free breakfast for Geniuses', 'No prepayment needed', 'No credit card needed', '13% Genius discount']
+    capacity: 1,
+    amenities: ['Mountain View', 'Single Occupancy', 'Large Double Bed', 'Balcony', 'Patio', 'Terrace'],
+    rating: 9.0,
+    images: getAllRoomImages('Single')
   }
 ];
 
 export default function RoomsPage() {
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-LK', {
-      style: 'currency',
-      currency: 'LKR',
-      minimumFractionDigits: 0
-    }).format(price);
+  const { user } = useAuth();
+  const [rooms, setRooms] = useState(defaultRooms);
+  const [loading, setLoading] = useState(false);
+
+  const isAdmin = user?.role === 'admin';
+
+  useEffect(() => {
+    const loadRooms = async () => {
+      try {
+        setLoading(true);
+        const response = await roomAPI.getAllRooms();
+        if (response.success && response.data) {
+          const transformedRooms = response.data.map((room: any) => {
+            const roomNameMap: { [key: string]: string } = {
+              'Double': 'Double Room with Mountain View',
+              'Family': 'Family Room with Mountain View',
+              'Twin': 'Double or Twin Room',
+              'Single': 'Single Room with Mountain View',
+              'Suite': 'Family Room with Mountain View'
+            };
+
+            const roomImages = getRoomImages(room.roomType, room.images);
+            const primaryImage = room.images?.[0] || getRandomRoomImageWithSeed(room.roomType, parseInt(room._id.slice(-2), 16) || 0);
+
+            return {
+              id: room._id,
+              name: roomNameMap[room.roomType] || `${room.roomType || 'Standard'} Room with Mountain View`,
+              description: room.description || `Comfortable ${(room.roomType || 'standard').toLowerCase()} room`,
+              image: primaryImage,
+              capacity: room.capacity || 1,
+              amenities: room.amenities || [],
+              rating: 9.0,
+              isPopular: room.status === 'available',
+              images: roomImages
+            };
+          });
+          setRooms(transformedRooms);
+        }
+      } catch (error) {
+        console.error('Error loading rooms:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadRooms();
+  }, []);
+
+  const handleRoomImageUpdate = (updatedRoom: any) => {
+    setRooms(prevRooms =>
+      prevRooms.map(room =>
+        room.id === updatedRoom._id
+          ? {
+              ...room,
+              image: updatedRoom.images && updatedRoom.images.length > 0 ? updatedRoom.images[0] : '/IMG-20250815-WA0007.jpg',
+              images: updatedRoom.images || []
+            }
+          : room
+      )
+    );
   };
 
   return (
@@ -133,118 +148,42 @@ export default function RoomsPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <Badge className="bg-hms-accent text-hms-primary font-semibold mb-4">
-              We Price Match
+              Accommodations
             </Badge>
             <h2 className="text-4xl font-bold text-hms-primary mb-6">
-              Our Room Types
+              Rooms & Suites
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              All our rooms feature stunning mountain views, modern amenities, and comfortable furnishings.
+              Experience unparalleled comfort in our carefully designed rooms and suites, each featuring modern amenities and elegant furnishings.
             </p>
           </div>
 
-          <div className="space-y-8">
-            {roomTypes.map((room) => (
-              <Card key={room.id} className="border-0 shadow-xl hover:shadow-2xl transition-all duration-300">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-0">
-                  {/* Room Image */}
-                  <div className="lg:col-span-1">
-                    <div className="relative h-64 lg:h-full">
-                      <Image
-                        src={room.image}
-                        alt={room.name}
-                        fill
-                        className="object-cover rounded-l-lg"
-                      />
-                      {room.available === 1 && (
-                        <Badge className="absolute top-4 left-4 bg-red-500 text-white">
-                          We have {room.available} left
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Room Details */}
-                  <div className="lg:col-span-2 p-8">
-                    <div className="flex flex-col h-full">
-                      {/* Header */}
-                      <div className="mb-6">
-                        <h3 className="text-2xl font-bold text-hms-primary mb-2">{room.name}</h3>
-                        <p className="text-gray-600 mb-4">{room.description}</p>
-                        
-                        <div className="flex items-center space-x-4 text-sm text-gray-600 mb-4">
-                          <div className="flex items-center space-x-1">
-                            <Bed className="w-4 h-4" />
-                            <span>{room.bedType}</span>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <Users className="w-4 h-4" />
-                            <span>Max {room.maxPersons} persons</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Amenities */}
-                      <div className="mb-6">
-                        <h4 className="font-semibold text-hms-primary mb-3">Room Amenities</h4>
-                        <div className="flex flex-wrap gap-2">
-                          {room.amenities.slice(0, 8).map((amenity, index) => (
-                            <Badge key={index} variant="secondary" className="text-xs">
-                              {amenity}
-                            </Badge>
-                          ))}
-                          {room.amenities.length > 8 && (
-                            <Badge variant="secondary" className="text-xs">
-                              +{room.amenities.length - 8} more
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Features */}
-                      <div className="mb-6">
-                        <div className="space-y-2">
-                          {room.features.map((feature, index) => (
-                            <div key={index} className="flex items-center space-x-2 text-sm">
-                              <CheckCircle className="w-4 h-4 text-green-500" />
-                              <span className="text-gray-600">{feature}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Pricing */}
-                      <div className="mt-auto">
-                        <div className="flex items-center justify-between mb-4">
-                          <div>
-                            <div className="flex items-center space-x-3">
-                              <span className="text-2xl font-bold text-hms-primary">
-                                {formatPrice(room.currentPrice)}
-                              </span>
-                              <span className="text-lg text-gray-500 line-through">
-                                {formatPrice(room.originalPrice)}
-                              </span>
-                              <Badge className="bg-green-500 text-white">
-                                {room.discount}% off
-                              </Badge>
-                            </div>
-                            <p className="text-sm text-gray-600 mt-1">
-                              Includes taxes and charges
-                            </p>
-                          </div>
-                          
-                          <Link href="/reservations">
-                            <Button className="bg-hms-primary hover:bg-hms-primary/90 text-white px-6">
-                              Book Now
-                            </Button>
-                          </Link>
-                        </div>
-                      </div>
-                    </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {loading ? (
+              Array.from({ length: 4 }).map((_, index) => (
+                <div key={index} className="animate-pulse">
+                  <div className="bg-gray-200 h-48 rounded-lg mb-4"></div>
+                  <div className="space-y-2">
+                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                    <div className="h-3 bg-gray-200 rounded w-2/3"></div>
                   </div>
                 </div>
-              </Card>
-            ))}
+              ))
+            ) : (
+              rooms.map((room) => (
+                <EnhancedRoomCard
+                  key={room.id}
+                  room={room}
+                  onBook={(room) => {
+                    window.location.href = `/availability?roomId=${room.id}`;
+                  }}
+                  onImageUpdate={handleRoomImageUpdate}
+                  showImageUpload={isAdmin}
+                  isAdmin={isAdmin}
+                />
+              ))
+            )}
           </div>
 
           {/* Call to Action */}

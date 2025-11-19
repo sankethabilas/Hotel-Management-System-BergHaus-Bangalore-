@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -8,10 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import { Eye, EyeOff, Mail, Lock, User, ArrowRight, Loader2, CheckCircle } from 'lucide-react';
-import { validateEmail, validatePassword } from '@/lib/auth';
+import { validateEmail, validatePassword, AuthService } from '@/lib/auth';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserRole } from '@/types/index';
@@ -57,6 +56,21 @@ export default function SignUp() {
     hasLowerCase: false,
     hasNumber: false
   });
+  const [verificationId, setVerificationId] = useState<string | null>(null);
+  const [verificationCode, setVerificationCode] = useState('');
+  const [verificationStatus, setVerificationStatus] = useState<'idle' | 'sending' | 'sent' | 'verifying' | 'verified'>('idle');
+  const [codeError, setCodeError] = useState<string | null>(null);
+  const [cooldown, setCooldown] = useState(0);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const timer = setInterval(() => {
+      setCooldown(prev => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [cooldown]);
+
+  const isEmailVerified = verificationStatus === 'verified';
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -71,6 +85,14 @@ export default function SignUp() {
         ...prev,
         [name]: ''
       }));
+    }
+
+    if (name === 'email') {
+      setVerificationId(null);
+      setVerificationCode('');
+      setVerificationStatus('idle');
+      setCooldown(0);
+      setCodeError(null);
     }
 
     // Password validation feedback
@@ -130,10 +152,101 @@ export default function SignUp() {
     return Object.keys(newErrors).length === 0;
   };
 
+  const handleSendVerificationCode = async () => {
+    if (!formData.email || !validateEmail(formData.email)) {
+      setErrors(prev => ({
+        ...prev,
+        email: 'Please enter a valid email before requesting verification'
+      }));
+      return;
+    }
+
+    if (cooldown > 0 || verificationStatus === 'sending' || isEmailVerified) {
+      return;
+    }
+
+    try {
+      setVerificationStatus('sending');
+      const response = await AuthService.requestEmailVerification(formData.email);
+
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to send verification code');
+      }
+
+      setVerificationId(response.data?.verificationId || null);
+      setVerificationStatus('sent');
+      setCooldown(60);
+      toast({
+        title: 'Verification code sent',
+        description: 'Please check your email for the verification code.',
+      });
+    } catch (error: any) {
+      setVerificationStatus('idle');
+      toast({
+        title: 'Unable to send code',
+        description: error.message || 'Please try again later.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleVerifyCode = async () => {
+    if (!formData.email || !validateEmail(formData.email)) {
+      setErrors(prev => ({
+        ...prev,
+        email: 'Please enter a valid email before verifying'
+      }));
+      return;
+    }
+
+    if (!verificationCode || verificationCode.trim().length !== 6) {
+      setCodeError('Please enter the 6-digit verification code');
+      return;
+    }
+
+    try {
+      setCodeError(null);
+      setVerificationStatus('verifying');
+
+      const response = await AuthService.verifyEmailCode(formData.email, verificationCode.trim());
+      if (!response.success) {
+        throw new Error(response.message || 'Invalid verification code');
+      }
+
+      setVerificationStatus('verified');
+      setVerificationId(response.data?.verificationId || null);
+      toast({
+        title: 'Email verified',
+        description: 'You can now create your account.',
+      });
+    } catch (error: any) {
+      setVerificationStatus('sent');
+      setCodeError(error.message || 'Invalid verification code');
+      toast({
+        title: 'Verification failed',
+        description: error.message || 'Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     if (!validateForm()) {
+      return;
+    }
+
+    if (!isEmailVerified || !verificationId) {
+      setErrors(prev => ({
+        ...prev,
+        email: 'Please verify your email before creating an account'
+      }));
+      toast({
+        title: 'Email verification required',
+        description: 'Please verify your email address to continue.',
+        variant: 'destructive',
+      });
       return;
     }
 
@@ -145,7 +258,8 @@ export default function SignUp() {
         lastName: formData.lastName.trim(),
         email: formData.email,
         password: formData.password,
-        role: formData.role
+        role: formData.role,
+        verificationId
       });
       
       if (success) {
@@ -330,6 +444,88 @@ export default function SignUp() {
                     {errors.email}
                   </p>
                 )}
+                <div className="flex flex-wrap items-center gap-3 mt-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="text-sm"
+                    onClick={handleSendVerificationCode}
+                    disabled={verificationStatus === 'sending' || cooldown > 0 || isEmailVerified}
+                  >
+                    {verificationStatus === 'sending'
+                      ? 'Sending...'
+                      : cooldown > 0
+                        ? `Resend in ${cooldown}s`
+                        : isEmailVerified
+                          ? 'Email Verified'
+                          : 'Send Verification Code'}
+                  </Button>
+                  {verificationStatus === 'sent' && (
+                    <span className="text-sm text-gray-600">
+                      Code sent! Enter it below to verify.
+                    </span>
+                  )}
+                  {isEmailVerified && (
+                    <span className="text-sm font-semibold text-green-600 flex items-center gap-1">
+                      <CheckCircle className="w-4 h-4" /> Verified
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Verification Code Field */}
+              <div className="space-y-2">
+                <Label htmlFor="verificationCode" className="text-sm font-medium text-gray-700">
+                  Verification Code
+                </Label>
+                <div className="flex flex-col md:flex-row gap-3">
+                  <div className="relative flex-1">
+                    <Input
+                      id="verificationCode"
+                      name="verificationCode"
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      maxLength={6}
+                      value={verificationCode}
+                      onChange={(event) => {
+                        setVerificationCode(event.target.value.replace(/\D/g, ''));
+                        setCodeError(null);
+                      }}
+                      disabled={isEmailVerified}
+                      placeholder="Enter 6-digit code"
+                      className={`pl-4 transition-all duration-200 ${
+                        isEmailVerified
+                          ? 'border-green-500'
+                          : codeError
+                            ? 'border-red-500 animate-shake'
+                            : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    />
+                    {codeError && (
+                      <p className="text-sm text-red-600 animate-fade-in mt-1">
+                        {codeError}
+                      </p>
+                    )}
+                  </div>
+                  <Button
+                    type="button"
+                    variant={isEmailVerified ? 'outline' : 'default'}
+                    onClick={handleVerifyCode}
+                    disabled={
+                      verificationStatus === 'verifying' ||
+                      verificationCode.length !== 6 ||
+                      isEmailVerified
+                    }
+                    className={`md:w-40 ${isEmailVerified ? 'bg-green-600 hover:bg-green-600/90 text-white' : ''}`}
+                  >
+                    {isEmailVerified
+                      ? 'Verified'
+                      : verificationStatus === 'verifying'
+                        ? 'Verifying...'
+                        : 'Verify Code'}
+                  </Button>
+                </div>
               </div>
 
               {/* Password Field */}
@@ -452,7 +648,7 @@ export default function SignUp() {
               {/* Sign Up Button */}
               <Button
                 type="submit"
-                disabled={loading}
+                disabled={loading || !isEmailVerified}
                 className="w-full bg-hms-primary hover:bg-hms-primary/90 text-white font-medium py-3 transition-all duration-200 disabled:opacity-50 group"
               >
                 {loading ? (
@@ -462,7 +658,7 @@ export default function SignUp() {
                   </div>
                 ) : (
                   <div className="flex items-center space-x-2">
-                    <span>Create Account</span>
+                    <span>{isEmailVerified ? 'Create Account' : 'Verify Email to Continue'}</span>
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" />
                   </div>
                 )}

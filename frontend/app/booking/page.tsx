@@ -1,10 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import RoomSearch from '@/components/RoomSearch';
 import RoomSelection from '@/components/RoomSelection';
 import BookingForm from '@/components/BookingForm';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 interface Room {
   _id: string;
@@ -26,11 +28,26 @@ type BookingStep = 'search' | 'selection' | 'booking';
 
 export default function BookingPage() {
   const router = useRouter();
+  const { isAuthenticated, loading: authLoading } = useAuth();
+  const { toast } = useToast();
   const [currentStep, setCurrentStep] = useState<BookingStep>('search');
   const [availableRooms, setAvailableRooms] = useState<Room[]>([]);
   const [searchCriteria, setSearchCriteria] = useState<any>(null);
   const [selectedRooms, setSelectedRooms] = useState<Room[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Check authentication when user reaches booking step
+  useEffect(() => {
+    if (!authLoading && currentStep === 'booking' && !isAuthenticated) {
+      toast({
+        title: "Login Required",
+        description: "Please log in to complete your booking.",
+        variant: "destructive"
+      });
+      // Redirect to login with return URL
+      router.push(`/auth/signin?redirect=${encodeURIComponent('/booking')}`);
+    }
+  }, [currentStep, isAuthenticated, authLoading, router, toast]);
 
   const handleRoomsFound = (rooms: Room[], criteria: any) => {
     setAvailableRooms(rooms);
@@ -43,6 +60,18 @@ export default function BookingPage() {
   };
 
   const handleProceedToBooking = (rooms: Room[]) => {
+    // Check authentication before proceeding to booking step
+    if (!isAuthenticated) {
+      toast({
+        title: "Login Required",
+        description: "Please log in to complete your booking. You will be redirected to the login page.",
+        variant: "destructive"
+      });
+      setTimeout(() => {
+        router.push(`/auth/signin?redirect=${encodeURIComponent('/booking')}`);
+      }, 1500);
+      return;
+    }
     setSelectedRooms(rooms);
     setCurrentStep('booking');
   };

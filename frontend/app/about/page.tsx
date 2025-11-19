@@ -213,6 +213,46 @@ export default function AboutPage() {
         </div>
       </section>
 
+      {/* Gallery Section */}
+      <section className="py-20 bg-gradient-to-br from-hms-highlight/20 to-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-hms-primary mb-6">
+              📸 Gallery
+            </h2>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Take a visual journey through Berghaus Bungalow and its beautiful surroundings
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {galleryImages.map((image, index) => (
+              <div
+                key={index}
+                className="relative group cursor-pointer overflow-hidden rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+                onClick={() => openLightbox(image.src, index)}
+              >
+                <div className="aspect-square relative">
+                  <Image
+                    src={image.src}
+                    alt={image.alt}
+                    fill
+                    className="object-cover transition-transform duration-300 group-hover:scale-110"
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
+                    <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                        <ExternalLink className="w-6 h-6 text-white" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Our Story Section */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -533,46 +573,6 @@ export default function AboutPage() {
                 <p className="text-gray-600">Employ and train local residents, helping grow our community</p>
               </CardContent>
             </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* Gallery Section */}
-      <section className="py-20 bg-gradient-to-br from-hms-highlight/20 to-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-hms-primary mb-6">
-              📸 Gallery
-            </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Take a visual journey through Berghaus Bungalow and its beautiful surroundings
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {galleryImages.map((image, index) => (
-              <div
-                key={index}
-                className="relative group cursor-pointer overflow-hidden rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
-                onClick={() => openLightbox(image.src, index)}
-              >
-                <div className="aspect-square relative">
-                  <Image
-                    src={image.src}
-                    alt={image.alt}
-                    fill
-                    className="object-cover transition-transform duration-300 group-hover:scale-110"
-                  />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
-                    <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-                        <ExternalLink className="w-6 h-6 text-white" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
           </div>
         </div>
       </section>

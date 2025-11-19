@@ -52,6 +52,7 @@ export interface RegisterData {
   confirmPassword?: string;
   phone?: string;
   role?: UserRole;
+  verificationId: string;
 }
 
 export interface AuthResponse {
@@ -77,6 +78,11 @@ export interface ApiResponse<T = any> {
   message: string;
   data?: T;
   errors?: Record<string, string>;
+}
+
+export interface EmailVerificationResponse {
+  verificationId: string;
+  expiresIn?: number;
 }
 
 export interface PaginatedResponse<T> {

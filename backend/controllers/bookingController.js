@@ -127,7 +127,7 @@ const searchAvailableRooms = async (req, res) => {
 
 // @desc    Create a new booking
 // @route   POST /api/bookings
-// @access  Public
+// @access  Private
 const createBooking = async (req, res) => {
   const session = await mongoose.startSession();
   
@@ -207,33 +207,22 @@ const createBooking = async (req, res) => {
       });
     }
 
-    // Find or create guest user
-    let guest;
-    
-    // If user is authenticated, use their ID
-    if (req.user && req.user.id) {
-      guest = await User.findById(req.user.id).session(session);
-      if (!guest) {
-        await session.abortTransaction();
-        return res.status(400).json({
-          success: false,
-          message: 'Authenticated user not found'
-        });
-      }
-    } else {
-      // For non-authenticated users, find or create by email
-      guest = await User.findOne({ email: guestEmail }).session(session);
-      if (!guest) {
-        guest = new User({
-          firstName: guestName.split(' ')[0] || guestName,
-          lastName: guestName.split(' ').slice(1).join(' ') || '',
-          email: guestEmail,
-          phone: guestPhone,
-          role: 'guest',
-          isActive: true
-        });
-        await guest.save({ session });
-      }
+    // Get authenticated user (required - enforced by protect middleware)
+    if (!req.user || !req.user.id) {
+      await session.abortTransaction();
+      return res.status(401).json({
+        success: false,
+        message: 'Authentication required. Please log in to book a room.'
+      });
+    }
+
+    const guest = await User.findById(req.user.id).session(session);
+    if (!guest) {
+      await session.abortTransaction();
+      return res.status(400).json({
+        success: false,
+        message: 'User not found'
+      });
     }
 
     // Calculate pricing

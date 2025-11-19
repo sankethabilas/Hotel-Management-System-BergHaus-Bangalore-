@@ -9,7 +9,8 @@ import {
   RegisterData, 
   UpdateUserData, 
   ChangePasswordData,
-  UserQueryParams 
+  UserQueryParams,
+  EmailVerificationResponse 
 } from '@/types/index';
 import { safeJsonParse, getErrorMessage } from './safeJsonParse';
 
@@ -114,6 +115,18 @@ export const authAPI = {
   // Change password
   changePassword: async (passwordData: ChangePasswordData): Promise<ApiResponse> => {
     const response: AxiosResponse<ApiResponse> = await api.put('/auth/change-password', passwordData);
+    return response.data;
+  },
+
+  // Request email verification code
+  requestEmailVerification: async (email: string): Promise<ApiResponse<EmailVerificationResponse>> => {
+    const response: AxiosResponse<ApiResponse<EmailVerificationResponse>> = await api.post('/auth/request-email-verification', { email });
+    return response.data;
+  },
+
+  // Verify email code
+  verifyEmailCode: async (payload: { email: string; code: string }): Promise<ApiResponse<EmailVerificationResponse>> => {
+    const response: AxiosResponse<ApiResponse<EmailVerificationResponse>> = await api.post('/auth/verify-email-code', payload);
     return response.data;
   },
 };
