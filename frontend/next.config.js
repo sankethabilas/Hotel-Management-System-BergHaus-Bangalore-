@@ -14,6 +14,11 @@ const nextConfig = {
         port: '5000',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'berghausbungalow.live',
+        pathname: '/**',
+      },
     ],
   },
   async rewrites() {

@@ -9,7 +9,11 @@
  * @param cacheBust - Whether to add a cache-busting parameter (defaults to true)
  * @returns The full URL for the profile image or undefined if no image
  */
-export const getProfileImageUrl = (profileImage: string | null | undefined, baseUrl: string = 'http://localhost:5000', cacheBust: boolean = true): string | undefined => {
+const DEFAULT_BASE_URL = typeof window !== 'undefined' 
+  ? (process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://localhost:5000')
+  : 'http://localhost:5000';
+
+export const getProfileImageUrl = (profileImage: string | null | undefined, baseUrl: string = DEFAULT_BASE_URL, cacheBust: boolean = true): string | undefined => {
   if (!profileImage) return undefined;
   
   // If it's already a full URL (Google profile image), return as is

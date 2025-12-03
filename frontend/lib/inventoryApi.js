@@ -1,6 +1,7 @@
 import axios from "axios";
 
-const API = axios.create({ baseURL: "http://localhost:5000/api/inventory" });
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API = axios.create({ baseURL: `${API_BASE_URL}/inventory` });
 
 // Add request interceptor to include auth token
 API.interceptors.request.use(
