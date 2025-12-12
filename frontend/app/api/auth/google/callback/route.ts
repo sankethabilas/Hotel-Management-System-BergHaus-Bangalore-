@@ -13,9 +13,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Exchange authorization code for access token
+    const clientId = process.env.GOOGLE_CLIENT_ID || '264905281304-ibmr3p9759rv17l4g02nmthcg7jria2f.apps.googleusercontent.com';
+    const clientSecret = process.env.GOOGLE_CLIENT_SECRET || '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';
+    
     const tokenResponse = await axios.post('https://oauth2.googleapis.com/token', {
-      client_id: '264905281304-ibmr3p9759rv17l4g02nmthcg7jria2f.apps.googleusercontent.com',
-      client_secret: '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',
+      client_id: clientId,
+      client_secret: clientSecret,
       code: code,
       grant_type: 'authorization_code',
       redirect_uri: redirectUri,
@@ -40,7 +43,8 @@ export async function POST(request: NextRequest) {
       accountType: 'guest'
     });
 
-    const backendResponse = await axios.post('http://localhost:5000/api/users/google-signup', {
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+    const backendResponse = await axios.post(`${backendUrl}/users/google-signup`, {
       name: userInfo.name,
       email: userInfo.email,
       profilePic: userInfo.picture,

@@ -26,7 +26,7 @@ export default function GoogleAuthButton({
       setError(null);
       
       // Google OAuth configuration
-      const clientId = '264905281304-ibmr3p9759rv17l4g02nmthcg7jria2f.apps.googleusercontent.com';
+      const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '264905281304-ibmr3p9759rv17l4g02nmthcg7jria2f.apps.googleusercontent.com';
       const redirectUri = `${window.location.origin}/auth/google/callback`;
       
       // Build Google OAuth URL
