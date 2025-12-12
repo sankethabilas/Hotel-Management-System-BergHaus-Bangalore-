@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 import axios from 'axios';
 
 export default function GoogleCallbackPage() {
@@ -53,10 +54,20 @@ export default function GoogleCallbackPage() {
           setStatus('error');
           setMessage(response.data.message || 'Authentication failed');
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Google callback error:', error);
         setStatus('error');
-        setMessage('An error occurred during authentication');
+        
+        // Provide more specific error messages
+        if (error.response?.data?.message) {
+          setMessage(error.response.data.message);
+        } else if (error.response?.data?.error) {
+          setMessage(`Authentication error: ${error.response.data.error}`);
+        } else if (error.message) {
+          setMessage(`Error: ${error.message}`);
+        } else {
+          setMessage('An error occurred during authentication. Please try again.');
+        }
       }
     };
 
@@ -94,11 +105,29 @@ export default function GoogleCallbackPage() {
           )}
           
           {status === 'error' && (
-            <Alert className="border-red-200 bg-red-50">
-              <AlertDescription className="text-red-700">
-                {message}
-              </AlertDescription>
-            </Alert>
+            <div className="space-y-4">
+              <Alert className="border-red-200 bg-red-50">
+                <AlertDescription className="text-red-700">
+                  {message}
+                </AlertDescription>
+              </Alert>
+              <div className="flex flex-col gap-2">
+                <Button 
+                  onClick={() => window.location.href = '/'}
+                  variant="outline"
+                  className="w-full"
+                >
+                  Go to Home
+                </Button>
+                <Button 
+                  onClick={() => window.location.reload()}
+                  variant="default"
+                  className="w-full"
+                >
+                  Try Again
+                </Button>
+              </div>
+            </div>
           )}
         </CardContent>
       </Card>

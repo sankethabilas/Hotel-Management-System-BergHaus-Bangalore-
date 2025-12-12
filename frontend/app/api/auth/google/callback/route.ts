@@ -16,6 +16,13 @@ export async function POST(request: NextRequest) {
     const clientId = process.env.GOOGLE_CLIENT_ID || '264905281304-ibmr3p9759rv17l4g02nmthcg7jria2f.apps.googleusercontent.com';
     const clientSecret = process.env.GOOGLE_CLIENT_SECRET || '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';
     
+    console.log('Exchanging authorization code for token...', {
+      hasClientId: !!clientId,
+      hasClientSecret: !!clientSecret,
+      redirectUri,
+      codeLength: code?.length
+    });
+    
     const tokenResponse = await axios.post('https://oauth2.googleapis.com/token', {
       client_id: clientId,
       client_secret: clientSecret,
@@ -44,6 +51,12 @@ export async function POST(request: NextRequest) {
     });
 
     const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+    console.log('Sending user data to backend:', {
+      backendUrl: `${backendUrl}/users/google-signup`,
+      userEmail: userInfo.email,
+      userName: userInfo.name
+    });
+    
     const backendResponse = await axios.post(`${backendUrl}/users/google-signup`, {
       name: userInfo.name,
       email: userInfo.email,
@@ -88,11 +101,56 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Google OAuth callback error:', error);
+    
+    // Provide more specific error messages
+    let errorMessage = 'Authentication failed';
+    let statusCode = 500;
+    
+    if (error.response) {
+      // Google OAuth API error
+      if (error.response.data?.error) {
+        const googleError = error.response.data.error;
+        if (googleError === 'invalid_grant') {
+          errorMessage = 'Authorization code expired or invalid. Please try signing in again.';
+        } else if (googleError === 'invalid_client') {
+          errorMessage = 'Invalid OAuth client configuration. Please contact support.';
+        } else if (googleError === 'redirect_uri_mismatch') {
+          errorMessage = 'Redirect URI mismatch. Please check Google Cloud Console configuration.';
+        } else {
+          errorMessage = `Google OAuth error: ${googleError}. ${error.response.data.error_description || ''}`;
+        }
+        statusCode = error.response.status || 400;
+      } else if (error.response.status === 401) {
+        errorMessage = 'Failed to authenticate with Google. Please try again.';
+        statusCode = 401;
+      } else if (error.response.status === 400) {
+        errorMessage = 'Invalid request to Google OAuth. Please try again.';
+        statusCode = 400;
+      }
+    } else if (error.request) {
+      // Network error - backend not reachable
+      errorMessage = 'Unable to connect to backend server. Please check your connection.';
+      statusCode = 503;
+    } else if (error.message) {
+      // Other errors
+      errorMessage = `Authentication error: ${error.message}`;
+    }
+    
+    console.error('Detailed error:', {
+      message: errorMessage,
+      status: statusCode,
+      error: error.response?.data || error.message
+    });
+    
     return NextResponse.json(
-      { success: false, message: 'Authentication failed' },
-      { status: 500 }
+      { 
+        success: false, 
+        message: errorMessage,
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      },
+      { status: statusCode }
     );
   }
 }
