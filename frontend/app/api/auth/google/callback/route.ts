@@ -50,21 +50,46 @@ export async function POST(request: NextRequest) {
       accountType: 'guest'
     });
 
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+    // Get backend URL - check both environment variable and fallback
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 
+                      (process.env.NODE_ENV === 'production' 
+                        ? 'https://berghausbungalow.live/api' 
+                        : 'http://localhost:5000/api');
+    
+    const backendEndpoint = `${backendUrl}/users/google-signup`;
+    
     console.log('Sending user data to backend:', {
-      backendUrl: `${backendUrl}/users/google-signup`,
+      backendUrl: backendEndpoint,
       userEmail: userInfo.email,
-      userName: userInfo.name
+      userName: userInfo.name,
+      nodeEnv: process.env.NODE_ENV,
+      hasEnvVar: !!process.env.NEXT_PUBLIC_API_URL
     });
     
-    const backendResponse = await axios.post(`${backendUrl}/users/google-signup`, {
+    // Add timeout and better error handling for backend call
+    const backendResponse = await axios.post(backendEndpoint, {
       name: userInfo.name,
       email: userInfo.email,
       profilePic: userInfo.picture,
       accountType: 'guest'
+    }, {
+      timeout: 10000, // 10 second timeout
+      headers: {
+        'Content-Type': 'application/json'
+      }
     });
 
     console.log('Backend response:', backendResponse.data);
+
+    if (!backendResponse.data) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          message: 'Backend returned an invalid response. Please check backend logs.' 
+        },
+        { status: 500 }
+      );
+    }
 
     if (backendResponse.data.success) {
       // Set session cookie or JWT token
@@ -128,11 +153,31 @@ export async function POST(request: NextRequest) {
       } else if (error.response.status === 400) {
         errorMessage = 'Invalid request to Google OAuth. Please try again.';
         statusCode = 400;
+      } else if (error.response.status >= 500) {
+        // Backend server error
+        const backendUrl = process.env.NEXT_PUBLIC_API_URL || 
+                          (process.env.NODE_ENV === 'production' 
+                            ? 'https://berghausbungalow.live/api' 
+                            : 'http://localhost:5000/api');
+        errorMessage = `Backend server error (${error.response.status}). Please check backend logs at ${backendUrl}`;
+        statusCode = error.response.status;
+      } else if (error.response.status === 404) {
+        errorMessage = 'Backend endpoint not found. Please check backend route configuration.';
+        statusCode = 404;
       }
     } else if (error.request) {
       // Network error - backend not reachable
-      errorMessage = 'Unable to connect to backend server. Please check your connection.';
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 
+                        (process.env.NODE_ENV === 'production' 
+                          ? 'https://berghausbungalow.live/api' 
+                          : 'http://localhost:5000/api');
+      errorMessage = `Unable to connect to backend server at ${backendUrl}. Please check if the backend is running and accessible.`;
       statusCode = 503;
+      console.error('Backend connection error:', {
+        backendUrl,
+        error: error.message,
+        code: error.code
+      });
     } else if (error.message) {
       // Other errors
       errorMessage = `Authentication error: ${error.message}`;
