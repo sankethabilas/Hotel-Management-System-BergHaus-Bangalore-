@@ -132,41 +132,51 @@ export default function RoomsPage() {
       <Navbar />
       
       {/* Hero Section */}
-      <section className="relative py-20 bg-gradient-to-br from-hms-primary to-hms-secondary text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h1 className="text-5xl font-bold mb-6">Rooms & Suites</h1>
-            <p className="text-xl text-blue-100 max-w-3xl mx-auto">
-              Choose from our comfortable rooms with stunning mountain views in the beautiful hills of Ella, Sri Lanka.
-            </p>
-          </div>
+      <section className="relative h-[60vh] flex items-center justify-center overflow-hidden">
+        <div className="absolute inset-0">
+          <img 
+            src="/IMG-20250815-WA0006.jpg" 
+            alt="Luxury Room" 
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-black/50"></div>
+        </div>
+        <div className="relative z-10 text-center text-white px-4">
+          <Badge className="bg-white/20 hover:bg-white/30 text-white border-white/40 backdrop-blur-md mb-6 px-4 py-1 text-sm uppercase tracking-widest">
+            Luxury Accommodation
+          </Badge>
+          <h1 className="text-5xl md:text-7xl font-bold mb-6 tracking-tight drop-shadow-lg">
+            Rooms & <span className="text-hms-accent">Suites</span>
+          </h1>
+          <p className="text-xl md:text-2xl text-white/90 max-w-3xl mx-auto font-light leading-relaxed drop-shadow-md">
+            Choose from our comfortable rooms with stunning mountain views in the beautiful hills of Ella, Sri Lanka.
+          </p>
         </div>
       </section>
 
       {/* Available Rooms */}
-      <section className="py-20 bg-gradient-to-br from-hms-highlight/20 to-white">
+      <section className="py-24 bg-gradient-to-b from-gray-50 to-white relative">
+        <div className="absolute top-0 left-0 w-full h-96 bg-hms-primary/5 -skew-y-3 transform origin-top-left -z-10"></div>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <Badge className="bg-hms-accent text-hms-primary font-semibold mb-4">
-              Accommodations
-            </Badge>
-            <h2 className="text-4xl font-bold text-hms-primary mb-6">
-              Rooms & Suites
+          <div className="text-center mb-20">
+            <h2 className="text-4xl font-bold text-gray-900 mb-6">
+              Find Your Perfect <span className="text-hms-primary">Sanctuary</span>
             </h2>
+            <div className="w-24 h-1 bg-gradient-to-r from-hms-primary to-hms-accent mx-auto rounded-full mb-6"></div>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
               Experience unparalleled comfort in our carefully designed rooms and suites, each featuring modern amenities and elegant furnishings.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
             {loading ? (
-              Array.from({ length: 4 }).map((_, index) => (
+              Array.from({ length: 3 }).map((_, index) => (
                 <div key={index} className="animate-pulse">
-                  <div className="bg-gray-200 h-48 rounded-lg mb-4"></div>
-                  <div className="space-y-2">
-                    <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                    <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+                  <div className="bg-gray-200 h-80 rounded-3xl mb-4"></div>
+                  <div className="space-y-4">
+                    <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+                    <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+                    <div className="h-4 bg-gray-200 rounded w-2/3"></div>
                   </div>
                 </div>
               ))
@@ -187,17 +197,21 @@ export default function RoomsPage() {
           </div>
 
           {/* Call to Action */}
-          <div className="text-center mt-16">
-            <Card className="border-0 shadow-2xl bg-gradient-to-r from-hms-primary to-hms-secondary text-white max-w-4xl mx-auto">
-              <CardContent className="p-8">
-                <h3 className="text-2xl font-bold mb-4">Ready to Book Your Stay?</h3>
-                <p className="text-blue-100 mb-6">
-                  Check availability and make your reservation in just a few clicks.
+          <div className="text-center mt-24">
+            <Card className="border-0 shadow-2xl overflow-hidden relative max-w-5xl mx-auto transform hover:scale-[1.01] transition-transform duration-500">
+              <div className="absolute inset-0 bg-gradient-to-r from-hms-primary to-hms-secondary opacity-95 z-0"></div>
+              <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl transform translate-x-1/2 -translate-y-1/2"></div>
+              <div className="absolute bottom-0 left-0 w-64 h-64 bg-hms-accent/20 rounded-full blur-3xl transform -translate-x-1/2 translate-y-1/2"></div>
+              
+              <CardContent className="p-12 relative z-10 text-white">
+                <h3 className="text-3xl font-bold mb-4">Ready to Book Your Stay?</h3>
+                <p className="text-white/90 mb-8 text-lg font-light">
+                  Check availability and make your reservation in just a few clicks. Your luxury escape awaits.
                 </p>
                 <Link href="/reservations">
                   <Button 
                     size="lg" 
-                    className="bg-white text-hms-primary hover:bg-gray-100 px-10 py-4 text-lg font-semibold shadow-2xl hover:shadow-3xl transition-all duration-300 hover:scale-110"
+                    className="bg-white text-hms-primary hover:bg-gray-50 px-12 py-6 text-xl font-bold shadow-xl hover:shadow-2xl transition-all duration-300 rounded-full"
                   >
                     Check Availability & Book
                     <ArrowRight className="ml-3 w-6 h-6" />

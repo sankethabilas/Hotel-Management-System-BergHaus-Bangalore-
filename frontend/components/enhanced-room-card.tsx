@@ -279,10 +279,10 @@ export function EnhancedRoomCard({
   };
 
   return (
-    <Card className="group overflow-hidden hover:shadow-xl transition-all duration-300 hover:scale-[1.02] border-0 shadow-lg">
+    <Card className="group overflow-hidden bg-white border border-gray-100 shadow-xl hover:shadow-[0_20px_50px_rgba(0,0,0,0.1)] transition-all duration-500 hover:-translate-y-2 rounded-3xl h-full flex flex-col">
       <div className="relative">
         <div 
-          className="relative h-48 overflow-hidden"
+          className="relative h-72 overflow-hidden"
           onMouseEnter={() => setShowNavigation(true)}
           onMouseLeave={() => setShowNavigation(false)}
         >
@@ -504,27 +504,27 @@ export function EnhancedRoomCard({
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Star className="w-5 h-5 text-yellow-500 fill-current" />
-                        <span className="font-semibold">{room.rating}</span>
+                        <Star className="w-5 h-5 text-hms-accent fill-current" />
+                        <span className="font-bold text-lg">{room.rating}</span>
                         <span className="text-gray-500">(127 reviews)</span>
                       </div>
-                      <div className="flex items-center gap-2 text-gray-600">
+                      <div className="flex items-center gap-2 text-gray-600 bg-gray-50 px-3 py-1 rounded-full">
                         <Users className="w-4 h-4" />
-                        <span className="text-sm">Up to {room.capacity} guests</span>
+                        <span className="text-sm font-medium">Up to {room.capacity} guests</span>
                       </div>
                     </div>
-                    <p className="text-gray-600">{room.description}</p>
+                    <p className="text-gray-600 leading-relaxed text-lg">{room.description}</p>
                     {room.location && (
                       <div className="flex items-center gap-2">
-                        <MapPin className="w-4 h-4 text-gray-500" />
-                        <span className="text-sm">{room.location}</span>
+                        <MapPin className="w-4 h-4 text-hms-primary" />
+                        <span className="text-sm font-medium text-gray-700">{room.location}</span>
                       </div>
                     )}
                     <div>
-                      <h4 className="font-semibold mb-2">Amenities</h4>
+                      <h4 className="font-bold mb-3 text-gray-900">Premium Amenities</h4>
                       <div className="flex flex-wrap gap-2">
                         {room.amenities.map((amenity, index) => (
-                          <Badge key={index} variant="secondary" className="flex items-center gap-1">
+                          <Badge key={index} variant="secondary" className="flex items-center gap-2 px-3 py-1.5 bg-hms-primary/5 text-hms-primary hover:bg-hms-primary/10 transition-colors">
                             {getAmenityIcon(amenity)}
                             {amenity}
                           </Badge>
@@ -539,60 +539,69 @@ export function EnhancedRoomCard({
         </div>
       </div>
 
-      <CardContent className="p-4 space-y-3">
-        <div className="space-y-2">
-          <h3 className="font-semibold text-lg group-hover:text-hms-primary transition-colors">
-            {room.name}
-          </h3>
-          <p className="text-sm text-gray-600 line-clamp-2">
+      <CardContent className="p-6 flex-grow flex flex-col justify-between bg-gradient-to-b from-white to-gray-50/50">
+        <div className="space-y-4 mb-6">
+          <div className="flex items-start justify-between gap-2">
+            <h3 className="font-bold text-xl group-hover:text-hms-primary transition-colors leading-tight">
+              {room.name}
+            </h3>
+            <div className="flex items-center gap-1 bg-yellow-50 px-2 py-1 rounded-md border border-yellow-100 shrink-0">
+               <Star className="w-3.5 h-3.5 text-yellow-500 fill-current" />
+               <span className="text-sm font-bold text-yellow-700">{room.rating}</span>
+            </div>
+          </div>
+          
+          <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed">
             {room.description}
           </p>
-        </div>
 
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1">
-            <Star className="w-4 h-4 text-yellow-500 fill-current" />
-            <span className="text-sm font-medium">{room.rating}</span>
-            <span className="text-xs text-gray-500">(127)</span>
+          <div className="flex items-center gap-4 text-sm text-gray-500 border-t border-gray-100 pt-4">
+             <div className="flex items-center gap-1.5">
+               <Users className="w-4 h-4 text-hms-secondary" />
+               <span className="font-medium">{room.capacity} Guests</span>
+             </div>
+             <div className="w-1 h-1 bg-gray-300 rounded-full"></div>
+             <div className="flex items-center gap-1.5">
+               <Wifi className="w-4 h-4 text-hms-secondary" />
+               <span className="font-medium">Free Wifi</span>
+             </div>
           </div>
-          <div className="flex items-center gap-1 text-sm text-gray-600">
-            <Users className="w-4 h-4" />
-            <span>{room.capacity} guests</span>
+        </div>
+
+        <div className="space-y-4">
+          <div className="flex flex-wrap gap-1.5">
+            {room.amenities.slice(0, 3).map((amenity, index) => (
+              <Badge key={index} variant="outline" className="text-xs flex items-center gap-1 border-gray-200 text-gray-600 font-normal bg-white">
+                {getAmenityIcon(amenity)}
+                {amenity}
+              </Badge>
+            ))}
+            {room.amenities.length > 3 && (
+              <Badge variant="outline" className="text-xs border-gray-200 text-gray-500 bg-gray-50">
+                +{room.amenities.length - 3} more
+              </Badge>
+            )}
           </div>
-        </div>
 
-        <div className="flex gap-2">
-          {showSelectButton && (
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={handleSelect}
-            >
-              Select Room
-            </Button>
-          )}
-          {showBookButton && (
-            <Button
-              className="flex-1 bg-hms-primary hover:bg-hms-primary/90"
-              onClick={handleBook}
-            >
-              Book Now
-            </Button>
-          )}
-        </div>
-
-        <div className="flex flex-wrap gap-1">
-          {room.amenities.slice(0, 3).map((amenity, index) => (
-            <Badge key={index} variant="secondary" className="text-xs flex items-center gap-1">
-              {getAmenityIcon(amenity)}
-              {amenity}
-            </Badge>
-          ))}
-          {room.amenities.length > 3 && (
-            <Badge variant="secondary" className="text-xs">
-              +{room.amenities.length - 3} more
-            </Badge>
-          )}
+          <div className="flex gap-3 pt-2">
+            {showSelectButton && (
+              <Button
+                variant="outline"
+                className="flex-1 border-hms-primary text-hms-primary hover:bg-hms-primary hover:text-white transition-colors"
+                onClick={handleSelect}
+              >
+                Select Room
+              </Button>
+            )}
+            {showBookButton && (
+              <Button
+                className="flex-1 bg-hms-primary hover:bg-hms-primary/90 text-white font-semibold shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5"
+                onClick={handleBook}
+              >
+                Book Now
+              </Button>
+            )}
+          </div>
         </div>
       </CardContent>
     </Card>
