@@ -12,7 +12,6 @@ import Hero from '@/components/hero';
 import RoomCard from '@/components/room-card';
 import { EnhancedRoomCard } from '@/components/enhanced-room-card';
 import FacilityCard, { iconMap } from '@/components/facility-card';
-import ReviewCarousel from '@/components/review-carousel';
 import FeedbackShowcase from '@/components/feedback-showcase';
 
 import { useAuth } from '@/contexts/AuthContext';
@@ -160,26 +159,7 @@ const facilities = [
   }
 ];
 
-const specialOffers = [
-  {
-    title: 'Pekoe Trail Package',
-    description: 'Perfect for hikers completing the Pekoe Trail. Includes free pickup from Demodara Railway Station.',
-    discount: 'FREE PICKUP',
-    validUntil: 'Dec 31, 2024'
-  },
-  {
-    title: 'Family Stay Special',
-    description: 'Family rooms with mountain views, breakfast included, and access to garden areas.',
-    discount: '15% OFF',
-    validUntil: 'Jan 15, 2025'
-  },
-  {
-    title: 'Extended Stay',
-    description: 'Stay 3 nights or more and enjoy our beautiful hill country views and local cuisine.',
-    discount: '20% OFF',
-    validUntil: 'Feb 28, 2025'
-  }
-];
+
 
 export default function HomePage() {
   const { user } = useAuth();
@@ -431,25 +411,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Guest Reviews Section */}
-      <section className="py-20 bg-gradient-to-br from-hms-highlight/20 to-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <Badge className="bg-hms-accent text-hms-primary font-semibold mb-4">
-              Testimonials
-            </Badge>
-            <h2 className="text-4xl font-bold text-hms-primary mb-6">
-              What Our Guests Say
-            </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Don't just take our word for it. Read what our valued guests have to say 
-              about their experiences at Berghaus Bungalow.
-            </p>
-          </div>
 
-          <ReviewCarousel />
-        </div>
-      </section>
 
       {/* Feedback Section */}
       <section className="py-20 bg-gradient-to-r from-hms-primary to-hms-secondary">
@@ -510,7 +472,7 @@ export default function HomePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
             <Card className="group relative h-80 overflow-hidden rounded-3xl border-0 shadow-lg cursor-pointer">
-               <Image src="/IMG-20250815-WA0009.jpg" alt="Nine Arch" fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
+               <Image src="/images/locations/nine-arch.jpg" alt="Nine Arch Bridge" fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
                <div className="absolute bottom-6 left-6 text-white">
                  <h3 className="text-xl font-bold mb-1">Nine Arch Bridge</h3>
@@ -519,7 +481,7 @@ export default function HomePage() {
             </Card>
 
             <Card className="group relative h-80 overflow-hidden rounded-3xl border-0 shadow-lg cursor-pointer">
-               <Image src="/IMG-20250815-WA0010.jpg" alt="Kitchen Garden" fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
+               <Image src="/images/locations/kitchen-garden.jpg" alt="Kitchen Garden" fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
                <div className="absolute bottom-6 left-6 text-white">
                  <h3 className="text-xl font-bold mb-1">Kitchen Garden</h3>
@@ -528,7 +490,7 @@ export default function HomePage() {
             </Card>
 
             <Card className="group relative h-80 overflow-hidden rounded-3xl border-0 shadow-lg cursor-pointer">
-               <Image src="/IMG-20250815-WA0027.jpg" alt="Railway Station" fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
+               <Image src="/images/locations/railway-station.jpg" alt="Railway Station" fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
                <div className="absolute bottom-6 left-6 text-white">
                  <h3 className="text-xl font-bold mb-1">Railway Station</h3>
@@ -537,7 +499,7 @@ export default function HomePage() {
             </Card>
 
             <Card className="group relative h-80 overflow-hidden rounded-3xl border-0 shadow-lg cursor-pointer">
-               <Image src="/IMG-20250815-WA0021.jpg" alt="Adams Peak" fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
+               <Image src="/images/locations/little-adams.jpg" alt="Little Adam's Peak" fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
                <div className="absolute bottom-6 left-6 text-white">
                  <h3 className="text-xl font-bold mb-1">Little Adam's Peak</h3>
@@ -549,50 +511,7 @@ export default function HomePage() {
       </section>
 
       {/* Special Offers Section */}
-      <section className="py-20 bg-gradient-to-br from-hms-highlight/20 to-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <Badge className="bg-hms-accent text-hms-primary font-semibold mb-4">
-              Exclusive Deals
-            </Badge>
-            <h2 className="text-4xl font-bold text-hms-primary mb-6">
-              Special Offers
-            </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Take advantage of our exclusive offers and packages designed to make your stay 
-              even more memorable and affordable.
-            </p>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {specialOffers.map((offer, index) => (
-              <Card key={index} className="border-0 shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 bg-white overflow-hidden group">
-                <div className="h-2 bg-gradient-to-r from-hms-accent to-hms-primary"></div>
-                <CardContent className="p-8">
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-start">
-                         <Badge className="bg-hms-accent text-hms-primary font-bold text-md px-3 py-1">
-                           {offer.discount}
-                         </Badge>
-                         <Sparkles className="w-6 h-6 text-hms-accent animate-pulse" />
-                    </div>
-                    <h3 className="text-2xl font-bold text-gray-900 group-hover:text-hms-primary transition-colors">{offer.title}</h3>
-                    <p className="text-gray-600 leading-relaxed">{offer.description}</p>
-                    <div className="pt-4 flex items-center justify-between border-t border-gray-100 mt-4 pt-4">
-                      <p className="text-sm text-gray-400 font-medium">{offer.validUntil}</p>
-                      <Link href="/reservations">
-                        <Button variant="ghost" className="text-hms-primary hover:text-hms-secondary hover:bg-hms-primary/5 p-0 font-semibold">
-                          Book Now <ArrowRight className="w-4 h-4 ml-1" />
-                        </Button>
-                      </Link>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* Call to Action Section */}
       <section className="py-20 bg-gradient-to-r from-hms-primary to-hms-secondary text-white">
