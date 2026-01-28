@@ -470,42 +470,57 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
-            <Card className="group relative h-80 overflow-hidden rounded-3xl border-0 shadow-lg cursor-pointer">
-               <Image src="/images/locations/nine-arch.jpg" alt="Nine Arch Bridge" fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
-               <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
-               <div className="absolute bottom-6 left-6 text-white">
-                 <h3 className="text-xl font-bold mb-1">Nine Arch Bridge</h3>
-                 <p className="text-white/80">5 km away</p>
-               </div>
-            </Card>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-16">
+             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 h-full">
+                <Card className="group relative h-64 overflow-hidden rounded-3xl border-0 shadow-lg cursor-pointer">
+                   <Image src="/images/locations/nine-arch.jpg" alt="Nine Arch Bridge" fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
+                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+                   <div className="absolute bottom-6 left-6 text-white">
+                     <h3 className="text-xl font-bold mb-1">Nine Arch Bridge</h3>
+                     <p className="text-white/80">5 km away</p>
+                   </div>
+                </Card>
 
-            <Card className="group relative h-80 overflow-hidden rounded-3xl border-0 shadow-lg cursor-pointer">
-               <Image src="/images/locations/kitchen-garden.jpg" alt="Kitchen Garden" fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
-               <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
-               <div className="absolute bottom-6 left-6 text-white">
-                 <h3 className="text-xl font-bold mb-1">Kitchen Garden</h3>
-                 <p className="text-white/80">3.1 km away</p>
-               </div>
-            </Card>
+                <Card className="group relative h-64 overflow-hidden rounded-3xl border-0 shadow-lg cursor-pointer">
+                   <Image src="/images/locations/kitchen-garden.jpg" alt="Kitchen Garden" fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
+                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+                   <div className="absolute bottom-6 left-6 text-white">
+                     <h3 className="text-xl font-bold mb-1">Kitchen Garden</h3>
+                     <p className="text-white/80">3.1 km away</p>
+                   </div>
+                </Card>
 
-            <Card className="group relative h-80 overflow-hidden rounded-3xl border-0 shadow-lg cursor-pointer">
-               <Image src="/images/locations/railway-station.jpg" alt="Railway Station" fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
-               <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
-               <div className="absolute bottom-6 left-6 text-white">
-                 <h3 className="text-xl font-bold mb-1">Railway Station</h3>
-                 <p className="text-white/80">1.7 km away</p>
-               </div>
-            </Card>
+                <Card className="group relative h-64 overflow-hidden rounded-3xl border-0 shadow-lg cursor-pointer">
+                   <Image src="/images/locations/railway-station.jpg" alt="Railway Station" fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
+                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+                   <div className="absolute bottom-6 left-6 text-white">
+                     <h3 className="text-xl font-bold mb-1">Railway Station</h3>
+                     <p className="text-white/80">1.7 km away</p>
+                   </div>
+                </Card>
 
-            <Card className="group relative h-80 overflow-hidden rounded-3xl border-0 shadow-lg cursor-pointer">
-               <Image src="/images/locations/little-adams.jpg" alt="Little Adam's Peak" fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
-               <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
-               <div className="absolute bottom-6 left-6 text-white">
-                 <h3 className="text-xl font-bold mb-1">Little Adam's Peak</h3>
-                 <p className="text-white/80">7 km away</p>
-               </div>
-            </Card>
+                <Card className="group relative h-64 overflow-hidden rounded-3xl border-0 shadow-lg cursor-pointer">
+                   <Image src="/images/locations/little-adams.jpg" alt="Little Adam's Peak" fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
+                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+                   <div className="absolute bottom-6 left-6 text-white">
+                     <h3 className="text-xl font-bold mb-1">Little Adam's Peak</h3>
+                     <p className="text-white/80">7 km away</p>
+                   </div>
+                </Card>
+             </div>
+
+             <div className="w-full h-full min-h-[400px] rounded-3xl overflow-hidden shadow-xl border border-gray-100">
+               <iframe
+                 src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3960.123456789!2d81.0444!3d6.8667!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zNsKwNTInMDAuMCJOIDgxwrAwMic0MC4wIkU!5e0!3m2!1sen!2slk!4v1234567890123!5m2!1sen!2slk"
+                 width="100%"
+                 height="100%"
+                 style={{ border: 0 }}
+                 allowFullScreen
+                 loading="lazy"
+                 referrerPolicy="no-referrer-when-downgrade"
+                 className="w-full h-full"
+               ></iframe>
+             </div>
           </div>
         </div>
       </section>
