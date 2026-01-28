@@ -107,12 +107,7 @@ export default function Navbar({ className }: NavbarProps) {
             >
               Facilities
             </Link>
-            <Link 
-              href="/Food-home" 
-              className="text-sm text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary transition-colors duration-200 font-medium"
-            >
-              Food Menu
-            </Link>
+
             <Link 
               href="/about" 
               className="text-sm text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary transition-colors duration-200 font-medium"
@@ -252,13 +247,7 @@ export default function Navbar({ className }: NavbarProps) {
               >
                 Facilities
               </Link>
-              <Link
-                href="/Food-home"
-                className="block px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary hover:bg-gray-50 dark:hover:bg-gray-600 rounded-md transition-colors duration-200"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Food Menu
-              </Link>
+
               <Link
                 href="/about"
                 className="block px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-hms-primary dark:hover:text-hms-secondary hover:bg-gray-50 dark:hover:bg-gray-600 rounded-md transition-colors duration-200"

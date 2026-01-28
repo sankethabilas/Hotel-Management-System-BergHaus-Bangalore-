@@ -14,7 +14,7 @@ import { EnhancedRoomCard } from '@/components/enhanced-room-card';
 import FacilityCard, { iconMap } from '@/components/facility-card';
 import ReviewCarousel from '@/components/review-carousel';
 import FeedbackShowcase from '@/components/feedback-showcase';
-import Chatbot from '@/components/chatbot/Chatbot';
+
 import { useAuth } from '@/contexts/AuthContext';
 import { roomAPI } from '@/lib/api';
 import { getRoomImages, getRoomPrimaryImage, getAllRoomImages, getRandomRoomImageWithSeed } from '@/lib/roomImageUtils';
@@ -260,58 +260,73 @@ export default function HomePage() {
       <Hero />
 
       {/* About Section */}
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div className="space-y-6">
+      {/* About Section */}
+      <section className="py-24 bg-white overflow-hidden relative">
+        <div className="absolute top-0 right-0 w-1/3 h-full bg-hms-highlight/10 skew-x-12 transform origin-top-right"></div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            {/* Text Content */}
+            <div className="space-y-8 animate-slide-up">
               <div>
-                <Badge className="bg-hms-accent text-hms-primary font-semibold mb-4">
-                  About Berghaus Bungalow
+                <Badge className="bg-hms-accent/20 text-hms-primary hover:bg-hms-accent/30 transition-colors px-4 py-1 text-sm font-semibold mb-6 rounded-full border border-hms-accent/50">
+                  Welcome to Paradise
                 </Badge>
-                <h2 className="text-4xl font-bold text-hms-primary mb-6">
-                  Where Luxury Meets Comfort
+                <h2 className="text-5xl font-bold text-gray-900 mb-6 leading-tight">
+                  Where <span className="text-hms-primary">Luxury</span> Meets <span className="text-hms-secondary">Comfort</span>
                 </h2>
-                <p className="text-lg text-gray-600 leading-relaxed mb-6">
-                  Located in the beautiful hills of Ella, Sri Lanka, Berghaus Bungalow offers comfortable 
-                  family rooms with private bathrooms, balconies, and stunning garden or mountain views. 
-                  Our commitment to excellence and warm hospitality has earned us a superb 9.4/10 rating.
-                </p>
-                <p className="text-gray-600 leading-relaxed">
-                  From our delicious local cuisine to our peaceful outdoor spaces, every aspect of 
-                  your stay is designed to provide comfort and create unforgettable memories in the heart of Sri Lanka's hill country.
-                </p>
+                <div className="space-y-4">
+                  <p className="text-lg text-gray-600 leading-relaxed">
+                    Nestled in the breathtaking hills of Ella, Berghaus Bungalow is more than just a hotel—it's your private sanctuary. 
+                    Wake up to misty mountain views and unwind in our luxurious, family-friendly accommodations.
+                  </p>
+                  <p className="text-lg text-gray-600 leading-relaxed">
+                     Rated <span className="font-bold text-hms-primary">9.4/10</span> by our guests for our exceptional hospitality and serene atmosphere.
+                  </p>
+                </div>
               </div>
               
-              <div className="grid grid-cols-2 gap-6">
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-hms-primary">9.4</div>
-                  <div className="text-gray-600">Guest Rating</div>
+              <div className="grid grid-cols-2 gap-8 pt-4">
+                <div className="text-center p-6 bg-gray-50 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all">
+                  <div className="text-4xl font-bold text-hms-primary mb-1">9.4</div>
+                  <div className="text-sm font-medium text-gray-500 uppercase tracking-wide">Guest Rating</div>
                 </div>
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-hms-primary">20+</div>
-                  <div className="text-gray-600">Reviews</div>
+                <div className="text-center p-6 bg-gray-50 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all">
+                  <div className="text-4xl font-bold text-hms-primary mb-1">Ella</div>
+                  <div className="text-sm font-medium text-gray-500 uppercase tracking-wide">Prime Location</div>
                 </div>
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-hms-primary">Family</div>
-                  <div className="text-gray-600">Rooms</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-hms-primary">9.2</div>
-                  <div className="text-gray-600">Location Score</div>
-                </div>
+              </div>
+
+              <div className="pt-4">
+                 <Link href="/about">
+                    <Button variant="link" className="text-hms-primary text-lg font-semibold hover:translate-x-2 transition-transform p-0 h-auto">
+                      Read Our Story <ArrowRight className="ml-2 w-5 h-5" />
+                    </Button>
+                 </Link>
               </div>
             </div>
             
-            <div className="relative">
-              <div className="relative h-96 lg:h-[500px] rounded-2xl overflow-hidden shadow-2xl">
+            {/* Image Composition */}
+            <div className="relative h-[600px] hidden lg:block">
+              {/* Main Large Image */}
+              <div className="absolute top-0 right-0 w-4/5 h-4/5 rounded-3xl overflow-hidden shadow-2xl z-10 transform hover:scale-[1.02] transition-transform duration-500">
                 <Image
                   src="/IMG-20250815-WA0011.jpg"
-                  alt="Hotel Interior"
+                  alt="Hotel Interior Main"
                   fill
                   className="object-cover"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
               </div>
+              {/* Secondary Overlapping Image */}
+              <div className="absolute bottom-0 left-0 w-3/5 h-3/5 rounded-3xl overflow-hidden shadow-2xl z-20 border-8 border-white transform hover:scale-[1.02] transition-transform duration-500">
+                <Image
+                  src="/IMG-20250815-WA0024.jpg"
+                  alt="Hotel Detail"
+                  fill
+                  className="object-cover"
+                />
+              </div>
+              {/* Decorative Element */}
+              <div className="absolute -bottom-8 -right-8 w-64 h-64 bg-hms-accent/20 rounded-full blur-3xl -z-10"></div>
             </div>
           </div>
         </div>
@@ -320,16 +335,16 @@ export default function HomePage() {
       {/* Rooms & Suites Section */}
       <section className="py-20 bg-gradient-to-br from-hms-highlight/20 to-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <Badge className="bg-hms-accent text-hms-primary font-semibold mb-4">
-              Accommodations
+          <div className="text-center mb-16 relative">
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-40 bg-hms-secondary/10 rounded-full blur-3xl -z-10"></div>
+            <Badge className="bg-hms-primary text-white font-semibold mb-6 px-6 py-2 rounded-full shadow-lg border-2 border-white/20">
+              Luxury Living
             </Badge>
-            <h2 className="text-4xl font-bold text-hms-primary mb-6">
-              Rooms & Suites
+            <h2 className="text-5xl font-bold text-gray-900 mb-6 tracking-tight">
+              Rooms & <span className="text-hms-secondary">Suites</span>
             </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Experience unparalleled comfort in our carefully designed rooms and suites, 
-              each featuring modern amenities and elegant furnishings.
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto font-light">
+              Immerse yourself in comfort with our thoughtfully designed spaces, featuring breath-taking views and premium amenities.
             </p>
           </div>
 
@@ -381,21 +396,27 @@ export default function HomePage() {
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <Badge className="bg-hms-accent text-hms-primary font-semibold mb-4">
-              Great Facilities!
+            <Badge className="bg-indigo-100 text-indigo-700 font-semibold mb-4 px-4 py-1 rounded-full">
+              World Class Amenities
             </Badge>
-            <h2 className="text-4xl font-bold text-hms-primary mb-6">
-              Facilities & Services
+            <h2 className="text-4xl font-bold text-gray-900 mb-6">
+              Our Facilities
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Review score: 9.3/10. Discover our comprehensive facilities and services designed to enhance your stay 
-              and provide everything you need for a perfect accommodation experience in Ella.
+              Everything you need for a perfect stay.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
             {facilities.map((facility, index) => (
-              <FacilityCard key={index} {...facility} />
+              <Card key={index} className="border-0 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 group bg-gray-50/50 hover:bg-white">
+                <CardContent className="p-6 text-center flex flex-col items-center justify-center h-full">
+                   <div className="w-12 h-12 bg-white rounded-2xl shadow-sm flex items-center justify-center text-hms-primary group-hover:bg-hms-primary group-hover:text-white transition-colors duration-300 mb-4">
+                     {facility.icon}
+                   </div>
+                   <h3 className="font-semibold text-gray-900 group-hover:text-hms-primary transition-colors text-sm">{facility.title}</h3>
+                </CardContent>
+              </Card>
             ))}
           </div>
           
@@ -476,75 +497,53 @@ export default function HomePage() {
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <Badge className="bg-hms-accent text-hms-primary font-semibold mb-4">
-              Excellent Location
+            <Badge className="bg-teal-100 text-teal-700 font-semibold mb-4 px-4 py-1 rounded-full">
+              Explore Ella
             </Badge>
-            <h2 className="text-4xl font-bold text-hms-primary mb-6">
-              Hotel Surroundings
+            <h2 className="text-4xl font-bold text-gray-900 mb-6">
+              Prime Location
             </h2>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Perfectly located in the hills of Ella with easy access to major attractions, 
-              restaurants, and transportation.
+              Minutes away from Ella's most famous landmarks.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
-            <Card className="text-center p-6 border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-              <CardContent className="p-0">
-                <div className="flex justify-center mb-4">
-                  <div className="w-12 h-12 bg-hms-primary/10 rounded-full flex items-center justify-center text-hms-primary">
-                    <Mountain className="w-6 h-6" />
-                  </div>
-                </div>
-                <h3 className="font-semibold text-hms-primary mb-2">Demodara Nine Arch Bridge</h3>
-                <p className="text-sm text-gray-600">5 km away</p>
-              </CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+            <Card className="group relative h-80 overflow-hidden rounded-3xl border-0 shadow-lg cursor-pointer">
+               <Image src="/IMG-20250815-WA0009.jpg" alt="Nine Arch" fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
+               <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+               <div className="absolute bottom-6 left-6 text-white">
+                 <h3 className="text-xl font-bold mb-1">Nine Arch Bridge</h3>
+                 <p className="text-white/80">5 km away</p>
+               </div>
             </Card>
 
-            <Card className="text-center p-6 border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-              <CardContent className="p-0">
-                <div className="flex justify-center mb-4">
-                  <div className="w-12 h-12 bg-hms-primary/10 rounded-full flex items-center justify-center text-hms-primary">
-                    <Utensils className="w-6 h-6" />
-                  </div>
-                </div>
-                <h3 className="font-semibold text-hms-primary mb-2">The Kitchen Garden</h3>
-                <p className="text-sm text-gray-600">3.1 km away</p>
-              </CardContent>
+            <Card className="group relative h-80 overflow-hidden rounded-3xl border-0 shadow-lg cursor-pointer">
+               <Image src="/IMG-20250815-WA0010.jpg" alt="Kitchen Garden" fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
+               <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+               <div className="absolute bottom-6 left-6 text-white">
+                 <h3 className="text-xl font-bold mb-1">Kitchen Garden</h3>
+                 <p className="text-white/80">3.1 km away</p>
+               </div>
             </Card>
 
-            <Card className="text-center p-6 border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-              <CardContent className="p-0">
-                <div className="flex justify-center mb-4">
-                  <div className="w-12 h-12 bg-hms-primary/10 rounded-full flex items-center justify-center text-hms-primary">
-                    <Plane className="w-6 h-6" />
-                  </div>
-                </div>
-                <h3 className="font-semibold text-hms-primary mb-2">Demodara Railway Station</h3>
-                <p className="text-sm text-gray-600">1.7 km away</p>
-              </CardContent>
+            <Card className="group relative h-80 overflow-hidden rounded-3xl border-0 shadow-lg cursor-pointer">
+               <Image src="/IMG-20250815-WA0027.jpg" alt="Railway Station" fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
+               <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+               <div className="absolute bottom-6 left-6 text-white">
+                 <h3 className="text-xl font-bold mb-1">Railway Station</h3>
+                 <p className="text-white/80">1.7 km away</p>
+               </div>
             </Card>
 
-            <Card className="text-center p-6 border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-              <CardContent className="p-0">
-                <div className="flex justify-center mb-4">
-                  <div className="w-12 h-12 bg-hms-primary/10 rounded-full flex items-center justify-center text-hms-primary">
-                    <TreePine className="w-6 h-6" />
-                  </div>
-                </div>
-                <h3 className="font-semibold text-hms-primary mb-2">Little Adam's Peak</h3>
-                <p className="text-sm text-gray-600">7 km away</p>
-              </CardContent>
+            <Card className="group relative h-80 overflow-hidden rounded-3xl border-0 shadow-lg cursor-pointer">
+               <Image src="/IMG-20250815-WA0021.jpg" alt="Adams Peak" fill className="object-cover transition-transform duration-700 group-hover:scale-110" />
+               <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+               <div className="absolute bottom-6 left-6 text-white">
+                 <h3 className="text-xl font-bold mb-1">Little Adam's Peak</h3>
+                 <p className="text-white/80">7 km away</p>
+               </div>
             </Card>
-          </div>
-
-          <div className="text-center">
-            <Link href="/facilities">
-              <Button size="lg" className="bg-hms-primary hover:bg-hms-primary/90 text-white px-8 py-4">
-                View All Surroundings
-                <ArrowRight className="ml-2 w-5 h-5" />
-              </Button>
-            </Link>
           </div>
         </div>
       </section>
@@ -567,22 +566,26 @@ export default function HomePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {specialOffers.map((offer, index) => (
-              <Card key={index} className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 bg-gradient-to-br from-hms-primary/5 to-hms-accent/10">
-                <CardContent className="p-8 text-center">
+              <Card key={index} className="border-0 shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 bg-white overflow-hidden group">
+                <div className="h-2 bg-gradient-to-r from-hms-accent to-hms-primary"></div>
+                <CardContent className="p-8">
                   <div className="space-y-4">
-                    <Badge className="bg-hms-primary text-white font-bold text-lg px-4 py-2">
-                      {offer.discount}
-                    </Badge>
-                    <h3 className="text-xl font-bold text-hms-primary">{offer.title}</h3>
-                    <p className="text-gray-600">{offer.description}</p>
-                    <div className="pt-4">
-                      <p className="text-sm text-gray-500">Valid until: {offer.validUntil}</p>
+                    <div className="flex justify-between items-start">
+                         <Badge className="bg-hms-accent text-hms-primary font-bold text-md px-3 py-1">
+                           {offer.discount}
+                         </Badge>
+                         <Sparkles className="w-6 h-6 text-hms-accent animate-pulse" />
                     </div>
-                    <Link href="/reservations">
-                      <Button className="w-full bg-hms-primary hover:bg-hms-primary/90 text-white">
-                        Book Now
-                      </Button>
-                    </Link>
+                    <h3 className="text-2xl font-bold text-gray-900 group-hover:text-hms-primary transition-colors">{offer.title}</h3>
+                    <p className="text-gray-600 leading-relaxed">{offer.description}</p>
+                    <div className="pt-4 flex items-center justify-between border-t border-gray-100 mt-4 pt-4">
+                      <p className="text-sm text-gray-400 font-medium">{offer.validUntil}</p>
+                      <Link href="/reservations">
+                        <Button variant="ghost" className="text-hms-primary hover:text-hms-secondary hover:bg-hms-primary/5 p-0 font-semibold">
+                          Book Now <ArrowRight className="w-4 h-4 ml-1" />
+                        </Button>
+                      </Link>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -628,8 +631,7 @@ export default function HomePage() {
 
       <Footer />
       
-      {/* Chatbot */}
-      <Chatbot />
+
     </div>
   );
 }
